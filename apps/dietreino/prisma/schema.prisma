@@ -1,0 +1,81 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DB_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  createdAt       DateTime      @default(now())
+  email           String        @unique
+  exercisePlans   ExercisePlan? @relation(fields: [exercisePlansId], references: [id])
+  exercisePlansId String?       @unique @db.ObjectId
+  firstName       String
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  lastName        String?
+  mealPlan        MealPlan?     @relation(fields: [mealPlanId], references: [id])
+  mealPlanId      String?       @db.ObjectId
+  password        String
+  roles           Json
+  updatedAt       DateTime      @updatedAt
+  username        String        @unique
+}
+
+model Meal {
+  description  String
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  kcal         Decimal?
+  mealPlans    MealPlan[] @relation(fields: [mealPlansIds], references: [id])
+  mealPlansIds String[]   @db.ObjectId
+  name         String
+  schedule     String
+}
+
+model MealPlan {
+  ExpiresAt DateTime?
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  kcal      Decimal?
+  meal      Meal[]    @relation(fields: [mealIds], references: [id])
+  mealIds   String[]  @db.ObjectId
+  name      String?
+  users     User[]
+}
+
+model Exercise {
+  exerciseSeries ExerciseSerie[]
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  name           String?
+  repetitions    Decimal?
+  series         Decimal?
+}
+
+model ExerciseSerie {
+  exercise        Exercise?     @relation(fields: [exerciseId], references: [id])
+  exerciseId      String?       @db.ObjectId
+  exerciseSets    ExerciseSet[] @relation(fields: [exerciseSetsIds], references: [id])
+  exerciseSetsIds String[]      @db.ObjectId
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  repetitions     Decimal?
+  series          Decimal?
+}
+
+model ExerciseSet {
+  description      String?
+  exercisePlans    ExercisePlan?   @relation(fields: [exercisePlansId], references: [id])
+  exercisePlansId  String?         @db.ObjectId
+  exerciseSerie    ExerciseSerie[] @relation(fields: [exerciseSerieIds], references: [id])
+  exerciseSerieIds String[]        @db.ObjectId
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  name             String?
+}
+
+model ExercisePlan {
+  description String?
+  exerciseSet ExerciseSet[]
+  expiresAt   DateTime?
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String?
+  user        User?
+}

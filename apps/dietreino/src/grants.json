@@ -1,0 +1,794 @@
+[
+  {
+    "role": "trainer",
+    "resource": "User",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "User",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "User",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "User",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "User",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "User",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "User",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "User",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "User",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "User",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "User",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "User",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "User",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "User",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "User",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "User",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "User",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "User",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "User",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "User",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Meal",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Meal",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Meal",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Meal",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Meal",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Meal",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Meal",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Meal",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Meal",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Meal",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Meal",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Meal",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Meal",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Meal",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Meal",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Meal",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Meal",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Meal",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Meal",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Meal",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "MealPlan",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "MealPlan",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "MealPlan",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "MealPlan",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "MealPlan",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "MealPlan",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "MealPlan",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "MealPlan",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "MealPlan",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "MealPlan",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "MealPlan",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "MealPlan",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Exercise",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Exercise",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Exercise",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Exercise",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Exercise",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Exercise",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Exercise",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Exercise",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Exercise",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Exercise",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Exercise",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Exercise",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Exercise",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Exercise",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Exercise",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Exercise",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "Exercise",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "Exercise",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "Exercise",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "Exercise",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSerie",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSerie",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSerie",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSerie",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSerie",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSerie",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSerie",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSerie",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSerie",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSerie",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSerie",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSerie",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSerie",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSerie",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSerie",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSerie",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSerie",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSerie",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSerie",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSerie",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSet",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSet",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSet",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSet",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSet",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSet",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSet",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSet",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSet",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSet",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSet",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSet",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSet",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSet",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSet",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSet",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExerciseSet",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExerciseSet",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExerciseSet",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExerciseSet",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExercisePlan",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExercisePlan",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExercisePlan",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExercisePlan",
+    "action": "read:own",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExercisePlan",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExercisePlan",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExercisePlan",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExercisePlan",
+    "action": "create:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExercisePlan",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExercisePlan",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExercisePlan",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExercisePlan",
+    "action": "update:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExercisePlan",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExercisePlan",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExercisePlan",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExercisePlan",
+    "action": "delete:any",
+    "attributes": "*"
+  },
+  {
+    "role": "trainer",
+    "resource": "ExercisePlan",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "admin",
+    "resource": "ExercisePlan",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "customer",
+    "resource": "ExercisePlan",
+    "action": "read:any",
+    "attributes": "*"
+  },
+  {
+    "role": "nutritionist",
+    "resource": "ExercisePlan",
+    "action": "read:any",
+    "attributes": "*"
+  }
+]
