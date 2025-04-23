@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { UserType } from './dto/user.type';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
+import { CreateUserWithPasswordInput } from './dto/create-user-with-password.input';
 
 @Resolver(() => UserType)
 export class UsersResolver {
@@ -38,5 +39,19 @@ export class UsersResolver {
   ): Promise<boolean> {
     await this.usersService.delete(id);
     return true;
+  }
+
+  @Mutation(() => UserType)
+  async createUserWithGeneratedPassword(
+    @Args('createUserInput') createUserInput: CreateUserWithPasswordInput,
+  ): Promise<UserType> {
+    const { user, generatedPassword } =
+      await this.usersService.createWithGeneratedPassword(createUserInput);
+
+    // Return the user with the generated password
+    return {
+      ...user,
+      generatedPassword,
+    };
   }
 }

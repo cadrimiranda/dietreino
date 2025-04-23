@@ -1,3 +1,4 @@
+// user.type.ts (modified)
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 
 @ObjectType()
@@ -10,6 +11,9 @@ export class UserType {
 
   @Field()
   email: string;
+
+  @Field({ nullable: true })
+  generatedPassword?: string;
 
   @Field()
   createdAt: Date;
