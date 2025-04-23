@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de arquivo XLSX</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+            background-color: #f0f7ff;
+        }
+        .upload-area.drag-over {
+            border-color: #28a745;
+            background-color: #e7f5e7;
+        }
+        .hidden {
+            display: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .button-group {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        #result {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .result-container {
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload de Arquivo XLSX</h1>
+        <p>Selecione um arquivo XLSX para processamento:</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <p>Arraste e solte o arquivo aqui ou clique para selecionar</p>
+            <input type="file" id="fileInput" accept=".xlsx" class="hidden">
+        </div>
+        
+        <div id="fileInfo"></div>
+        
+        <div class="button-group">
+            <button id="extractButton" disabled>Extrair Exercícios</button>
+            <button id="processButton" disabled>Processar Planilha Completa</button>
+        </div>
+        
+        <div class="result-container hidden" id="resultContainer">
+            <h3>Resultado do processamento:</h3>
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos do DOM
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const extractButton = document.getElementById('extractButton');
+        const processButton = document.getElementById('processButton');
+        const resultContainer = document.getElementById('resultContainer');
+        const result = document.getElementById('result');
+        
+        // URL do seu servidor GraphQL
+        const GRAPHQL_URL = 'http://localhost:3000/graphql';
+        
+        // Adiciona listeners para drag and drop
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files.length) {
+                handleFileSelection(e.dataTransfer.files[0]);
+            }
+        });
+        
+        // Listener para seleção de arquivo via input
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileSelection(e.target.files[0]);
+            }
+        });
+        
+        // Listeners para botões de upload
+        extractButton.addEventListener('click', () => uploadFile('extract'));
+        processButton.addEventListener('click', () => uploadFile('process'));
+        
+        // Função para lidar com a seleção de arquivo
+        function handleFileSelection(file) {
+            // Verifica se é um arquivo XLSX
+            if (!file.name.endsWith('.xlsx')) {
+                fileInfo.innerHTML = '<p style="color: red;">Por favor, selecione um arquivo XLSX válido.</p>';
+                extractButton.disabled = true;
+                processButton.disabled = true;
+                return;
+            }
+            
+            fileInfo.innerHTML = `
+                <p><strong>Arquivo selecionado:</strong> ${file.name}</p>
+                <p><strong>Tamanho:</strong> ${formatFileSize(file.size)}</p>
+            `;
+            
+            // Habilita os botões de upload
+            extractButton.disabled = false;
+            processButton.disabled = false;
+        }
+        
+        // Função para formatar o tamanho do arquivo
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Função para fazer upload do arquivo via GraphQL
+        async function uploadFile(action) {
+            const file = fileInput.files[0] || null;
+            if (!file) return;
+            
+            // Muda o estado dos botões
+            extractButton.disabled = true;
+            processButton.disabled = true;
+            
+            // Define qual botão está sendo usado
+            const activeButton = action === 'extract' ? extractButton : processButton;
+            activeButton.textContent = 'Enviando...';
+            
+            try {
+                // Prepara a operação GraphQL com base no botão clicado
+                let query;
+                let resultHandler;
+                
+                if (action === 'extract') {
+                    query = `
+                        mutation ExtractExerciseNames($file: Upload!) {
+                            extractExerciseNames(file: $file) {
+                                sheetName
+                                exercises {
+                                    name
+                                    rawReps
+                                    repSchemes {
+                                        sets
+                                        minReps
+                                        maxReps
+                                    }
+                                }
+                            }
+                        }
+                    `;
+                    resultHandler = displayExerciseNames;
+                } else {
+                    query = `
+                        mutation ProcessXlsx($file: Upload!) {
+                            processXlsx(file: $file) {
+                                sheets {
+                                    name
+                                    data
+                                }
+                            }
+                        }
+                    `;
+                    resultHandler = displaySheets;
+                }
+                
+                const operations = {
+                    query: query,
+                    variables: {
+                        file: null
+                    }
+                };
+                
+                // Prepara o mapa de variáveis
+                const map = {
+                    '0': ['variables.file']
+                };
+                
+                // Prepara o FormData
+                const formData = new FormData();
+                formData.append('operations', JSON.stringify(operations));
+                formData.append('map', JSON.stringify(map));
+                formData.append('0', file);
+                
+                // Envia a requisição
+                const response = await fetch(GRAPHQL_URL, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        // Adiciona o cabeçalho para evitar o erro de CSRF
+                        'apollo-require-preflight': 'true'
+                        // Se você tiver autenticação, adicione headers aqui também
+                        // 'Authorization': 'Bearer seu_token_aqui',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.errors) {
+                    throw new Error(data.errors[0].message);
+                }
+                
+                // Processa o resultado com o handler apropriado
+                if (action === 'extract') {
+                    resultHandler(data.data.extractExerciseNames);
+                } else {
+                    resultHandler(data.data.processXlsx);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao fazer upload:', error);
+                result.innerHTML = `<p style="color: red;">Erro: ${error.message}</p>`;
+                resultContainer.classList.remove('hidden');
+            } finally {
+                // Restaura o estado dos botões
+                extractButton.disabled = false;
+                processButton.disabled = false;
+                activeButton.textContent = action === 'extract' ? 'Extrair Exercícios' : 'Processar Planilha Completa';
+            }
+        }
+        
+        // Função para exibir a lista de nomes de exercícios
+        function displayExerciseNames(exercisesBySheet) {
+            // Limpa o conteúdo anterior
+            result.innerHTML = '';
+            
+            if (Array.isArray(exercisesBySheet) && exercisesBySheet.length > 0) {
+                const container = document.createElement('div');
+                
+                exercisesBySheet.forEach(sheet => {
+                    // Cria um container para cada folha
+                    const sheetContainer = document.createElement('div');
+                    sheetContainer.style.marginBottom = '20px';
+                    
+                    // Adiciona o título da folha
+                    const sheetTitle = document.createElement('h4');
+                    sheetTitle.textContent = `Folha: ${sheet.sheetName}`;
+                    sheetContainer.appendChild(sheetTitle);
+                    
+                    // Cria uma tabela para os exercícios e repetições
+                    if (sheet.exercises && sheet.exercises.length > 0) {
+                        const table = document.createElement('table');
+                        table.border = '1';
+                        table.style.borderCollapse = 'collapse';
+                        table.style.width = '100%';
+                        
+                        // Cabeçalho da tabela
+                        const thead = document.createElement('thead');
+                        const headerRow = document.createElement('tr');
+                        headerRow.style.backgroundColor = '#f0f0f0';
+                        headerRow.style.fontWeight = 'bold';
+                        
+                        const thExercise = document.createElement('th');
+                        thExercise.textContent = 'Exercício';
+                        thExercise.style.padding = '8px';
+                        thExercise.style.textAlign = 'left';
+                        
+                        const thRawReps = document.createElement('th');
+                        thRawReps.textContent = 'Repetições Brutas';
+                        thRawReps.style.padding = '8px';
+                        thRawReps.style.textAlign = 'center';
+                        
+                        const thRepSchemes = document.createElement('th');
+                        thRepSchemes.textContent = 'Esquemas de Repetições';
+                        thRepSchemes.style.padding = '8px';
+                        thRepSchemes.style.textAlign = 'center';
+                        
+                        headerRow.appendChild(thExercise);
+                        headerRow.appendChild(thRawReps);
+                        headerRow.appendChild(thRepSchemes);
+                        thead.appendChild(headerRow);
+                        table.appendChild(thead);
+                        
+                        // Corpo da tabela
+                        const tbody = document.createElement('tbody');
+                        
+                        sheet.exercises.forEach(exercise => {
+                            const tr = document.createElement('tr');
+                            
+                            const tdName = document.createElement('td');
+                            tdName.textContent = exercise.name;
+                            tdName.style.padding = '8px';
+                            
+                            const tdRawReps = document.createElement('td');
+                            tdRawReps.textContent = exercise.rawReps;
+                            tdRawReps.style.padding = '8px';
+                            tdRawReps.style.textAlign = 'center';
+                            
+                            const tdRepSchemes = document.createElement('td');
+                            tdRepSchemes.style.padding = '8px';
+                            tdRepSchemes.style.textAlign = 'center';
+                            
+                            if (exercise.repSchemes && exercise.repSchemes.length > 0) {
+                                const repSchemesList = document.createElement('ul');
+                                repSchemesList.style.listStyleType = 'none';
+                                repSchemesList.style.padding = '0';
+                                
+                                exercise.repSchemes.forEach(scheme => {
+                                    const schemeItem = document.createElement('li');
+                                    schemeItem.textContent = `${scheme.sets} sets: ${scheme.minReps}-${scheme.maxReps} reps`;
+                                    repSchemesList.appendChild(schemeItem);
+                                });
+                                
+                                tdRepSchemes.appendChild(repSchemesList);
+                            } else {
+                                tdRepSchemes.textContent = 'N/A';
+                            }
+                            
+                            tr.appendChild(tdName);
+                            tr.appendChild(tdRawReps);
+                            tr.appendChild(tdRepSchemes);
+                            tbody.appendChild(tr);
+                        });
+                        
+                        table.appendChild(tbody);
+                        sheetContainer.appendChild(table);
+                    } else {
+                        const noExercises = document.createElement('p');
+                        noExercises.textContent = 'Nenhum exercício encontrado nesta folha.';
+                        sheetContainer.appendChild(noExercises);
+                    }
+                    
+                    container.appendChild(sheetContainer);
+                });
+                
+                result.appendChild(container);
+            } else {
+                result.innerHTML = '<p>Nenhum exercício encontrado nas planilhas.</p>';
+            }
+            
+            // Mostra o contêiner de resultados
+            resultContainer.classList.remove('hidden');
+        }
+        
+        // Função para exibir as planilhas completas
+        function displaySheets(data) {
+            // Limpa o conteúdo anterior
+            result.innerHTML = '';
+            
+            // Adiciona as informações de cada planilha
+            if (data && data.sheets && data.sheets.length > 0) {
+                const sheetsInfo = document.createElement('div');
+                
+                data.sheets.forEach((sheet, index) => {
+                    const sheetDiv = document.createElement('div');
+                    sheetDiv.style.marginBottom = '20px';
+                    
+                    // Cria um cabeçalho para a planilha
+                    const sheetTitle = document.createElement('h4');
+                    sheetTitle.textContent = `Planilha: ${sheet.name}`;
+                    sheetDiv.appendChild(sheetTitle);
+                    
+                    // Cria uma tabela para os dados
+                    const table = document.createElement('table');
+                    table.border = '1';
+                    table.style.borderCollapse = 'collapse';
+                    table.style.width = '100%';
+                    
+                    // Adiciona os dados à tabela
+                    sheet.data.forEach((row, rowIndex) => {
+                        const tr = document.createElement('tr');
+                        
+                        // Destaca a primeira linha como cabeçalho
+                        if (rowIndex === 0) {
+                            tr.style.backgroundColor = '#f0f0f0';
+                            tr.style.fontWeight = 'bold';
+                        }
+                        
+                        row.forEach(cell => {
+                            const td = document.createElement('td');
+                            td.textContent = cell || '';
+                            td.style.padding = '4px 8px';
+                            tr.appendChild(td);
+                        });
+                        
+                        table.appendChild(tr);
+                    });
+                    
+                    sheetDiv.appendChild(table);
+                    sheetsInfo.appendChild(sheetDiv);
+                });
+                
+                result.appendChild(sheetsInfo);
+            } else {
+                result.innerHTML = '<p>Nenhum dado encontrado nas planilhas.</p>';
+            }
+            
+            // Mostra o contêiner de resultados
+            resultContainer.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

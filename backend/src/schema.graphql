@@ -1,0 +1,127 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateUserInput {
+  email: String!
+  name: String!
+  password: String!
+}
+
+input CreateWorkoutInput {
+  isActive: Boolean! = false
+  name: String!
+  userId: String!
+  weekEnd: Int!
+  weekStart: Int!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type ExerciseInfo {
+  name: String!
+  rawReps: String!
+  repSchemes: [RepRange!]!
+  restIntervals: String!
+}
+
+type Mutation {
+  createUser(createUserInput: CreateUserInput!): UserType!
+  createWorkout(createWorkoutInput: CreateWorkoutInput!): WorkoutType!
+  deleteUser(id: ID!): Boolean!
+  deleteWorkout(id: ID!): Boolean!
+  extractWorkoutSheet(file: Upload!): [SheetExercises!]!
+  processWorkoutFile(input: ProcessWorkoutFileInput!): WorkoutPreviewType!
+  processXlsx(file: Upload!): XlsxData!
+  updateUser(updateUserInput: UpdateUserInput!): UserType!
+  updateWorkout(updateWorkoutInput: UpdateWorkoutInput!): WorkoutType
+}
+
+input ProcessWorkoutFileInput {
+  file: Upload!
+  userId: String!
+}
+
+type Query {
+  user(id: ID!): UserType!
+  users: [UserType!]!
+  workout(id: ID!): WorkoutType
+  workouts: [WorkoutType!]!
+}
+
+type RepRange {
+  maxReps: Int!
+  minReps: Int!
+  sets: Int!
+}
+
+type SheetData {
+  data: [[String!]!]!
+  name: String!
+}
+
+type SheetExercises {
+  exercises: [ExerciseInfo!]!
+  sheetName: String!
+}
+
+input UpdateUserInput {
+  email: String
+  id: ID!
+  name: String
+  password: String
+}
+
+input UpdateWorkoutInput {
+  id: ID!
+  isActive: Boolean
+  name: String
+  weekEnd: Int
+  weekStart: Int
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+type UserType {
+  createdAt: DateTime!
+  email: String!
+  id: ID!
+  name: String!
+  updatedAt: DateTime!
+}
+
+type WorkoutExercisePreviewType {
+  exerciseName: String!
+  notes: String
+  order: Int!
+  repetitions: String!
+  rest: String!
+  sets: Int!
+}
+
+type WorkoutPreviewType {
+  exercises: [WorkoutExercisePreviewType!]!
+  isActive: Boolean!
+  name: String!
+  userId: String!
+  weekEnd: Int!
+  weekStart: Int!
+}
+
+type WorkoutType {
+  createdAt: DateTime!
+  id: ID!
+  isActive: Boolean!
+  name: String!
+  userId: String!
+  weekEnd: Int!
+  weekStart: Int!
+}
+
+type XlsxData {
+  sheets: [SheetData!]!
+}
