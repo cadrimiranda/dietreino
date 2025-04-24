@@ -8,4 +8,7 @@ export class CreateUserWithPasswordInput {
 
   @Field()
   email: string;
+
+  @Field()
+  phone: string;
 }

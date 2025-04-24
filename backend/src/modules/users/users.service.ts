@@ -2,6 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 import { User } from '../../entities/user.entity';
 import * as crypto from 'crypto';
+import { promisify } from 'util';
+import { CreateUserWithPasswordInput } from './dto/create-user-with-password.input';
+
+// Promisify the crypto functions
+const scrypt = promisify(crypto.scrypt);
+const randomBytes = promisify(crypto.randomBytes);
 
 @Injectable()
 export class UsersService {
@@ -41,15 +47,22 @@ export class UsersService {
   }
 
   async createWithGeneratedPassword(
-    data: Partial<User>,
+    data: CreateUserWithPasswordInput,
   ): Promise<{ user: User; generatedPassword: string }> {
     // Generate a random password
     const generatedPassword = this.generateRandomPassword();
+    const hashedPassword = await this.encodePassword(generatedPassword);
+
+    // Check if the email already exists
+    const existingUser = await this.usersRepository.findByEmail(data.email);
+    if (existingUser) {
+      throw new Error('Email já cadastrado');
+    }
 
     // Create user with the generated password
     const userData = {
       ...data,
-      password: generatedPassword, // In a real app, you'd hash this password
+      password: hashedPassword,
     };
 
     const user = await this.usersRepository.create(userData);
@@ -89,5 +102,55 @@ export class UsersService {
       .split('')
       .sort(() => 0.5 - Math.random())
       .join('');
+  }
+
+  /**
+   * Encodes a password using scrypt for secure storage in a database
+   * @param plainPassword The plain text password to encode
+   * @returns A Promise that resolves to the hashed password string
+   */
+  private async encodePassword(plainPassword: string): Promise<string> {
+    try {
+      // Generate a random salt
+      const salt = await randomBytes(16);
+
+      // Hash the password with the salt
+      const derivedKey = (await scrypt(plainPassword, salt, 64)) as Buffer;
+
+      // Format as [salt]:[derived key]
+      return salt.toString('hex') + ':' + derivedKey.toString('hex');
+    } catch (error) {
+      console.error('Error encoding password:', error);
+      throw new Error('Password encoding failed');
+    }
+  }
+
+  /**
+   * Verifies a password against a stored scrypt hash
+   * @param plainPassword The plain text password to verify
+   * @param hashedPassword The stored hashed password (salt:hash format)
+   * @returns A Promise that resolves to true if password matches, false otherwise
+   */
+  async verifyPassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    try {
+      // Split the stored hash into salt and hash portions
+      const [salt, storedHash] = hashedPassword.split(':');
+
+      // Hash the input password with the same salt
+      const derivedKey = (await scrypt(
+        plainPassword,
+        Buffer.from(salt, 'hex'),
+        64,
+      )) as Buffer;
+
+      // Compare the derived key with the stored hash
+      return crypto.timingSafeEqual(Buffer.from(storedHash, 'hex'), derivedKey);
+    } catch (error) {
+      console.error('Error verifying password:', error);
+      throw new Error('Password verification failed');
+    }
   }
 }
