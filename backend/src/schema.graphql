@@ -11,6 +11,7 @@ input CreateUserInput {
 input CreateUserWithPasswordInput {
   email: String!
   name: String!
+  phone: String!
 }
 
 input CreateWorkoutInput {

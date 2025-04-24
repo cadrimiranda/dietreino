@@ -50,9 +50,9 @@
       </div>
     </div>
 
-    <!-- Client list (atualizado para usar a composable API e mostrar o estado de carregamento) -->
+    <!-- Client list -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      <!-- Estado de carregamento -->
+      <!-- Loading state -->
       <template v-if="loading">
         <div
           v-for="i in 6"
@@ -81,7 +81,7 @@
         </div>
       </template>
 
-      <!-- Estado de erro -->
+      <!-- Error state -->
       <div
         v-else-if="error"
         class="col-span-3 bg-red-50 rounded-lg p-6 text-center"
@@ -104,7 +104,7 @@
         </button>
       </div>
 
-      <!-- Lista de clientes -->
+      <!-- Client list -->
       <div
         v-else
         v-for="client in filteredClients"
@@ -258,7 +258,7 @@
       </button>
     </div>
 
-    <!-- Add Client Modal (placeholder) -->
+    <!-- Add Client Modal -->
     <div
       v-if="showAddClientModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -336,8 +336,12 @@
             <button
               type="submit"
               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              :disabled="isAddingClient"
             >
-              Save Client
+              <span v-if="isAddingClient">
+                <i class="fas fa-spinner fa-spin mr-2"></i>Adding...
+              </span>
+              <span v-else>Save Client</span>
             </button>
           </div>
         </form>
@@ -348,10 +352,26 @@
 
 <script>
 import gql from "graphql-tag";
+import ToastService from "../services/ToastService";
 
 const GET_USERS_QUERY = gql`
   query {
     users {
+      id
+      name
+      email
+      generatedPassword
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+const CREATE_USER_MUTATION = gql`
+  mutation CreateUserWithGeneratedPassword(
+    $createUserInput: CreateUserWithPasswordInput!
+  ) {
+    createUserWithGeneratedPassword(createUserInput: $createUserInput) {
       id
       name
       email
@@ -369,6 +389,7 @@ export default {
       searchQuery: "",
       filterStatus: "all",
       showAddClientModal: false,
+      isAddingClient: false,
       newClient: {
         name: "",
         email: "",
@@ -414,15 +435,13 @@ export default {
             ? "pending"
             : "expired",
         createdAt: new Date(user.createdAt),
-        phone: `+55 47 ${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(
-          1000 + Math.random() * 9000
-        )}`,
+        phone: user.phone,
       }));
     },
     filteredClients() {
       let result = this.clients;
 
-      // Aplicar filtro de pesquisa
+      // Apply search filter
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
         result = result.filter(
@@ -432,7 +451,7 @@ export default {
         );
       }
 
-      // Aplicar filtro de status
+      // Apply status filter
       if (this.filterStatus !== "all") {
         result = result.filter(
           (client) =>
@@ -454,7 +473,6 @@ export default {
         .substring(0, 2);
     },
     formatDate(date) {
-      console.log(date);
       return new Intl.DateTimeFormat("pt-BR", {
         day: "numeric",
         month: "short",
@@ -462,20 +480,45 @@ export default {
       }).format(date);
     },
     viewClient(id) {
-      // Roteamento (assumindo que você está usando o Vue Router)
+      // Routing (assuming you're using Vue Router)
       // this.$router.push(`/clients/${id}`);
       console.log(`Navegando para o cliente ${id}`);
     },
-    addClient() {
-      // Simulação para este exemplo
-      setTimeout(() => {
-        this.$apollo.queries.users.refetch();
+    async addClient() {
+      // Set loading state
+      this.isAddingClient = true;
+
+      try {
+        // Call mutation to create user with generated password
+        const response = await this.$apollo.mutate({
+          mutation: CREATE_USER_MUTATION,
+          variables: {
+            createUserInput: {
+              name: this.newClient.name,
+              email: this.newClient.email,
+              phone: this.newClient.phone,
+            },
+          },
+        });
+
+        const newUser = response.data.createUserWithGeneratedPassword;
+
+        console.log("New user created:", newUser);
+
+        // Reset form
         this.newClient = { name: "", email: "", phone: "" };
         this.showAddClientModal = false;
-        alert("Cliente adicionado com sucesso!");
-      }, 500);
+        this.isAddingClient = false;
+
+        // Refresh client list
+        this.$apollo.queries.users.refetch();
+      } catch (error) {
+        console.error("Error adding client:", error);
+      } finally {
+        this.isAddingClient = false;
+      }
     },
-    refetchClients() {
+    refetch() {
       this.$apollo.queries.users.refetch();
     },
   },
