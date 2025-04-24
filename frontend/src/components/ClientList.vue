@@ -50,18 +50,75 @@
       </div>
     </div>
 
-    <!-- Client list -->
+    <!-- Client list (atualizado para usar a composable API e mostrar o estado de carregamento) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Estado de carregamento -->
+      <template v-if="loading">
+        <div
+          v-for="i in 6"
+          :key="i"
+          class="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse"
+        >
+          <div class="p-5">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center">
+                <div class="h-10 w-10 rounded-full bg-gray-200 mr-3"></div>
+                <div>
+                  <div class="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                  <div class="h-3 bg-gray-200 rounded w-32"></div>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-2">
+              <div class="h-3 bg-gray-200 rounded"></div>
+              <div class="h-3 bg-gray-200 rounded"></div>
+            </div>
+            <div class="mt-4 pt-3 border-t flex justify-between">
+              <div class="h-3 bg-gray-200 rounded w-20"></div>
+              <div class="h-3 bg-gray-200 rounded w-16"></div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Estado de erro -->
       <div
+        v-else-if="error"
+        class="col-span-3 bg-red-50 rounded-lg p-6 text-center"
+      >
+        <div
+          class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4"
+        >
+          <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-red-900">
+          Erro ao carregar clientes
+        </h3>
+        <p class="mt-2 text-red-600">{{ error.message }}</p>
+        <button
+          @click="refetch"
+          class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg inline-flex items-center"
+        >
+          <i class="fas fa-sync-alt mr-2"></i>
+          <span>Tentar novamente</span>
+        </button>
+      </div>
+
+      <!-- Lista de clientes -->
+      <div
+        v-else
         v-for="client in filteredClients"
         :key="client.id"
-        class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+        class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow transform hover:-translate-y-1 duration-200"
       >
         <div class="p-5">
           <div class="flex items-start justify-between">
             <div class="flex items-center">
               <div
-                class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3 text-blue-700 font-semibold"
+                class="h-10 w-10 rounded-full flex items-center justify-center mr-3 text-white font-semibold"
+                :style="`background-color: hsl(${
+                  (client.id * 137.5) % 360
+                }, 70%, 50%)`"
               >
                 {{ getInitials(client.name) }}
               </div>
@@ -71,9 +128,35 @@
               </div>
             </div>
             <div class="flex space-x-1">
-              <button class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-ellipsis-v"></i>
-              </button>
+              <div class="relative group">
+                <button
+                  class="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                >
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div
+                  class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block"
+                >
+                  <a
+                    href="#"
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <i class="far fa-edit mr-2"></i> Editar
+                  </a>
+                  <a
+                    href="#"
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <i class="far fa-envelope mr-2"></i> Enviar mensagem
+                  </a>
+                  <a
+                    href="#"
+                    class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <i class="far fa-trash-alt mr-2"></i> Excluir
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -85,6 +168,15 @@
                   'text-green-600': client.trainingStatus === 'active',
                   'text-yellow-600': client.trainingStatus === 'pending',
                   'text-red-600': client.trainingStatus === 'expired',
+                }"
+                class="ml-1 px-2 py-1 rounded-full text-xs"
+                :style="{
+                  backgroundColor:
+                    client.trainingStatus === 'active'
+                      ? 'rgba(16, 185, 129, 0.1)'
+                      : client.trainingStatus === 'pending'
+                      ? 'rgba(245, 158, 11, 0.1)'
+                      : 'rgba(239, 68, 68, 0.1)',
                 }"
               >
                 {{
@@ -101,6 +193,15 @@
                   'text-yellow-600': client.dietStatus === 'pending',
                   'text-red-600': client.dietStatus === 'expired',
                 }"
+                class="ml-1 px-2 py-1 rounded-full text-xs"
+                :style="{
+                  backgroundColor:
+                    client.dietStatus === 'active'
+                      ? 'rgba(16, 185, 129, 0.1)'
+                      : client.dietStatus === 'pending'
+                      ? 'rgba(245, 158, 11, 0.1)'
+                      : 'rgba(239, 68, 68, 0.1)',
+                }"
               >
                 {{
                   client.dietStatus.charAt(0).toUpperCase() +
@@ -110,16 +211,19 @@
             </div>
           </div>
 
-          <div class="mt-4 pt-3 border-t flex justify-between">
+          <div class="mt-4 pt-3 border-t flex justify-between items-center">
             <span class="text-xs text-gray-500">
-              <i class="far fa-calendar mr-1"></i> Added
+              <i class="far fa-calendar mr-1"></i>
               {{ formatDate(client.createdAt) }}
             </span>
             <button
               @click="viewClient(client.id)"
-              class="text-blue-600 hover:text-blue-800 text-sm font-semibold"
+              class="text-blue-600 hover:text-blue-800 text-sm font-semibold flex items-center group"
             >
-              View Details
+              <span>View Details</span>
+              <i
+                class="fas fa-chevron-right ml-1 transform group-hover:translate-x-1 transition-transform"
+              ></i>
             </button>
           </div>
         </div>
@@ -243,6 +347,21 @@
 </template>
 
 <script>
+import gql from "graphql-tag";
+
+const GET_USERS_QUERY = gql`
+  query {
+    users {
+      id
+      name
+      email
+      generatedPassword
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
 export default {
   name: "ClientList",
   data() {
@@ -255,42 +374,55 @@ export default {
         email: "",
         phone: "",
       },
-      clients: [
-        {
-          id: 1,
-          name: "João Silva",
-          email: "joao.silva@example.com",
-          phone: "+55 47 9999-9999",
-          trainingStatus: "active",
-          dietStatus: "active",
-          createdAt: new Date(2023, 1, 15),
-        },
-        {
-          id: 2,
-          name: "Maria Oliveira",
-          email: "maria.oliveira@example.com",
-          phone: "+55 47 8888-8888",
-          trainingStatus: "expired",
-          dietStatus: "pending",
-          createdAt: new Date(2023, 3, 22),
-        },
-        {
-          id: 3,
-          name: "Pedro Santos",
-          email: "pedro.santos@example.com",
-          phone: "+55 47 7777-7777",
-          trainingStatus: "pending",
-          dietStatus: "expired",
-          createdAt: new Date(2023, 5, 10),
-        },
-      ],
+      loading: true,
+      error: null,
+      users: [],
     };
   },
+  apollo: {
+    users: {
+      query: GET_USERS_QUERY,
+      update: (data) => data.users,
+      result({ data, loading, error }) {
+        this.loading = loading;
+        if (error) {
+          this.error = error;
+        }
+      },
+      error(error) {
+        this.error = error;
+      },
+    },
+  },
   computed: {
+    clients() {
+      return this.users.map((user) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        password: user.generatedPassword,
+        trainingStatus:
+          Math.random() > 0.5
+            ? "active"
+            : Math.random() > 0.5
+            ? "pending"
+            : "expired",
+        dietStatus:
+          Math.random() > 0.5
+            ? "active"
+            : Math.random() > 0.5
+            ? "pending"
+            : "expired",
+        createdAt: new Date(user.createdAt),
+        phone: `+55 47 ${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(
+          1000 + Math.random() * 9000
+        )}`,
+      }));
+    },
     filteredClients() {
       let result = this.clients;
 
-      // Apply search filter
+      // Aplicar filtro de pesquisa
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
         result = result.filter(
@@ -300,7 +432,7 @@ export default {
         );
       }
 
-      // Apply status filter
+      // Aplicar filtro de status
       if (this.filterStatus !== "all") {
         result = result.filter(
           (client) =>
@@ -322,6 +454,7 @@ export default {
         .substring(0, 2);
     },
     formatDate(date) {
+      console.log(date);
       return new Intl.DateTimeFormat("pt-BR", {
         day: "numeric",
         month: "short",
@@ -329,32 +462,21 @@ export default {
       }).format(date);
     },
     viewClient(id) {
-      this.$router.push(`/clients/${id}`);
+      // Roteamento (assumindo que você está usando o Vue Router)
+      // this.$router.push(`/clients/${id}`);
+      console.log(`Navegando para o cliente ${id}`);
     },
     addClient() {
-      // Generate a new ID (in a real app, this would come from the backend)
-      const newId = Math.max(...this.clients.map((c) => c.id)) + 1;
-
-      // Create new client object
-      const client = {
-        id: newId,
-        name: this.newClient.name,
-        email: this.newClient.email,
-        phone: this.newClient.phone,
-        trainingStatus: "pending",
-        dietStatus: "pending",
-        createdAt: new Date(),
-      };
-
-      // Add to clients array (in a real app, this would be an API call)
-      this.clients.push(client);
-
-      // Reset form and close modal
-      this.newClient = { name: "", email: "", phone: "" };
-      this.showAddClientModal = false;
-
-      // Show success notification (you'd implement this)
-      alert("Client added successfully!");
+      // Simulação para este exemplo
+      setTimeout(() => {
+        this.$apollo.queries.users.refetch();
+        this.newClient = { name: "", email: "", phone: "" };
+        this.showAddClientModal = false;
+        alert("Cliente adicionado com sucesso!");
+      }, 500);
+    },
+    refetchClients() {
+      this.$apollo.queries.users.refetch();
     },
   },
 };
