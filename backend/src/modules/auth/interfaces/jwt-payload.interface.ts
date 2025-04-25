@@ -1,9 +1,10 @@
 import { UserRole } from '../../../utils/roles.enum';
 
 export interface JwtPayload {
-  sub: string; // user ID
+  sub: string;
   email: string;
   role: UserRole;
-  iat?: number; // issued at
-  exp?: number; // expiration
+  type: 'access' | 'refresh';
+  iat?: number;
+  exp?: number;
 }

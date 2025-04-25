@@ -20,6 +20,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
+    // Verificar se é um token de acesso
+    if (payload.type !== 'access') {
+      throw new UnauthorizedException('Token inválido');
+    }
+
     const user = await this.authService.validateUserById(payload.sub);
 
     if (!user) {

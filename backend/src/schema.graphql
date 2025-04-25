@@ -28,7 +28,8 @@ input LoginInput {
 }
 
 type LoginResponse {
-  token: String!
+  accessToken: String!
+  refreshToken: String!
   user: UserType!
 }
 
@@ -43,6 +44,7 @@ type Mutation {
   me: UserType!
   processWorkoutFile(input: ProcessWorkoutFileInput!): WorkoutPreviewType!
   processXlsx(file: Upload!): XlsxData!
+  refreshToken(refreshTokenInput: RefreshTokenInput!): LoginResponse!
   updateWorkout(updateWorkoutInput: UpdateWorkoutInput!): WorkoutType
   upsertUser(userInput: UserInput!): UserType!
 }
@@ -60,6 +62,10 @@ type Query {
   users: [UserType!]!
   workout(id: ID!): WorkoutType
   workouts: [WorkoutType!]!
+}
+
+input RefreshTokenInput {
+  refreshToken: String!
 }
 
 type RepRange {
