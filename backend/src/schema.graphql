@@ -22,6 +22,16 @@ type ExerciseInfo {
   restIntervals: String!
 }
 
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type LoginResponse {
+  token: String!
+  user: UserType!
+}
+
 type Mutation {
   assignNutritionist(clientId: ID!, nutritionistId: ID!): UserType!
   assignTrainer(clientId: ID!, trainerId: ID!): UserType!
@@ -29,6 +39,8 @@ type Mutation {
   deleteUser(id: ID!): Boolean!
   deleteWorkout(id: ID!): Boolean!
   extractWorkoutSheet(file: Upload!): [SheetExercises!]!
+  login(loginInput: LoginInput!): LoginResponse!
+  me: UserType!
   processWorkoutFile(input: ProcessWorkoutFileInput!): WorkoutPreviewType!
   processXlsx(file: Upload!): XlsxData!
   updateWorkout(updateWorkoutInput: UpdateWorkoutInput!): WorkoutType

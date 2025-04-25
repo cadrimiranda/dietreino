@@ -2,27 +2,48 @@ import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { UsersService } from './users.service';
 import { UserType } from './dto/user.type';
 import { UserInput } from './dto/user.input';
+import { UseGuards } from '@nestjs/common';
+import { UserRole } from 'src/utils/roles.enum';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Resolver(() => UserType)
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
   @Query(() => [UserType])
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   async users(): Promise<UserType[]> {
     return this.usersService.findAll();
   }
 
   @Query(() => UserType)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   async user(@Args('id', { type: () => ID }) id: string): Promise<UserType> {
     return this.usersService.findById(id);
   }
 
   @Mutation(() => UserType)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   async upsertUser(@Args('userInput') userInput: UserInput): Promise<UserType> {
-    return this.usersService.upsertUser(userInput);
+    const result = await this.usersService.upsertUser(userInput);
+    // Se houver uma senha gerada, adicione-a ao objeto de resposta
+    if ('generatedPassword' in result) {
+      return {
+        ...result,
+        generatedPassword: result.generatedPassword,
+      };
+    }
+    return result;
   }
 
   @Mutation(() => Boolean)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   async deleteUser(
     @Args('id', { type: () => ID }) id: string,
   ): Promise<boolean> {
@@ -31,6 +52,8 @@ export class UsersResolver {
   }
 
   @Query(() => [UserType])
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   async trainerClients(
     @Args('trainerId', { type: () => ID }) trainerId: string,
   ): Promise<UserType[]> {
@@ -38,6 +61,8 @@ export class UsersResolver {
   }
 
   @Query(() => [UserType])
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   async nutritionistClients(
     @Args('nutritionistId', { type: () => ID }) nutritionistId: string,
   ): Promise<UserType[]> {
@@ -45,6 +70,8 @@ export class UsersResolver {
   }
 
   @Mutation(() => UserType)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   async assignTrainer(
     @Args('clientId', { type: () => ID }) clientId: string,
     @Args('trainerId', { type: () => ID }) trainerId: string,
@@ -53,6 +80,8 @@ export class UsersResolver {
   }
 
   @Mutation(() => UserType)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   async assignNutritionist(
     @Args('clientId', { type: () => ID }) clientId: string,
     @Args('nutritionistId', { type: () => ID }) nutritionistId: string,
@@ -64,6 +93,8 @@ export class UsersResolver {
   }
 
   @Query(() => UserType)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   async clientForProfessional(
     @Args('clientId', { type: () => ID }) clientId: string,
     @Args('professionalId', { type: () => ID }) professionalId: string,
