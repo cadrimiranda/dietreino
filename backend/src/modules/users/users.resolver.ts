@@ -1,9 +1,7 @@
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { UsersService } from './users.service';
 import { UserType } from './dto/user.type';
-import { CreateUserInput } from './dto/create-user.input';
-import { UpdateUserInput } from './dto/update-user.input';
-import { CreateUserWithPasswordInput } from './dto/create-user-with-password.input';
+import { UserInput } from './dto/user.input';
 
 @Resolver(() => UserType)
 export class UsersResolver {
@@ -20,17 +18,8 @@ export class UsersResolver {
   }
 
   @Mutation(() => UserType)
-  async createUser(
-    @Args('createUserInput') createUserInput: CreateUserInput,
-  ): Promise<UserType> {
-    return this.usersService.create(createUserInput);
-  }
-
-  @Mutation(() => UserType)
-  async updateUser(
-    @Args('updateUserInput') updateUserInput: UpdateUserInput,
-  ): Promise<UserType> {
-    return this.usersService.update(updateUserInput.id, updateUserInput);
+  async upsertUser(@Args('userInput') userInput: UserInput): Promise<UserType> {
+    return this.usersService.upsertUser(userInput);
   }
 
   @Mutation(() => Boolean)
@@ -41,17 +30,44 @@ export class UsersResolver {
     return true;
   }
 
-  @Mutation(() => UserType)
-  async createUserWithGeneratedPassword(
-    @Args('createUserInput') createUserInput: CreateUserWithPasswordInput,
-  ): Promise<UserType> {
-    const { user, generatedPassword } =
-      await this.usersService.createWithGeneratedPassword(createUserInput);
+  @Query(() => [UserType])
+  async trainerClients(
+    @Args('trainerId', { type: () => ID }) trainerId: string,
+  ): Promise<UserType[]> {
+    return this.usersService.getClientsForTrainer(trainerId);
+  }
 
-    // Return the user with the generated password
-    return {
-      ...user,
-      generatedPassword,
-    };
+  @Query(() => [UserType])
+  async nutritionistClients(
+    @Args('nutritionistId', { type: () => ID }) nutritionistId: string,
+  ): Promise<UserType[]> {
+    return this.usersService.getClientsForNutritionist(nutritionistId);
+  }
+
+  @Mutation(() => UserType)
+  async assignTrainer(
+    @Args('clientId', { type: () => ID }) clientId: string,
+    @Args('trainerId', { type: () => ID }) trainerId: string,
+  ): Promise<UserType | null> {
+    return this.usersService.assignClientToTrainer(clientId, trainerId);
+  }
+
+  @Mutation(() => UserType)
+  async assignNutritionist(
+    @Args('clientId', { type: () => ID }) clientId: string,
+    @Args('nutritionistId', { type: () => ID }) nutritionistId: string,
+  ): Promise<UserType | null> {
+    return this.usersService.assignClientToNutritionist(
+      clientId,
+      nutritionistId,
+    );
+  }
+
+  @Query(() => UserType)
+  async clientForProfessional(
+    @Args('clientId', { type: () => ID }) clientId: string,
+    @Args('professionalId', { type: () => ID }) professionalId: string,
+  ): Promise<UserType> {
+    return this.usersService.getClientForProfessional(clientId, professionalId);
   }
 }

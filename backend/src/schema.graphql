@@ -2,19 +2,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-input CreateUserInput {
-  email: String!
-  name: String!
-  password: String!
-  phone: String!
-}
-
-input CreateUserWithPasswordInput {
-  email: String!
-  name: String!
-  phone: String!
-}
-
 input CreateWorkoutInput {
   isActive: Boolean! = false
   name: String!
@@ -36,16 +23,16 @@ type ExerciseInfo {
 }
 
 type Mutation {
-  createUser(createUserInput: CreateUserInput!): UserType!
-  createUserWithGeneratedPassword(createUserInput: CreateUserWithPasswordInput!): UserType!
+  assignNutritionist(clientId: ID!, nutritionistId: ID!): UserType!
+  assignTrainer(clientId: ID!, trainerId: ID!): UserType!
   createWorkout(createWorkoutInput: CreateWorkoutInput!): WorkoutType!
   deleteUser(id: ID!): Boolean!
   deleteWorkout(id: ID!): Boolean!
   extractWorkoutSheet(file: Upload!): [SheetExercises!]!
   processWorkoutFile(input: ProcessWorkoutFileInput!): WorkoutPreviewType!
   processXlsx(file: Upload!): XlsxData!
-  updateUser(updateUserInput: UpdateUserInput!): UserType!
   updateWorkout(updateWorkoutInput: UpdateWorkoutInput!): WorkoutType
+  upsertUser(userInput: UserInput!): UserType!
 }
 
 input ProcessWorkoutFileInput {
@@ -54,6 +41,9 @@ input ProcessWorkoutFileInput {
 }
 
 type Query {
+  clientForProfessional(clientId: ID!, professionalId: ID!): UserType!
+  nutritionistClients(nutritionistId: ID!): [UserType!]!
+  trainerClients(trainerId: ID!): [UserType!]!
   user(id: ID!): UserType!
   users: [UserType!]!
   workout(id: ID!): WorkoutType
@@ -76,14 +66,6 @@ type SheetExercises {
   sheetName: String!
 }
 
-input UpdateUserInput {
-  email: String
-  id: ID!
-  name: String
-  password: String
-  phone: String
-}
-
 input UpdateWorkoutInput {
   id: ID!
   isActive: Boolean
@@ -95,13 +77,37 @@ input UpdateWorkoutInput {
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
 
+input UserInput {
+  email: String
+  id: ID
+  name: String
+  nutritionistId: String
+  password: String
+  phone: String
+  role: UserRole
+  trainerId: String
+}
+
+enum UserRole {
+  CLIENT
+  NUTRITIONIST
+  TRAINER
+}
+
 type UserType {
+  clients_as_nutritionist: [UserType!]
+  clients_as_trainer: [UserType!]
   createdAt: DateTime!
   email: String!
   generatedPassword: String
   id: ID!
   name: String!
+  nutritionist: UserType
+  nutritionistId: ID
   phone: String!
+  role: UserRole!
+  trainer: UserType
+  trainerId: ID
   updatedAt: DateTime!
 }
 

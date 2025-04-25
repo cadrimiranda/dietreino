@@ -1,5 +1,5 @@
-// user.type.ts (modified)
 import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { UserRole } from 'src/utils/roles.enum';
 
 @ObjectType()
 export class UserType {
@@ -23,4 +23,25 @@ export class UserType {
 
   @Field()
   updatedAt: Date;
+
+  @Field(() => UserRole)
+  role: UserRole;
+
+  @Field(() => ID, { nullable: true })
+  trainerId: string;
+
+  @Field(() => ID, { nullable: true })
+  nutritionistId: string;
+
+  @Field(() => UserType, { nullable: true })
+  trainer: UserType;
+
+  @Field(() => UserType, { nullable: true })
+  nutritionist: UserType;
+
+  @Field(() => [UserType], { nullable: true })
+  clients_as_trainer: UserType[];
+
+  @Field(() => [UserType], { nullable: true })
+  clients_as_nutritionist: UserType[];
 }

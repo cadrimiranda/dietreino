@@ -35,4 +35,45 @@ export class UsersRepository {
   async findAll(): Promise<User[]> {
     return this.repository.find();
   }
+
+  async findClientsForTrainer(trainerId: string): Promise<User[]> {
+    return this.repository.find({
+      where: { trainerId },
+      relations: ['workouts'],
+    });
+  }
+
+  async findClientsForNutritionist(nutritionistId: string): Promise<User[]> {
+    return this.repository.find({
+      where: { nutritionistId },
+      relations: ['workouts'],
+    });
+  }
+
+  async findClientById(
+    clientId: string,
+    professionalId: string,
+  ): Promise<User | null> {
+    return this.repository.findOne({
+      where: [
+        { id: clientId, trainerId: professionalId },
+        { id: clientId, nutritionistId: professionalId },
+      ],
+      relations: ['workouts', 'trainer', 'nutritionist'],
+    });
+  }
+
+  async findProfessionalsByClient(
+    clientId: string,
+  ): Promise<{ trainer: User | null; nutritionist: User | null }> {
+    const client = await this.repository.findOne({
+      where: { id: clientId },
+      relations: ['trainer', 'nutritionist'],
+    });
+
+    return {
+      trainer: client?.trainer || null,
+      nutritionist: client?.nutritionist || null,
+    };
+  }
 }
