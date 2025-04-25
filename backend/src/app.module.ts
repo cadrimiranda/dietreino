@@ -15,6 +15,7 @@ import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 
 // Importe o middleware diretamente - não como um objeto
 import { graphqlUploadExpress } from 'graphql-upload-minimal';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { graphqlUploadExpress } from 'graphql-upload-minimal';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.graphql'),
       sortSchema: true,
+      context: ({ req }) => ({ req }),
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -39,6 +41,7 @@ import { graphqlUploadExpress } from 'graphql-upload-minimal';
     UsersModule,
     WorkoutModule,
     XlsxModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
