@@ -22,31 +22,34 @@ services:
       retries: 5
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: dietreino-api
-    ports:
-      - "3000:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      NODE_ENV: development
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USER: ${DB_USERNAME}
-      DATABASE_PASSWORD: ${DB_PASSWORD}
-      DATABASE_NAME: ${DB_NAME}
-      JWT_SECRET: ${JWT_SECRET}
-      PORT: 3000
-    volumes:
-      - .:/app
-      - /app/node_modules
-    networks:
-      - dietreino-network
-    command: npm run start:dev
-    restart: unless-stopped
+  build:
+    context: .
+    dockerfile: Dockerfile
+  container_name: dietreino-api
+  ports:
+    - "3000:3000"
+  depends_on:
+    postgres:
+      condition: service_healthy
+  environment:
+    NODE_ENV: development
+    DATABASE_HOST: postgres
+    DATABASE_PORT: 5432
+    DATABASE_USER: ${DB_USERNAME}
+    DATABASE_PASSWORD: ${DB_PASSWORD}
+    DATABASE_NAME: ${DB_NAME}
+    JWT_SECRET: ${JWT_SECRET}
+    JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN}
+    JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+    JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
+    PORT: 3000
+  volumes:
+    - .:/app
+    - /app/node_modules
+  networks:
+    - dietreino-network
+  command: npm run start:dev
+  restart: unless-stopped
 
     # PgAdmin (Optional - for database management)
   pgadmin:
