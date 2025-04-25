@@ -39,8 +39,12 @@ export class UsersService {
 
   async upsertUser(
     data: UserInput,
+    currentUser?: User,
   ): Promise<User & { generatedPassword?: string }> {
     const isUpdate = !!data.id;
+
+    // Aplicar auto-vinculação com o profissional atual se necessário
+    data = this.applyProfessionalAutoLink(data, currentUser);
 
     // Common validation logic for both update and insert
     await this.validateProfessionalRelationships(data, isUpdate);
@@ -81,7 +85,79 @@ export class UsersService {
     }
   }
 
-  // Helper methods to enforce DRY principle
+  private applyProfessionalAutoLink(
+    data: UserInput,
+    currentUser?: User,
+  ): UserInput {
+    if (!currentUser || data.trainerId || data.nutritionistId) {
+      return data;
+    }
+
+    if (
+      currentUser.role === UserRole.TRAINER &&
+      (data.role === UserRole.CLIENT || !data.role)
+    ) {
+      if (data.trainerId === undefined) {
+        return { ...data, trainerId: currentUser.id };
+      }
+    }
+
+    if (
+      currentUser.role === UserRole.NUTRITIONIST &&
+      (data.role === UserRole.CLIENT || !data.role)
+    ) {
+      if (data.nutritionistId === undefined) {
+        return { ...data, nutritionistId: currentUser.id };
+      }
+    }
+
+    return data;
+  }
+
+  private async validateClientRelationships(
+    data: UserInput,
+    existingUser: User | null,
+  ): Promise<void> {
+    if (
+      !existingUser &&
+      data.role === UserRole.CLIENT &&
+      !data.trainerId &&
+      !data.nutritionistId
+    ) {
+      throw new Error(
+        'Um cliente deve estar associado a pelo menos um treinador ou nutricionista',
+      );
+    }
+
+    if (existingUser && existingUser.role === UserRole.CLIENT) {
+      const isRemovingTrainer = data.trainerId === null;
+      const isRemovingNutritionist = data.nutritionistId === null;
+
+      if (isRemovingTrainer && isRemovingNutritionist) {
+        throw new Error(
+          'Não é possível remover ambas as relações. Um cliente deve estar vinculado a pelo menos um treinador ou nutricionista.',
+        );
+      }
+
+      const willHaveTrainer = isRemovingTrainer
+        ? false
+        : data.trainerId !== undefined
+          ? data.trainerId
+          : existingUser.trainerId;
+      const willHaveNutritionist = isRemovingNutritionist
+        ? false
+        : data.nutritionistId !== undefined
+          ? data.nutritionistId
+          : existingUser.nutritionistId;
+
+      if (!willHaveTrainer && !willHaveNutritionist) {
+        throw new Error(
+          'Após a atualização, o cliente ficaria sem vínculos. Um cliente deve estar vinculado a pelo menos um treinador ou nutricionista.',
+        );
+      }
+    }
+  }
+
   private async validateProfessionalRelationships(
     data: UserInput,
     isUpdate: boolean,
@@ -110,50 +186,6 @@ export class UsersService {
 
     // Validate professional roles where relevant
     await this.validateProfessionalRoles(data);
-  }
-
-  private async validateClientRelationships(
-    data: UserInput,
-    existingUser: User | null,
-  ): Promise<void> {
-    // For new clients, ensure at least one professional relationship
-    if (
-      !existingUser &&
-      data.role === UserRole.CLIENT &&
-      !data.trainerId &&
-      !data.nutritionistId
-    ) {
-      throw new Error(
-        'Um cliente deve estar associado a pelo menos um treinador ou nutricionista',
-      );
-    }
-
-    // For existing clients, handle relationship modifications
-    if (existingUser) {
-      const isRemovingTrainer = data.trainerId === null;
-      const isRemovingNutritionist = data.nutritionistId === null;
-
-      // If explicitly removing both relationships
-      if (isRemovingTrainer && isRemovingNutritionist) {
-        throw new Error(
-          'Não é possível remover ambas as relações. Um cliente deve estar vinculado a pelo menos um treinador ou nutricionista.',
-        );
-      }
-
-      // Check if client will have at least one professional after update
-      const willHaveTrainer = isRemovingTrainer
-        ? false
-        : data.trainerId || existingUser.trainerId;
-      const willHaveNutritionist = isRemovingNutritionist
-        ? false
-        : data.nutritionistId || existingUser.nutritionistId;
-
-      if (!willHaveTrainer && !willHaveNutritionist) {
-        throw new Error(
-          'Após a atualização, o cliente ficaria sem vínculos. Um cliente deve estar vinculado a pelo menos um treinador ou nutricionista.',
-        );
-      }
-    }
   }
 
   private async validateProfessionalRoles(data: UserInput): Promise<void> {

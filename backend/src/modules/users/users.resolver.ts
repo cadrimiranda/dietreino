@@ -7,6 +7,8 @@ import { UserRole } from 'src/utils/roles.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from 'src/entities';
 
 @Resolver(() => UserType)
 export class UsersResolver {
@@ -27,10 +29,12 @@ export class UsersResolver {
   }
 
   @Mutation(() => UserType)
-  @UseGuards(GqlAuthGuard, RolesGuard)
-  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
-  async upsertUser(@Args('userInput') userInput: UserInput): Promise<UserType> {
-    const result = await this.usersService.upsertUser(userInput);
+  @UseGuards(GqlAuthGuard)
+  async upsertUser(
+    @Args('userInput') userInput: UserInput,
+    @CurrentUser() currentUser: User,
+  ): Promise<UserType> {
+    const result = await this.usersService.upsertUser(userInput, currentUser);
     // Se houver uma senha gerada, adicione-a ao objeto de resposta
     if ('generatedPassword' in result) {
       return {
