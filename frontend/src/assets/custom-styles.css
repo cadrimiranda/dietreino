@@ -1,0 +1,86 @@
+.p-card .p-card-content {
+  padding: 0;
+}
+
+.p-dialog .p-dialog-header {
+  padding: 1.25rem 1.5rem 0.5rem;
+}
+
+.p-dialog .p-dialog-content {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.p-toast .p-toast-message {
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.p-button.p-button-sm {
+  font-size: 0.875rem;
+  padding: 0.4rem 0.8rem;
+}
+
+.p-password input:disabled {
+  opacity: 1;
+  background-color: transparent;
+}
+
+.password-fading {
+  animation: fadeText 3s ease-in-out;
+}
+
+.password-expiring {
+  background: linear-gradient(90deg, #ff9800, #f44336) !important;
+}
+
+.p-avatar.p-avatar-circle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+}
+
+.p-tag {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+}
+
+@keyframes fadeText {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+/* Improving responsive design */
+@media (max-width: 768px) {
+  .p-dialog {
+    width: 90% !important;
+    max-width: 450px;
+  }
+  
+  .p-inputgroup {
+    flex-direction: column;
+  }
+  
+  .p-inputgroup .p-button {
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+}
+
+/* Custom styling for client cards to match the original design */
+.client-card {
+  transition: all 0.2s ease;
+}
+
+.client-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.client-card .p-card-content {
+  padding: 1rem;
+}

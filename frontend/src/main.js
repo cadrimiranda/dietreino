@@ -1,42 +1,21 @@
-// main.js
-import { createApp, h } from "vue";
-import {
-  ApolloClient,
-  InMemoryCache,
-  createHttpLink,
-} from "@apollo/client/core";
-import { createApolloProvider } from "@vue/apollo-option";
+import { createApp } from "vue";
 import App from "./App.vue";
+import ToastService from "primevue/toastservice";
+import ConfirmationService from "primevue/confirmationservice";
+import DialogService from "primevue/dialogservice";
+
+import "./assets/tailwind.css";
+import "./assets/custom-styles.css";
 import router from "./router";
-import "./style.css";
+import { setupApollo } from "./apollo";
 
-// For Font Awesome icons (you'll need to install this separately)
-// npm install @fortawesome/fontawesome-free
-import "@fortawesome/fontawesome-free/css/all.min.css";
+const app = createApp(App);
 
-const httpLink = createHttpLink({
-  uri: "http://localhost:3000/graphql",
-});
+setupApollo(app);
 
-const apolloClient = new ApolloClient({
-  link: httpLink,
-  cache: new InMemoryCache(),
-});
-
-const apolloProvider = createApolloProvider({
-  defaultClient: apolloClient,
-});
-
-// Criação da aplicação Vue com Apollo
-const app = createApp({
-  render: () => h(App),
-});
-
-// Uso do provider Apollo
-app.use(apolloProvider);
-
-// Use router
+app.use(ToastService);
+app.use(ConfirmationService);
+app.use(DialogService);
 app.use(router);
 
-// Mount the app
 app.mount("#app");

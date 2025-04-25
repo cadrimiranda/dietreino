@@ -1,8 +1,17 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+import Components from "unplugin-vue-components/vite";
+import { AntDesignVueResolver } from "unplugin-vue-components/resolvers";
 
-// Use the external postcss config file
 export default defineConfig({
-  plugins: [vue()],
-  // No need to specify postcss config here as it will use the postcss.config.cjs file
+  plugins: [
+    vue(),
+    Components({
+      resolvers: [
+        AntDesignVueResolver({
+          importStyle: false,
+        }),
+      ],
+    }),
+  ],
 });

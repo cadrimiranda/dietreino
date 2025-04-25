@@ -3,7 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import MainLayout from "../components/MainLayout.vue";
 import Login from "../components/Login.vue";
 import Dashboard from "../components/Dashboard.vue";
-import ClientList from "../components/ClientList.vue";
+import ClientList from "../pages/client/ClientList.vue";
 import TrainingUpload from "../components/TrainingUpload.vue";
 import DietUpload from "../components/DietUpload.vue";
 

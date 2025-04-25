@@ -5,4 +5,12 @@ export default {
     extend: {},
   },
   plugins: [],
+  safelist: [
+    {
+      pattern: /p-(.+)-(.+)/,
+    },
+    {
+      pattern: /p-(.+)/,
+    },
+  ],
 };
