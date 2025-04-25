@@ -12,6 +12,9 @@ export class UserType {
   @Field()
   email: string;
 
+  @Field()
+  phone: string;
+
   @Field({ nullable: true })
   generatedPassword?: string;
 

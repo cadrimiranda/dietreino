@@ -6,6 +6,7 @@ input CreateUserInput {
   email: String!
   name: String!
   password: String!
+  phone: String!
 }
 
 input CreateUserWithPasswordInput {
@@ -80,6 +81,7 @@ input UpdateUserInput {
   id: ID!
   name: String
   password: String
+  phone: String
 }
 
 input UpdateWorkoutInput {
@@ -99,6 +101,7 @@ type UserType {
   generatedPassword: String
   id: ID!
   name: String!
+  phone: String!
   updatedAt: DateTime!
 }
 
