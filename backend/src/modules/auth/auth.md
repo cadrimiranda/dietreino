@@ -33,7 +33,7 @@ src/
 Para utilizar este módulo, você precisa instalar as seguintes dependências:
 
 ```bash
-npm install @nestjs/jwt @nestjs/passport passport passport-jwt bcrypt
+npm install @nestjs/jwt @nestjs/passport passport passport-jwt
 ```
 
 Adicione as seguintes variáveis ao seu arquivo `.env`:
