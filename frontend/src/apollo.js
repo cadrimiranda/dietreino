@@ -2,21 +2,26 @@ import {
   ApolloClient,
   createHttpLink,
   InMemoryCache,
+  from,
 } from "@apollo/client/core";
 import { provideApolloClient } from "@vue/apollo-composable";
+import { createAuthMiddleware } from "./security/auth.middleware";
 
-// HTTP connection to the API
 const httpLink = createHttpLink({
   uri: "http://localhost:3000/graphql",
 });
-
-// Cache implementation
 const cache = new InMemoryCache();
 
-// Create the apollo client
-export const apolloClient = new ApolloClient({
+const tempClient = new ApolloClient({
+  cache: new InMemoryCache(),
   link: httpLink,
-  cache,
+});
+
+const authLink = createAuthMiddleware(tempClient);
+
+export const apolloClient = new ApolloClient({
+  link: from([authLink, httpLink]),
+  cache: new InMemoryCache(),
   defaultOptions: {
     query: {
       fetchPolicy: "network-only",
@@ -24,7 +29,6 @@ export const apolloClient = new ApolloClient({
   },
 });
 
-// Set up in main.js
 export function setupApollo(app) {
   provideApolloClient(apolloClient);
 }
