@@ -10,7 +10,6 @@ import { createAuthMiddleware } from "./security/auth.middleware";
 const httpLink = createHttpLink({
   uri: "http://localhost:3000/graphql",
 });
-const cache = new InMemoryCache();
 
 const tempClient = new ApolloClient({
   cache: new InMemoryCache(),
