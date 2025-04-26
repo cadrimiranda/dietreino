@@ -8,7 +8,9 @@ const REFRESH_TOKEN_MUTATION = gql`
       refreshToken
       user {
         id
-        # Adicione outros campos necessários do UserType aqui
+        name
+        email
+        role
       }
     }
   }
