@@ -5,18 +5,11 @@ import {
   from,
 } from "@apollo/client/core";
 import { provideApolloClient } from "@vue/apollo-composable";
-import { createAuthMiddleware } from "./security/auth.middleware";
+import { authLink } from "./composables/useAuth";
 
 const httpLink = createHttpLink({
   uri: "http://localhost:3000/graphql",
 });
-
-const tempClient = new ApolloClient({
-  cache: new InMemoryCache(),
-  link: httpLink,
-});
-
-const authLink = createAuthMiddleware(tempClient);
 
 export const apolloClient = new ApolloClient({
   link: from([authLink, httpLink]),
