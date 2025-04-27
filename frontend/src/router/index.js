@@ -1,18 +1,21 @@
-// router/index.js
 import { createRouter, createWebHistory } from "vue-router";
+import { message } from "ant-design-vue";
+import { useAuth } from "../composables/useAuth";
 import MainLayout from "../components/MainLayout.vue";
-import Login from "../components/Login.vue";
+import Login from "../pages/login/Login.vue";
 import Dashboard from "../components/Dashboard.vue";
 import ClientList from "../pages/client/ClientList.vue";
 import TrainingUpload from "../components/TrainingUpload.vue";
 import DietUpload from "../components/DietUpload.vue";
+import NotFound from "../components/NotFound.vue";
 
-// You can create these components later
 const ClientDetail = { template: "<div>Client Detail View</div>" };
 const TrainingList = { template: "<div>Training Plans List</div>" };
 const DietList = { template: "<div>Diet Plans List</div>" };
 const ProgressView = { template: "<div>Progress View</div>" };
 const Settings = { template: "<div>Settings</div>" };
+
+const { isAuthenticated } = useAuth();
 
 const routes = [
   {
@@ -20,6 +23,11 @@ const routes = [
     name: "Login",
     component: Login,
     meta: { requiresAuth: false },
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: NotFound,
   },
   {
     path: "/",
@@ -78,16 +86,6 @@ const routes = [
       },
     ],
   },
-  // Catch all route - redirect to dashboard if authenticated, otherwise to login
-  {
-    path: "/:pathMatch(.*)*",
-    redirect: (to) => {
-      // This is a simple example - in a real app, you'd check authentication state
-      const isAuthenticated =
-        localStorage.getItem("isAuthenticated") === "true";
-      return isAuthenticated ? "/dashboard" : "/login";
-    },
-  },
 ];
 
 const router = createRouter({
@@ -95,15 +93,27 @@ const router = createRouter({
   routes,
 });
 
-// Navigation guard for authentication
 router.beforeEach((to, from, next) => {
-  // This is a simple example - in a real app, you'd use your auth store
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next("/login");
-  } else if (to.path === "/login" && isAuthenticated) {
-    next("/dashboard");
+  if (requiresAuth && !isAuthenticated.value) {
+    message.warning("Você precisa fazer login para acessar esta página");
+    next({
+      name: "Login",
+      query: { redirect: to.fullPath },
+    });
+  } else if (to.name === "Login" && isAuthenticated.value) {
+    next({ name: "Dashboard" });
+  } else if (to.name === "NotFound") {
+    if (to.path.startsWith("/dashboard") || to.path.startsWith("/admin")) {
+      if (!isAuthenticated.value) {
+        message.warning("Você precisa fazer login para acessar esta área");
+        next({ name: "Login" });
+        return;
+      }
+    }
+
+    next();
   } else {
     next();
   }

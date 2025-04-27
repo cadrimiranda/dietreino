@@ -1,0 +1,147 @@
+<template>
+  <div class="flex min-h-screen bg-gray-100 items-center justify-center p-4">
+    <a-card :bordered="false" class="w-full max-w-md shadow-lg">
+      <template #title>
+        <div class="text-center">
+          <h1 class="text-2xl font-bold text-gray-800">Bem-vindo</h1>
+          <p class="text-gray-600 mt-1">Entre para acessar sua conta</p>
+        </div>
+      </template>
+
+      <a-form
+        :model="formState"
+        @finish="onFinish"
+        layout="vertical"
+        :disabled="loading"
+      >
+        <a-alert
+          v-if="error"
+          type="error"
+          :message="error"
+          class="mb-4"
+          show-icon
+        />
+
+        <a-form-item
+          name="email"
+          label="Email"
+          :rules="[
+            { required: true, message: 'Por favor insira seu email' },
+            { type: 'email', message: 'Email inválido' },
+          ]"
+        >
+          <a-input
+            v-model:value="formState.email"
+            placeholder="Seu email"
+            size="large"
+          >
+            <template #prefix>
+              <UserOutlined class="text-gray-400" />
+            </template>
+          </a-input>
+        </a-form-item>
+
+        <a-form-item
+          name="password"
+          label="Senha"
+          :rules="[
+            { required: true, message: 'Por favor insira sua senha' },
+            { min: 6, message: 'A senha deve ter pelo menos 6 caracteres' },
+          ]"
+        >
+          <a-input-password
+            v-model:value="formState.password"
+            placeholder="Sua senha"
+            size="large"
+          >
+            <template #prefix>
+              <LockOutlined class="text-gray-400" />
+            </template>
+          </a-input-password>
+        </a-form-item>
+
+        <div class="flex justify-between items-center mb-4">
+          <a-checkbox v-model:checked="formState.remember">Lembrar</a-checkbox>
+          <a href="#" class="text-blue-600 hover:text-blue-800">
+            Esqueceu a senha?
+          </a>
+        </div>
+
+        <a-form-item>
+          <a-button
+            type="primary"
+            html-type="submit"
+            :loading="loading"
+            class="w-full h-10 text-base"
+          >
+            Entrar
+          </a-button>
+        </a-form-item>
+
+        <div class="text-center mt-4">
+          <p class="text-gray-600">
+            Ainda não tem uma conta?
+            <router-link
+              to="/register"
+              class="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Registre-se
+            </router-link>
+          </p>
+        </div>
+      </a-form>
+    </a-card>
+  </div>
+</template>
+
+<script>
+import { defineComponent, reactive, toRefs, onMounted } from "vue";
+import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
+import { useRouter } from "vue-router";
+import { useAuth } from "../../composables/useAuth";
+
+export default defineComponent({
+  name: "LoginView",
+  components: {
+    UserOutlined,
+    LockOutlined,
+  },
+  setup() {
+    const router = useRouter();
+
+    const { login, loading, error, isAuthenticated } = useAuth();
+
+    const formState = reactive({
+      email: "",
+      password: "",
+      remember: false,
+    });
+
+    onMounted(() => {
+      if (isAuthenticated.value) {
+        router.push("/dashboard");
+      }
+    });
+
+    const onFinish = async (values) => {
+      try {
+        await login(values.email, values.password);
+        router.push("/dashboard");
+      } catch (err) {
+        console.error("Falha no login:", err);
+      }
+    };
+
+    return {
+      formState,
+      onFinish,
+      ...toRefs(
+        reactive({
+          loading,
+          error,
+        })
+      ),
+    };
+  },
+});
+</script>
