@@ -3,7 +3,7 @@ import { UsersRepository } from './users.repository';
 import { User } from '../../entities/user.entity';
 import * as crypto from 'crypto';
 import { promisify } from 'util';
-import { UserRole } from 'src/utils/roles.enum';
+import { UserRole } from '../../utils/roles.enum';
 import { UserInput } from './dto/user.input';
 
 // Promisify the crypto functions

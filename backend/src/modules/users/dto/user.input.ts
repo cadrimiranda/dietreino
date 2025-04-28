@@ -6,7 +6,7 @@ import {
   IsEnum,
   MinLength,
 } from 'class-validator';
-import { UserRole } from 'src/utils/roles.enum';
+import { UserRole } from '../../../utils/roles.enum';
 
 @InputType()
 export class UserInput {
