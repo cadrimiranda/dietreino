@@ -1,5 +1,13 @@
 {
     "compilerOptions": {
+        "skipLibCheck": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "useDefineForClassFields": true,
+        "types": [
+            "webpack-env",
+            "node"
+        ],
         "target": "ESNext",
         "module": "ESNext",
         "moduleResolution": "Node",
@@ -9,8 +17,10 @@
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "lib": [
-            "ESNext",
-            "DOM"
+            "esnext",
+            "dom",
+            "dom.iterable",
+            "scripthost"
         ],
         "baseUrl": ".",
         "paths": {
@@ -18,14 +28,17 @@
                 "./src/*"
             ]
         },
-        "skipLibCheck": true,
         "noEmit": true
     },
     "include": [
         "src/**/*.ts",
-        "src/**/*.d.ts",
         "src/**/*.tsx",
-        "src/**/*.vue"
+        "src/**/*.vue",
+        "tests/**/*.ts",
+        "tests/**/*.tsx"
+    ],
+    "exclude": [
+        "node_modules"
     ],
     "references": [
         {
