@@ -9,11 +9,7 @@
   >
     <a-card class="border-none shadow-none p-0">
       <a-space direction="vertical w-full">
-        <div class="flex justify-content-between align-items-center">
-          <label for="username" disabled class="font-bold"
-            >Nome de usuário</label
-          >
-        </div>
+        <label for="username" disabled class="font-bold">Nome de usuário</label>
         <a-input-group compact>
           <a-input
             id="username"
@@ -29,7 +25,7 @@
           </a-button>
         </a-input-group>
 
-        <div class="flex align-items-center flex-col">
+        <div class="flex flex-col">
           <label for="password" class="font-bold">Senha gerada</label>
           <small class="text-orange-500 font-italic">
             Esta é a única vez que a senha completa será mostrada
