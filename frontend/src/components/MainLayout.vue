@@ -114,6 +114,7 @@
 </template>
 
 <script lang="ts">
+import { useAuth } from "@/composables/useAuth";
 import { defineComponent } from "vue";
 
 interface NavItem {
@@ -182,9 +183,12 @@ export default defineComponent({
       }
     },
     logout(): void {
-      // TODO: Implement logout logic
-      console.log("Logging out...");
-      // this.$store.dispatch('auth/logout').then(() => this.$router.push('/login'));
+      const auth = useAuth();
+      auth.logout().then((isLoggedOut) => {
+        if (isLoggedOut) {
+          this.$router.push("/login");
+        }
+      });
     },
     checkMobile(): void {
       this.isMobile = window.innerWidth < 768;

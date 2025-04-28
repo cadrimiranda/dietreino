@@ -248,20 +248,24 @@ export function useAuth() {
   /**
    * Logout
    */
-  const logout = (): void => {
+  const logout = (): Promise<boolean> => {
     accessToken.value = "";
     refreshToken.value = "";
     currentUser.value = null;
 
     tokenStorage.clearTokens();
 
-    if (apolloClient) {
-      apolloClient.clearStore().catch(console.error);
+    if (!apolloClient) {
+      return new Promise((resolve) => resolve(true));
     }
 
-    window.dispatchEvent(new CustomEvent("auth:logout"));
-
-    router.push("/login");
+    return apolloClient
+      .clearStore()
+      .then(() => true)
+      .catch((...error) => {
+        console.warn("Erro ao limpar o store do Apollo Client", error);
+        return false;
+      });
   };
 
   // Set up event listener for session expiration
