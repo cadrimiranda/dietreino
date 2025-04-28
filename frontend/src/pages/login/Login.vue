@@ -1,3 +1,4 @@
+<!-- src/pages/login/Login.vue -->
 <template>
   <div class="flex min-h-screen bg-gray-100 items-center justify-center p-4">
     <a-card :bordered="false" class="w-full max-w-md shadow-lg">
@@ -95,7 +96,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, toRefs, onMounted, Ref } from "vue";
+import { defineComponent, reactive, toRefs, onMounted } from "vue";
 import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "../../composables/useAuth";
@@ -114,8 +115,7 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter();
-
-    const { login, loading, error, isAuthenticated } = useAuth();
+    const auth = useAuth();
 
     const formState = reactive<FormState>({
       email: "",
@@ -124,14 +124,14 @@ export default defineComponent({
     });
 
     onMounted(() => {
-      if (isAuthenticated.value) {
+      if (auth.isAuthenticated.value) {
         router.push("/dashboard");
       }
     });
 
     const onFinish = async (values: FormState): Promise<void> => {
       try {
-        await login(values.email, values.password);
+        await auth.login(values.email, values.password);
         router.push("/dashboard");
       } catch (err) {
         console.error("Falha no login:", err);
@@ -141,12 +141,8 @@ export default defineComponent({
     return {
       formState,
       onFinish,
-      ...toRefs(
-        reactive({
-          loading,
-          error,
-        })
-      ),
+      loading: auth.loading,
+      error: auth.error,
     };
   },
 });

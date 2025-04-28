@@ -1,3 +1,4 @@
+// src/router/index.ts
 import {
   createRouter,
   createWebHistory,
@@ -6,7 +7,7 @@ import {
   NavigationGuardNext,
 } from "vue-router";
 import { message } from "ant-design-vue";
-import { useAuth } from "../composables/useAuth";
+import { computed } from "vue";
 import MainLayout from "../components/MainLayout.vue";
 import Login from "../pages/login/Login.vue";
 import Dashboard from "../components/Dashboard.vue";
@@ -14,6 +15,10 @@ import ClientList from "../pages/client/ClientList.vue";
 import TrainingUpload from "../components/TrainingUpload.vue";
 import DietUpload from "../components/DietUpload.vue";
 import NotFound from "../components/NotFound.vue";
+import {
+  LocalStorageTokenService,
+  TokenValidator,
+} from "../security/authStorage";
 
 // Define component interfaces for the simple template components
 interface TemplateComponent {
@@ -32,7 +37,16 @@ const ProgressView: TemplateComponent = {
 };
 const Settings: TemplateComponent = { template: "<div>Settings</div>" };
 
-const { isAuthenticated } = useAuth();
+// Avoid using useAuth directly in router setup
+// Instead, use the token validator directly to check authentication
+const tokenService = new LocalStorageTokenService();
+const tokenValidator = new TokenValidator();
+
+// Check authentication status without using useAuth
+function isAuthenticated(): boolean {
+  const token = tokenService.getAccessToken();
+  return tokenValidator.isTokenValid(token);
+}
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -118,17 +132,20 @@ router.beforeEach(
   ) => {
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-    if (requiresAuth && !isAuthenticated.value) {
+    // Check authentication without composable
+    const authenticated = isAuthenticated();
+
+    if (requiresAuth && !authenticated) {
       message.warning("Você precisa fazer login para acessar esta página");
       next({
         name: "Login",
         query: { redirect: to.fullPath },
       });
-    } else if (to.name === "Login" && isAuthenticated.value) {
+    } else if (to.name === "Login" && authenticated) {
       next({ name: "Dashboard" });
     } else if (to.name === "NotFound") {
       if (to.path.startsWith("/dashboard") || to.path.startsWith("/admin")) {
-        if (!isAuthenticated.value) {
+        if (!authenticated) {
           message.warning("Você precisa fazer login para acessar esta área");
           next({ name: "Login" });
           return;

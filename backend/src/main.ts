@@ -9,7 +9,7 @@ async function bootstrap() {
 
   // Configurando CORS para permitir requisições de qualquer origem
   app.enableCors({
-    origin: true, // Permite todas as origens ou especifique as origens permitidas como um array ['http://exemplo.com']
+    origin: ['http://localhost:5173', 'http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders:
