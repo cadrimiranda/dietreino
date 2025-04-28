@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#60A5FA" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="8" ry="8" fill="url(#gradient)" />
+  <path d="M24,12 C17.37,12 12,17.37 12,24 C12,30.63 17.37,36 24,36 C30.63,36 36,30.63 36,24 C36,17.37 30.63,12 24,12 Z M24,32 C19.58,32 16,28.42 16,24 C16,19.58 19.58,16 24,16 C28.42,16 32,19.58 32,24 C32,28.42 28.42,32 24,32 Z" fill="white" />
+  <text x="20" y="28" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">DT</text>
+</svg>

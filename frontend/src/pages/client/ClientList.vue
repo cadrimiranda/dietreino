@@ -271,8 +271,26 @@ export default defineComponent({
       }
     }
 
-    function deleteClient(id: number | string): void {
-      console.log(id);
+    function deleteClient(id: string): void {
+      deleteUser(id)
+        .then(() => {
+          toast.add({
+            severity: "success",
+            summary: "Cliente Deletado",
+            detail: "Cliente deletado com sucesso.",
+            life: 3000,
+          });
+          refetch();
+        })
+        .catch((error) => {
+          console.error("Erro ao deletar cliente:", error);
+          toast.add({
+            severity: "error",
+            summary: "Erro",
+            detail: "Falha ao deletar cliente. Por favor, tente novamente.",
+            life: 3000,
+          });
+        });
     }
 
     // Watch for search query and filter changes to save to localStorage

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#60A5FA" />
+    </linearGradient>
+  </defs>
+  <path d="M12,8 C9.79,8 8,9.79 8,12 L8,36 C8,38.21 9.79,40 12,40 L36,40 C38.21,40 40,38.21 40,36 L40,12 C40,9.79 38.21,8 36,8 L12,8 Z" fill="url(#gradient)" />
+  <path d="M24,14 C19.58,14 16,17.58 16,22 C16,26.42 19.58,30 24,30 C28.42,30 32,26.42 32,22 C32,17.58 28.42,14 24,14 Z M24,28 C20.69,28 18,25.31 18,22 C18,18.69 20.69,16 24,16 C27.31,16 30,18.69 30,22 C30,25.31 27.31,28 24,28 Z" fill="white" />
+  <path d="M24,18 L24,22 L28,22 C28,19.79 26.21,18 24,18 Z" fill="white" />
+  <text x="48" y="28" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#3B82F6">Diet<tspan fill="#60A5FA">Treino</tspan>AI</text>
+</svg>

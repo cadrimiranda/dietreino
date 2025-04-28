@@ -28,7 +28,7 @@ interface UsersState {
 interface UseUsersReturn extends ToRefs<UsersState> {
   refetch: () => Promise<any> | undefined; // Updated to allow undefined return
   addUser: (userData: UserInput) => Promise<User>;
-  deleteUser: (id: string) => Promise<User>;
+  deleteUser: (id: string) => Promise<boolean>;
   createLoading: Ref<boolean>;
   deleteLoading: Ref<boolean>;
 }
@@ -68,10 +68,7 @@ export function useUsers(): UseUsersReturn {
 
   const DELETE_USER = gql`
     mutation DeleteUser($id: ID!) {
-      deleteUser(id: $id) {
-        id
-        name
-      }
+      deleteUser(id: $id)
     }
   `;
 
@@ -132,7 +129,7 @@ export function useUsers(): UseUsersReturn {
   };
 
   // Delete a user by ID
-  const deleteUser = async (id: string): Promise<User> => {
+  const deleteUser = async (id: string): Promise<boolean> => {
     try {
       const response = await deleteUserMutation({
         id,
@@ -144,12 +141,12 @@ export function useUsers(): UseUsersReturn {
       if (!response?.data) {
         throw new Error("Failed to delete user");
       }
-
-      return response.data.deleteUser;
     } catch (err) {
       state.error = err as ApolloError;
       throw err;
     }
+
+    return Promise.resolve(true);
   };
 
   return {
