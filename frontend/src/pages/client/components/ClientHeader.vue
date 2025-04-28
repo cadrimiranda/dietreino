@@ -11,14 +11,15 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from "vue";
 import { PlusOutlined } from "@ant-design/icons-vue";
 
-export default {
+export default defineComponent({
   name: "ClientHeader",
   components: {
     PlusOutlined,
   },
   emits: ["add-client"],
-};
+});
 </script>

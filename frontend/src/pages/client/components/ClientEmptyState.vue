@@ -27,10 +27,11 @@
   </a-card>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from "vue";
 import { TeamOutlined, PlusOutlined } from "@ant-design/icons-vue";
 
-export default {
+export default defineComponent({
   name: "ClientEmptyState",
   components: {
     TeamOutlined,
@@ -43,5 +44,5 @@ export default {
     },
   },
   emits: ["add-client"],
-};
+});
 </script>

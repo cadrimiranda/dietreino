@@ -102,8 +102,8 @@
   </a-modal>
 </template>
 
-<script>
-import { ref, watch, onUnmounted, reactive } from "vue";
+<script lang="ts">
+import { ref, watch, onUnmounted, defineComponent } from "vue";
 import {
   CopyOutlined,
   EyeOutlined,
@@ -113,7 +113,13 @@ import {
 } from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
 
-export default {
+interface ToastMessage {
+  type: "success" | "error" | "info" | "warning";
+  summary: string;
+  detail: string;
+}
+
+export default defineComponent({
   name: "PasswordRevealDialog",
   components: {
     CopyOutlined,
@@ -138,14 +144,14 @@ export default {
   },
   emits: ["close"],
   setup(props, { emit }) {
-    const dialogVisible = ref(props.visible);
-    const usernameValue = ref(props.username);
-    const passwordValue = ref(props.password);
-    const passwordRevealed = ref(false);
-    const revealTimeRemaining = ref(100);
-    const revealTimer = ref(null);
-    const isFading = ref(false);
-    const toastMessage = ref(null);
+    const dialogVisible = ref<boolean>(props.visible);
+    const usernameValue = ref<string>(props.username);
+    const passwordValue = ref<string>(props.password);
+    const passwordRevealed = ref<boolean>(false);
+    const revealTimeRemaining = ref<number>(100);
+    const revealTimer = ref<number | null>(null);
+    const isFading = ref<boolean>(false);
+    const toastMessage = ref<ToastMessage | null>(null);
 
     // Watch for changes in props.visible
     watch(
@@ -165,16 +171,16 @@ export default {
       }
     );
 
-    function promptPasswordReveal() {
+    function promptPasswordReveal(): void {
       revealPassword();
     }
 
-    function revealPassword() {
+    function revealPassword(): void {
       passwordRevealed.value = true;
 
       // Start 10-second timer (100 units)
       revealTimeRemaining.value = 100;
-      revealTimer.value = setInterval(() => {
+      revealTimer.value = window.setInterval(() => {
         revealTimeRemaining.value -= 1;
 
         // Activate fading effect in the last 3 seconds
@@ -196,7 +202,7 @@ export default {
       );
     }
 
-    function hidePassword() {
+    function hidePassword(): void {
       if (revealTimer.value) {
         clearInterval(revealTimer.value);
       }
@@ -211,7 +217,7 @@ export default {
       );
     }
 
-    function copyToClipboard(text) {
+    function copyToClipboard(text: string): void {
       navigator.clipboard
         .writeText(text)
         .then(() => {
@@ -230,11 +236,11 @@ export default {
         });
     }
 
-    function closeDialog() {
+    function closeDialog(): void {
       dialogVisible.value = false;
     }
 
-    function sendPasswordEmail() {
+    function sendPasswordEmail(): void {
       // Simulate email sending
       showToast(
         "success",
@@ -243,7 +249,7 @@ export default {
       );
     }
 
-    function sendPasswordSMS() {
+    function sendPasswordSMS(): void {
       // Simulate SMS sending
       showToast(
         "success",
@@ -252,7 +258,11 @@ export default {
       );
     }
 
-    function showToast(severity, summary, detail) {
+    function showToast(
+      severity: "success" | "error" | "info" | "warning",
+      summary: string,
+      detail: string
+    ): void {
       // Using both local state for the alert and Ant Design's message system
       toastMessage.value = {
         type: severity,
@@ -293,7 +303,7 @@ export default {
       sendPasswordSMS,
     };
   },
-};
+});
 </script>
 
 <style scoped>

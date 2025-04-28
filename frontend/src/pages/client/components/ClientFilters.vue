@@ -24,10 +24,16 @@
   </a-card>
 </template>
 
-<script>
+<script lang="ts">
+import { computed, defineComponent } from "vue";
 import { SlidersOutlined } from "@ant-design/icons-vue";
 
-export default {
+interface StatusOption {
+  label: string;
+  value: string;
+}
+
+export default defineComponent({
   name: "ClientFilters",
   components: {
     SlidersOutlined,
@@ -43,31 +49,29 @@ export default {
     },
   },
   emits: ["update:searchQuery", "update:filterStatus"],
-  computed: {
-    searchModel: {
-      get() {
-        return this.searchQuery;
-      },
-      set(value) {
-        this.$emit("update:searchQuery", value);
-      },
-    },
-    statusModel: {
-      get() {
-        return this.filterStatus;
-      },
-      set(value) {
-        this.$emit("update:filterStatus", value);
-      },
-    },
-    statusOptions() {
-      return [
-        { label: "All Statuses", value: "all" },
-        { label: "Active", value: "active" },
-        { label: "Pending", value: "pending" },
-        { label: "Expired", value: "expired" },
-      ];
-    },
+  setup(props, { emit }) {
+    const searchModel = computed({
+      get: () => props.searchQuery,
+      set: (value: string) => emit("update:searchQuery", value),
+    });
+
+    const statusModel = computed({
+      get: () => props.filterStatus,
+      set: (value: string) => emit("update:filterStatus", value),
+    });
+
+    const statusOptions = computed<StatusOption[]>(() => [
+      { label: "All Statuses", value: "all" },
+      { label: "Active", value: "active" },
+      { label: "Pending", value: "pending" },
+      { label: "Expired", value: "expired" },
+    ]);
+
+    return {
+      searchModel,
+      statusModel,
+      statusOptions,
+    };
   },
-};
+});
 </script>

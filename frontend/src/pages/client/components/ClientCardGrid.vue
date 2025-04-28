@@ -10,20 +10,31 @@
   </a-row>
 </template>
 
-<script>
-import ClientCard from "./ClientCard.vue";
+<script lang="ts">
+import { defineComponent, PropType } from "vue";
+import ClientCard from "@/pages/client/components/ClientCard.vue";
 
-export default {
+interface Client {
+  id: number | string;
+  name: string;
+  email: string;
+  trainingStatus: string;
+  dietStatus: string;
+  createdAt: Date;
+  phone?: string;
+}
+
+export default defineComponent({
   name: "ClientCardGrid",
   components: {
     ClientCard,
   },
   props: {
     clients: {
-      type: Array,
+      type: Array as PropType<Client[]>,
       required: true,
     },
   },
   emits: ["view-client", "delete-client"],
-};
+});
 </script>

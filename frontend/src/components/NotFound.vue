@@ -30,7 +30,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 import { HomeOutlined } from "@ant-design/icons-vue";
@@ -46,7 +46,7 @@ export default defineComponent({
     const { isAuthenticated } = useAuth();
 
     // Navegar para a página inicial apropriada com base no estado de autenticação
-    const goHome = () => {
+    const goHome = (): void => {
       if (isAuthenticated.value) {
         router.push("/dashboard");
       } else {

@@ -1,34 +1,56 @@
 import { jwtDecode } from "jwt-decode";
 
-class TokenStorage {
-  getAccessToken() {
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface JwtPayload {
+  exp: number;
+  [key: string]: any;
+}
+
+abstract class TokenStorage {
+  getAccessToken(): string | null {
     throw new Error("Not implemented");
   }
-  setAccessToken(token) {
+
+  setAccessToken(token: string): void {
     throw new Error("Not implemented");
   }
-  getRefreshToken() {
+
+  getRefreshToken(): string | null {
     throw new Error("Not implemented");
   }
-  setRefreshToken(token) {
+
+  setRefreshToken(token: string): void {
     throw new Error("Not implemented");
   }
-  getUser() {
+
+  getUser(): User | null {
     throw new Error("Not implemented");
   }
-  setUser() {
+
+  setUser(user: User): void {
     throw new Error("Not implemented");
   }
-  clearTokens() {
+
+  clearTokens(): void {
     throw new Error("Not implemented");
   }
 }
 
 export class LocalStorageTokenService extends TokenStorage {
+  private accessTokenKey: string;
+  private refreshTokenKey: string;
+  private userKey: string;
+
   constructor(
-    accessTokenKey = "access_token",
-    refreshTokenKey = "refresh_token",
-    userKey = "user"
+    accessTokenKey: string = "access_token",
+    refreshTokenKey: string = "refresh_token",
+    userKey: string = "user"
   ) {
     super();
     this.accessTokenKey = accessTokenKey;
@@ -36,32 +58,32 @@ export class LocalStorageTokenService extends TokenStorage {
     this.userKey = userKey;
   }
 
-  getAccessToken() {
+  getAccessToken(): string | null {
     return localStorage.getItem(this.accessTokenKey);
   }
 
-  setAccessToken(token) {
+  setAccessToken(token: string): void {
     localStorage.setItem(this.accessTokenKey, token);
   }
 
-  getRefreshToken() {
+  getRefreshToken(): string | null {
     return localStorage.getItem(this.refreshTokenKey);
   }
 
-  setRefreshToken(token) {
+  setRefreshToken(token: string): void {
     localStorage.setItem(this.refreshTokenKey, token);
   }
 
-  getUser() {
+  getUser(): User | null {
     const userData = localStorage.getItem(this.userKey);
     return userData ? JSON.parse(userData) : null;
   }
 
-  setUser(user) {
+  setUser(user: User): void {
     localStorage.setItem(this.userKey, JSON.stringify(user));
   }
 
-  clearTokens() {
+  clearTokens(): void {
     localStorage.removeItem(this.accessTokenKey);
     localStorage.removeItem(this.refreshTokenKey);
     localStorage.removeItem(this.userKey);
@@ -69,11 +91,11 @@ export class LocalStorageTokenService extends TokenStorage {
 }
 
 export class TokenValidator {
-  isTokenValid(token) {
+  isTokenValid(token: string | null): boolean {
     if (!token) return false;
 
     try {
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode<JwtPayload>(token);
       // Margem de segurança de 30 segundos
       return decoded.exp * 1000 > Date.now() + 30000;
     } catch {

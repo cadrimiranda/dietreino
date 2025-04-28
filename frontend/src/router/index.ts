@@ -1,4 +1,10 @@
-import { createRouter, createWebHistory } from "vue-router";
+import {
+  createRouter,
+  createWebHistory,
+  RouteRecordRaw,
+  RouteLocationNormalized,
+  NavigationGuardNext,
+} from "vue-router";
 import { message } from "ant-design-vue";
 import { useAuth } from "../composables/useAuth";
 import MainLayout from "../components/MainLayout.vue";
@@ -9,15 +15,26 @@ import TrainingUpload from "../components/TrainingUpload.vue";
 import DietUpload from "../components/DietUpload.vue";
 import NotFound from "../components/NotFound.vue";
 
-const ClientDetail = { template: "<div>Client Detail View</div>" };
-const TrainingList = { template: "<div>Training Plans List</div>" };
-const DietList = { template: "<div>Diet Plans List</div>" };
-const ProgressView = { template: "<div>Progress View</div>" };
-const Settings = { template: "<div>Settings</div>" };
+// Define component interfaces for the simple template components
+interface TemplateComponent {
+  template: string;
+}
+
+const ClientDetail: TemplateComponent = {
+  template: "<div>Client Detail View</div>",
+};
+const TrainingList: TemplateComponent = {
+  template: "<div>Training Plans List</div>",
+};
+const DietList: TemplateComponent = { template: "<div>Diet Plans List</div>" };
+const ProgressView: TemplateComponent = {
+  template: "<div>Progress View</div>",
+};
+const Settings: TemplateComponent = { template: "<div>Settings</div>" };
 
 const { isAuthenticated } = useAuth();
 
-const routes = [
+const routes: Array<RouteRecordRaw> = [
   {
     path: "/login",
     name: "Login",
@@ -93,30 +110,36 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+router.beforeEach(
+  (
+    to: RouteLocationNormalized,
+    from: RouteLocationNormalized,
+    next: NavigationGuardNext
+  ) => {
+    const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-  if (requiresAuth && !isAuthenticated.value) {
-    message.warning("Você precisa fazer login para acessar esta página");
-    next({
-      name: "Login",
-      query: { redirect: to.fullPath },
-    });
-  } else if (to.name === "Login" && isAuthenticated.value) {
-    next({ name: "Dashboard" });
-  } else if (to.name === "NotFound") {
-    if (to.path.startsWith("/dashboard") || to.path.startsWith("/admin")) {
-      if (!isAuthenticated.value) {
-        message.warning("Você precisa fazer login para acessar esta área");
-        next({ name: "Login" });
-        return;
+    if (requiresAuth && !isAuthenticated.value) {
+      message.warning("Você precisa fazer login para acessar esta página");
+      next({
+        name: "Login",
+        query: { redirect: to.fullPath },
+      });
+    } else if (to.name === "Login" && isAuthenticated.value) {
+      next({ name: "Dashboard" });
+    } else if (to.name === "NotFound") {
+      if (to.path.startsWith("/dashboard") || to.path.startsWith("/admin")) {
+        if (!isAuthenticated.value) {
+          message.warning("Você precisa fazer login para acessar esta área");
+          next({ name: "Login" });
+          return;
+        }
       }
-    }
 
-    next();
-  } else {
-    next();
+      next();
+    } else {
+      next();
+    }
   }
-});
+);
 
 export default router;

@@ -45,7 +45,8 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, PropType, computed } from "vue";
 import {
   SyncOutlined,
   UserOutlined,
@@ -56,7 +57,26 @@ import {
   ArrowDownOutlined,
 } from "@ant-design/icons-vue";
 
-export default {
+interface Client {
+  id: number | string;
+  name: string;
+  email: string;
+  trainingStatus: string;
+  dietStatus: string;
+  createdAt: Date;
+  phone?: string;
+}
+
+interface Stat {
+  label: string;
+  value: number;
+  icon: string;
+  color: string;
+  percentage: number;
+  trend: "up" | "down";
+}
+
+export default defineComponent({
   name: "ClientStats",
   components: {
     SyncOutlined,
@@ -69,23 +89,23 @@ export default {
   },
   props: {
     clients: {
-      type: Array,
+      type: Array as PropType<Client[]>,
       required: true,
     },
   },
   emits: ["refresh"],
-  computed: {
-    stats() {
-      const totalClients = this.clients.length;
-      const activeClients = this.clients.filter(
+  setup(props) {
+    const stats = computed<Stat[]>(() => {
+      const totalClients = props.clients.length;
+      const activeClients = props.clients.filter(
         (client) =>
           client.trainingStatus === "active" || client.dietStatus === "active"
       ).length;
-      const pendingClients = this.clients.filter(
+      const pendingClients = props.clients.filter(
         (client) =>
           client.trainingStatus === "pending" || client.dietStatus === "pending"
       ).length;
-      const expiredClients = this.clients.filter(
+      const expiredClients = props.clients.filter(
         (client) =>
           client.trainingStatus === "expired" && client.dietStatus === "expired"
       ).length;
@@ -124,7 +144,9 @@ export default {
           trend: "down",
         },
       ];
-    },
+    });
+
+    return { stats };
   },
-};
+});
 </script>

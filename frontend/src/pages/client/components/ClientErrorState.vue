@@ -18,10 +18,11 @@
   </a-card>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, PropType } from "vue";
 import { ExclamationCircleOutlined, RedoOutlined } from "@ant-design/icons-vue";
 
-export default {
+export default defineComponent({
   name: "ClientErrorState",
   components: {
     ExclamationCircleOutlined,
@@ -29,10 +30,10 @@ export default {
   },
   props: {
     error: {
-      type: Object,
+      type: Object as PropType<Error>,
       required: true,
     },
   },
   emits: ["retry"],
-};
+});
 </script>

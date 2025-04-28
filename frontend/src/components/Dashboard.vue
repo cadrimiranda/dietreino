@@ -314,8 +314,34 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from "vue";
+
+interface Stats {
+  activeClients: number;
+  newClientsPercent: number;
+  activeTrainingPlans: number;
+  expiringSoonTraining: number;
+  activeDietPlans: number;
+  expiringSoonDiet: number;
+  newProgressReports: number;
+}
+
+interface Activity {
+  type: "training" | "diet" | "client" | "progress";
+  text: string;
+  time: string;
+}
+
+interface Reminder {
+  clientName: string;
+  type: string;
+  dueDate: string;
+  status: "Expiring Soon" | "Active" | "Due Soon" | "Overdue";
+  action: string;
+}
+
+export default defineComponent({
   name: "Dashboard",
   data() {
     return {
@@ -328,7 +354,7 @@ export default {
         activeDietPlans: 8,
         expiringSoonDiet: 1,
         newProgressReports: 3,
-      },
+      } as Stats,
       recentActivity: [
         {
           type: "training",
@@ -350,7 +376,7 @@ export default {
           text: "Weekly progress update from Ana Costa",
           time: "Yesterday",
         },
-      ],
+      ] as Activity[],
       reminders: [
         {
           clientName: "João Silva",
@@ -373,12 +399,12 @@ export default {
           status: "Due Soon",
           action: "Remind",
         },
-      ],
+      ] as Reminder[],
     };
   },
   computed: {
-    formattedDate() {
-      const options = {
+    formattedDate(): string {
+      const options: Intl.DateTimeFormatOptions = {
         weekday: "long",
         year: "numeric",
         month: "long",
@@ -388,7 +414,7 @@ export default {
     },
   },
   methods: {
-    getInitials(name) {
+    getInitials(name: string): string {
       return name
         .split(" ")
         .map((n) => n[0])
@@ -396,8 +422,8 @@ export default {
         .toUpperCase()
         .substring(0, 2);
     },
-    getActivityIcon(type) {
-      const icons = {
+    getActivityIcon(type: string): string {
+      const icons: Record<string, string> = {
         training: "fas fa-dumbbell",
         diet: "fas fa-utensils",
         client: "fas fa-user-plus",
@@ -405,8 +431,8 @@ export default {
       };
       return icons[type] || "fas fa-bell";
     },
-    getActivityIconClass(type) {
-      const classes = {
+    getActivityIconClass(type: string): string {
+      const classes: Record<string, string> = {
         training: "bg-purple-100 text-purple-700",
         diet: "bg-teal-100 text-teal-700",
         client: "bg-blue-100 text-blue-700",
@@ -414,19 +440,19 @@ export default {
       };
       return classes[type] || "bg-gray-100 text-gray-700";
     },
-    getReminderIcon(type) {
+    getReminderIcon(type: string): string {
       if (type.includes("Training")) return "fas fa-dumbbell";
       if (type.includes("Diet")) return "fas fa-utensils";
       if (type.includes("Progress")) return "fas fa-chart-line";
       return "fas fa-bell";
     },
-    getReminderIconColor(type) {
+    getReminderIconColor(type: string): string {
       if (type.includes("Training")) return "text-purple-600";
       if (type.includes("Diet")) return "text-teal-600";
       if (type.includes("Progress")) return "text-orange-600";
       return "text-gray-600";
     },
-    getReminderStatusClass(status) {
+    getReminderStatusClass(status: string): string {
       if (status === "Expiring Soon" || status === "Due Soon")
         return "bg-yellow-100 text-yellow-800";
       if (status === "Active") return "bg-green-100 text-green-800";
@@ -434,5 +460,5 @@ export default {
       return "bg-gray-100 text-gray-800";
     },
   },
-};
+});
 </script>

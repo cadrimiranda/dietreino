@@ -303,8 +303,31 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from "vue";
+
+interface Client {
+  id: number;
+  name: string;
+}
+
+interface Macros {
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
+interface DietFormData {
+  clientId: number | string;
+  dietType: string;
+  startDate: string;
+  endDate: string;
+  goals: string;
+  macros: Macros;
+  file: File | null;
+}
+
+export default defineComponent({
   name: "DietUpload",
   data() {
     return {
@@ -323,56 +346,57 @@ export default {
           fats: 30,
         },
         file: null,
-      },
+      } as DietFormData,
       clients: [
         { id: 1, name: "João Silva" },
         { id: 2, name: "Maria Oliveira" },
         { id: 3, name: "Pedro Santos" },
-      ],
+      ] as Client[],
     };
   },
   computed: {
-    macroTotal() {
+    macroTotal(): number {
       return (
         (this.formData.macros.protein || 0) +
         (this.formData.macros.carbs || 0) +
         (this.formData.macros.fats || 0)
       );
     },
-    macroTotalValid() {
+    macroTotalValid(): boolean {
       return this.macroTotal === 100;
     },
-    isFormValid() {
+    isFormValid(): boolean {
       return (
-        this.formData.clientId &&
-        this.formData.dietType &&
-        this.formData.startDate &&
-        this.formData.endDate &&
-        this.formData.file &&
+        !!this.formData.clientId &&
+        !!this.formData.dietType &&
+        !!this.formData.startDate &&
+        !!this.formData.endDate &&
+        !!this.formData.file &&
         this.macroTotalValid
       );
     },
-    selectedClientName() {
+    selectedClientName(): string {
       if (!this.formData.clientId) return "";
       const client = this.clients.find((c) => c.id === this.formData.clientId);
       return client ? client.name : "";
     },
   },
   methods: {
-    handleFileSelect(event) {
-      const file = event.target.files[0];
+    handleFileSelect(event: Event): void {
+      const input = event.target as HTMLInputElement;
+      const file = input.files?.[0];
       if (file) {
         this.validateAndSetFile(file);
       }
     },
-    handleFileDrop(event) {
+    handleFileDrop(event: DragEvent): void {
       this.isDragging = false;
-      const file = event.dataTransfer.files[0];
+      const file = event.dataTransfer?.files[0];
       if (file) {
         this.validateAndSetFile(file);
       }
     },
-    validateAndSetFile(file) {
+    validateAndSetFile(file: File): void {
       // Check file type
       if (file.type !== "application/pdf") {
         alert("Please upload a valid PDF file");
@@ -387,15 +411,17 @@ export default {
 
       this.formData.file = file;
     },
-    removeFile() {
+    removeFile(): void {
       this.formData.file = null;
       // Reset the file input
-      const fileInput = document.getElementById("fileInput");
+      const fileInput = document.getElementById(
+        "fileInput"
+      ) as HTMLInputElement;
       if (fileInput) {
         fileInput.value = "";
       }
     },
-    formatFileSize(bytes) {
+    formatFileSize(bytes: number): string {
       if (bytes < 1024) {
         return bytes + " bytes";
       } else if (bytes < 1024 * 1024) {
@@ -404,7 +430,7 @@ export default {
         return (bytes / (1024 * 1024)).toFixed(1) + " MB";
       }
     },
-    handleSubmit() {
+    handleSubmit(): void {
       // Simulate form submission
       this.isSubmitting = true;
 
@@ -417,11 +443,11 @@ export default {
         // In a real app, you'd handle the response from your API here
       }, 2000);
     },
-    viewDietPlans() {
+    viewDietPlans(): void {
       this.showSuccessModal = false;
       this.$router.push("/diet");
     },
-    uploadAnother() {
+    uploadAnother(): void {
       // Reset the form but keep macros
       const currentMacros = { ...this.formData.macros };
       this.formData = {
@@ -445,5 +471,5 @@ export default {
     this.formData.startDate = today.toISOString().split("T")[0];
     this.formData.endDate = fourWeeksLater.toISOString().split("T")[0];
   },
-};
+});
 </script>

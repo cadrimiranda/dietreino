@@ -76,7 +76,8 @@
   </a-card>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent, computed, PropType } from "vue";
 import {
   MoreOutlined,
   CalendarOutlined,
@@ -84,7 +85,22 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons-vue";
 
-export default {
+interface Client {
+  id: number | string;
+  name: string;
+  email: string;
+  trainingStatus: string;
+  dietStatus: string;
+  createdAt: Date;
+  phone?: string;
+}
+
+interface MenuInfo {
+  key: string;
+  clientId: number | string;
+}
+
+export default defineComponent({
   name: "ClientCard",
   components: {
     MoreOutlined,
@@ -94,45 +110,53 @@ export default {
   },
   props: {
     client: {
-      type: Object,
+      type: Object as PropType<Client>,
       required: true,
     },
   },
-  emits: ["delete-client"],
-  computed: {
-    avatarStyle() {
+  emits: ["delete-client", "view-client", "menu-click"],
+  setup(props) {
+    const avatarStyle = computed(() => {
       const colors = ["#f56a00", "#7265e6", "#ffbf00", "#00a2ae"];
       // Generate consistent color based on client name
-      const index = this.client.name.length % colors.length;
+      const index = props.client.name.length % colors.length;
       return { backgroundColor: colors[index] };
-    },
+    });
+
+    return {
+      avatarStyle,
+    };
   },
   methods: {
-    getInitials(name) {
+    getInitials(name: string): string {
       return name
         .split(" ")
         .map((part) => part[0])
         .join("")
         .toUpperCase();
     },
-    capitalizeFirst(text) {
+    capitalizeFirst(text: string): string {
       return text.charAt(0).toUpperCase() + text.slice(1);
     },
-    formatDate(dateString) {
+    formatDate(dateString: Date): string {
       return new Date(dateString).toLocaleDateString();
     },
-    getStatusColor(status) {
-      const map = {
+    getStatusColor(status: string): string {
+      const map: Record<string, string> = {
         completed: "success",
         active: "processing",
         pending: "warning",
         inactive: "default",
+        expired: "error",
       };
       return map[status.toLowerCase()] || "default";
     },
-    handleMenuClick(e) {
-      this.$emit("menu-click", { key: e.key, clientId: this.client.id });
+    handleMenuClick(e: any): void {
+      this.$emit("menu-click", {
+        key: e.key,
+        clientId: this.client.id,
+      } as MenuInfo);
     },
   },
-};
+});
 </script>

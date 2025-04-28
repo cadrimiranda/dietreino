@@ -1,4 +1,4 @@
-// components/ClientList.vue - Enhanced with toggle between grid/table views
+// components/ClientList.vue
 <template>
   <div class="p-4">
     <!-- Page header -->
@@ -88,28 +88,54 @@
   </div>
 </template>
 
-<script>
-import { ref, computed, watch } from "vue";
-import { useUsers } from "../../composables/useUsers";
+<script lang="ts">
+import { ref, computed, watch, defineComponent } from "vue";
 
 // Import components
-import ClientHeader from "./components/ClientHeader.vue";
-import ClientFilters from "./components/ClientFilters.vue";
-import ClientSkeletonList from "./components/ClientSkeletonList.vue";
-import ClientErrorState from "./components/ClientErrorState.vue";
-import ClientEmptyState from "./components/ClientEmptyState.vue";
-import ClientCardGrid from "./components/ClientCardGrid.vue";
-import ClientDataTable from "./components/ClientDataTable.vue";
-import AddClientDialog from "./components/AddClientDialog.vue";
-import PasswordRevealDialog from "./components/PasswordRevealDialog.vue";
-import ClientStats from "./components/ClientStats.vue";
+import ClientHeader from "@/pages/client/components/ClientHeader.vue";
+import ClientFilters from "@/pages/client/components/ClientFilters.vue";
+import ClientSkeletonList from "@/pages/client/components/ClientSkeletonList.vue";
+import ClientErrorState from "@/pages/client/components/ClientErrorState.vue";
+import ClientEmptyState from "@/pages/client/components/ClientEmptyState.vue";
+import ClientCardGrid from "@/pages/client/components/ClientCardGrid.vue";
+import ClientDataTable from "@/pages/client/components/ClientDataTable.vue";
+import AddClientDialog from "@/pages/client/components/AddClientDialog.vue";
+import PasswordRevealDialog from "@/pages/client/components/PasswordRevealDialog.vue";
+import ClientStats from "@/pages/client/components/ClientStats.vue";
 import Toast from "primevue/toast";
 import ConfirmDialog from "primevue/confirmdialog";
 import { useToast } from "primevue/usetoast";
 
 import { TableOutlined, AppstoreOutlined } from "@ant-design/icons-vue";
+import { useUsers } from "@/composables/useUsers";
 
-export default {
+// Define interfaces
+interface Client {
+  id: number | string;
+  name: string;
+  email: string;
+  password?: string;
+  trainingStatus: string;
+  dietStatus: string;
+  createdAt: Date;
+  phone?: string;
+}
+
+interface User {
+  id: number | string;
+  name: string;
+  email: string;
+  generatedPassword?: string;
+  createdAt: string;
+  updatedAt?: string;
+  phone?: string;
+}
+
+interface CreatedUser extends User {
+  generatedPassword: string;
+}
+
+export default defineComponent({
   name: "ClientList",
   components: {
     ClientHeader,
@@ -128,13 +154,13 @@ export default {
     AppstoreOutlined,
   },
   setup() {
-    const searchQuery = ref("");
-    const filterStatus = ref("all");
-    const showAddClientModal = ref(false);
-    const usuarioCriado = ref(false);
-    const temporaryPassword = ref("");
-    const newlyCreatedUsername = ref("");
-    const viewMode = ref(true); // true = grid, false = table
+    const searchQuery = ref<string>("");
+    const filterStatus = ref<string>("all");
+    const showAddClientModal = ref<boolean>(false);
+    const usuarioCriado = ref<boolean>(false);
+    const temporaryPassword = ref<string>("");
+    const newlyCreatedUsername = ref<string>("");
+    const viewMode = ref<boolean>(true); // true = grid, false = table
     const toast = useToast();
 
     // Use our composable
@@ -149,8 +175,8 @@ export default {
     } = useUsers();
 
     // Clients computed property
-    const clients = computed(() => {
-      return users.value.map((user) => ({
+    const clients = computed<Client[]>(() => {
+      return users.value.map((user: User) => ({
         id: user.id,
         name: user.name,
         email: user.email,
@@ -173,7 +199,7 @@ export default {
     });
 
     // Filtered clients based on search and filter
-    const filteredClients = computed(() => {
+    const filteredClients = computed<Client[]>(() => {
       let result = clients.value;
 
       if (searchQuery.value) {
@@ -196,18 +222,18 @@ export default {
       return result;
     });
 
-    function viewClient(id) {
+    function viewClient(id: number | string): void {
       console.log(`Navegando para o cliente ${id}`);
       // this.$router.push(`/clients/${id}`);
     }
 
-    function handleViewModeChange(mode) {
+    function handleViewModeChange(mode: "grid" | "table"): void {
       viewMode.value = mode === "grid";
     }
 
-    async function handleClientAdded(newClient) {
+    async function handleClientAdded(newClient: User): Promise<void> {
       try {
-        const createdUser = await addUser(newClient);
+        const createdUser = (await addUser(newClient)) as CreatedUser;
 
         usuarioCriado.value = true;
         temporaryPassword.value = createdUser.generatedPassword;
@@ -238,7 +264,7 @@ export default {
       }
     }
 
-    function deleteClient(id) {
+    function deleteClient(id: number | string): void {
       console.log(id);
     }
 
@@ -254,7 +280,7 @@ export default {
     });
 
     // Load saved preferences from localStorage
-    function loadSavedPreferences() {
+    function loadSavedPreferences(): void {
       const savedSearchQuery = localStorage.getItem("clientSearchQuery");
       const savedFilterStatus = localStorage.getItem("clientFilterStatus");
       const savedViewMode = localStorage.getItem("clientViewMode");
@@ -295,7 +321,7 @@ export default {
       refetch,
     };
   },
-};
+});
 </script>
 
 <style scoped>

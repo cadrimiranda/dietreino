@@ -250,8 +250,24 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from "vue";
+
+interface Client {
+  id: number;
+  name: string;
+}
+
+interface TrainingFormData {
+  clientId: number | string;
+  trainingType: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  file: File | null;
+}
+
+export default defineComponent({
   name: "TrainingUpload",
   data() {
     return {
@@ -265,45 +281,46 @@ export default {
         endDate: "",
         description: "",
         file: null,
-      },
+      } as TrainingFormData,
       clients: [
         { id: 1, name: "João Silva" },
         { id: 2, name: "Maria Oliveira" },
         { id: 3, name: "Pedro Santos" },
-      ],
+      ] as Client[],
     };
   },
   computed: {
-    isFormValid() {
+    isFormValid(): boolean {
       return (
-        this.formData.clientId &&
-        this.formData.trainingType &&
-        this.formData.startDate &&
-        this.formData.endDate &&
-        this.formData.file
+        !!this.formData.clientId &&
+        !!this.formData.trainingType &&
+        !!this.formData.startDate &&
+        !!this.formData.endDate &&
+        !!this.formData.file
       );
     },
-    selectedClientName() {
+    selectedClientName(): string {
       if (!this.formData.clientId) return "";
       const client = this.clients.find((c) => c.id === this.formData.clientId);
       return client ? client.name : "";
     },
   },
   methods: {
-    handleFileSelect(event) {
-      const file = event.target.files[0];
+    handleFileSelect(event: Event): void {
+      const input = event.target as HTMLInputElement;
+      const file = input.files?.[0];
       if (file) {
         this.validateAndSetFile(file);
       }
     },
-    handleFileDrop(event) {
+    handleFileDrop(event: DragEvent): void {
       this.isDragging = false;
-      const file = event.dataTransfer.files[0];
+      const file = event.dataTransfer?.files[0];
       if (file) {
         this.validateAndSetFile(file);
       }
     },
-    validateAndSetFile(file) {
+    validateAndSetFile(file: File): void {
       // Check file type
       const validTypes = [
         "application/vnd.ms-excel",
@@ -323,15 +340,17 @@ export default {
 
       this.formData.file = file;
     },
-    removeFile() {
+    removeFile(): void {
       this.formData.file = null;
       // Reset the file input
-      const fileInput = document.getElementById("fileInput");
+      const fileInput = document.getElementById(
+        "fileInput"
+      ) as HTMLInputElement;
       if (fileInput) {
         fileInput.value = "";
       }
     },
-    formatFileSize(bytes) {
+    formatFileSize(bytes: number): string {
       if (bytes < 1024) {
         return bytes + " bytes";
       } else if (bytes < 1024 * 1024) {
@@ -340,7 +359,7 @@ export default {
         return (bytes / (1024 * 1024)).toFixed(1) + " MB";
       }
     },
-    handleSubmit() {
+    handleSubmit(): void {
       // Simulate form submission
       this.isSubmitting = true;
 
@@ -353,11 +372,11 @@ export default {
         // In a real app, you'd handle the response from your API here
       }, 2000);
     },
-    viewTrainingPlans() {
+    viewTrainingPlans(): void {
       this.showSuccessModal = false;
       this.$router.push("/training");
     },
-    uploadAnother() {
+    uploadAnother(): void {
       // Reset the form
       this.formData = {
         clientId: "",
@@ -379,5 +398,5 @@ export default {
     this.formData.startDate = today.toISOString().split("T")[0];
     this.formData.endDate = fourWeeksLater.toISOString().split("T")[0];
   },
-};
+});
 </script>

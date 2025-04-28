@@ -44,10 +44,26 @@
   </a-modal>
 </template>
 
-<script>
-import { ref, computed } from "vue";
+<script lang="ts">
+import { ref, computed, defineComponent } from "vue";
 
-export default {
+interface NewClient {
+  name: string;
+  email: string;
+  phone: string;
+}
+
+interface MockUser {
+  id: number;
+  name: string;
+  email: string;
+  generatedPassword: string;
+  createdAt: string;
+  updatedAt: string;
+  phone?: string;
+}
+
+export default defineComponent({
   name: "AddClientDialog",
   props: {
     visible: {
@@ -61,7 +77,7 @@ export default {
   },
   emits: ["update:visible", "update:is-adding", "client-added"],
   setup(props, { emit }) {
-    const newClient = ref({
+    const newClient = ref<NewClient>({
       name: "",
       email: "",
       phone: "",
@@ -69,19 +85,19 @@ export default {
 
     const visibleModel = computed({
       get: () => props.visible,
-      set: (value) => emit("update:visible", value),
+      set: (value: boolean) => emit("update:visible", value),
     });
 
     const isAddingModel = computed({
       get: () => props.isAdding,
-      set: (value) => emit("update:is-adding", value),
+      set: (value: boolean) => emit("update:is-adding", value),
     });
 
-    function closeDialog() {
+    function closeDialog(): void {
       emit("update:visible", false);
     }
 
-    async function addClient() {
+    async function addClient(): Promise<void> {
       try {
         // Basic validation
         if (!newClient.value.name || !newClient.value.email) {
@@ -93,7 +109,7 @@ export default {
         emit("update:is-adding", true);
 
         // Mock user creation - in a real implementation, this would be done by the parent component
-        const mockUser = {
+        const mockUser: MockUser = {
           id: Math.floor(Math.random() * 1000),
           name: newClient.value.name,
           email: newClient.value.email,
@@ -127,7 +143,7 @@ export default {
       closeDialog,
     };
   },
-};
+});
 </script>
 
 <style scoped>

@@ -102,8 +102,8 @@
   </a-modal>
 </template>
 
-<script>
-import { ref, reactive } from "vue";
+<script lang="ts">
+import { ref, reactive, defineComponent, PropType } from "vue";
 import { notification } from "ant-design-vue";
 import {
   EyeOutlined,
@@ -112,7 +112,32 @@ import {
   SearchOutlined,
 } from "@ant-design/icons-vue";
 
-export default {
+interface Client {
+  id: number | string;
+  name: string;
+  email: string;
+  trainingStatus: string;
+  dietStatus: string;
+  createdAt: Date;
+  phone?: string;
+}
+
+interface StatusOption {
+  text: string;
+  value: string;
+}
+
+interface Column {
+  title: string;
+  dataIndex?: string;
+  key: string;
+  sorter?: (a: Client, b: Client) => number;
+  filteredValue?: string[] | null;
+  onFilter?: (value: string, record: Client) => boolean;
+  filters?: StatusOption[];
+}
+
+export default defineComponent({
   name: "ClientDataTable",
   components: {
     EyeOutlined,
@@ -122,29 +147,29 @@ export default {
   },
   props: {
     clients: {
-      type: Array,
+      type: Array as PropType<Client[]>,
       required: true,
     },
   },
   emits: ["view-client", "delete-client"],
   setup(props, { emit }) {
-    const deleteModalVisible = ref(false);
-    const clientIdToDelete = ref(null);
-    const searchText = ref("");
-    const searchedColumn = ref("");
+    const deleteModalVisible = ref<boolean>(false);
+    const clientIdToDelete = ref<number | string | null>(null);
+    const searchText = ref<string>("");
+    const searchedColumn = ref<string>("");
 
     // Filter states for each column
-    const nameFilter = ref("");
-    const trainingStatusFilter = ref(null);
-    const dietStatusFilter = ref(null);
+    const nameFilter = ref<string>("");
+    const trainingStatusFilter = ref<string | null>(null);
+    const dietStatusFilter = ref<string | null>(null);
 
-    const statusOptions = [
+    const statusOptions: StatusOption[] = [
       { text: "Active", value: "active" },
       { text: "Pending", value: "pending" },
       { text: "Expired", value: "expired" },
     ];
 
-    const columns = reactive([
+    const columns = reactive<Column[]>([
       {
         title: "Client Name",
         dataIndex: "name",
@@ -174,7 +199,8 @@ export default {
         title: "Date Added",
         dataIndex: "createdAt",
         key: "createdAt",
-        sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+        sorter: (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       },
       {
         title: "Actions",
@@ -182,7 +208,7 @@ export default {
       },
     ]);
 
-    function getInitials(name) {
+    function getInitials(name: string): string {
       return name
         .split(" ")
         .map((n) => n[0])
@@ -191,14 +217,15 @@ export default {
         .substring(0, 2);
     }
 
-    function getAvatarStyle(id) {
+    function getAvatarStyle(id: number | string): Record<string, string> {
+      const numId = typeof id === "string" ? parseInt(id, 10) : id;
       return {
-        backgroundColor: `hsl(${(id * 137.5) % 360}, 70%, 50%)`,
+        backgroundColor: `hsl(${(numId * 137.5) % 360}, 70%, 50%)`,
         color: "white",
       };
     }
 
-    function formatDate(date) {
+    function formatDate(date: Date): string {
       return new Intl.DateTimeFormat("pt-BR", {
         day: "numeric",
         month: "short",
@@ -206,36 +233,35 @@ export default {
       }).format(date);
     }
 
-    function capitalizeFirst(str) {
+    function capitalizeFirst(str: string): string {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    function getStatusColor(status) {
-      switch (status) {
-        case "active":
-          return "success";
-        case "pending":
-          return "warning";
-        case "expired":
-          return "error";
-        default:
-          return "default";
-      }
+    function getStatusColor(status: string): string {
+      const map: Record<string, string> = {
+        active: "success",
+        pending: "warning",
+        expired: "error",
+        default: "default",
+      };
+      return map[status] || "default";
     }
 
-    function confirmDeleteClient(id) {
+    function confirmDeleteClient(id: number | string): void {
       clientIdToDelete.value = id;
       deleteModalVisible.value = true;
     }
 
-    function handleDelete() {
-      emit("delete-client", clientIdToDelete.value);
-      notification.success({
-        message: "Success",
-        description: "Client deleted successfully",
-        duration: 3,
-      });
-      deleteModalVisible.value = false;
+    function handleDelete(): void {
+      if (clientIdToDelete.value !== null) {
+        emit("delete-client", clientIdToDelete.value);
+        notification.success({
+          message: "Success",
+          description: "Client deleted successfully",
+          duration: 3,
+        });
+        deleteModalVisible.value = false;
+      }
     }
 
     return {
@@ -256,5 +282,5 @@ export default {
       statusOptions,
     };
   },
-};
+});
 </script>

@@ -113,8 +113,16 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from "vue";
+
+interface NavItem {
+  name: string;
+  path: string;
+  icon: string;
+}
+
+export default defineComponent({
   name: "MainLayout",
   data() {
     return {
@@ -135,50 +143,50 @@ export default {
         { name: "Training Plans", path: "/training", icon: "fas fa-dumbbell" },
         { name: "Diet Plans", path: "/diet", icon: "fas fa-utensils" },
         { name: "Settings", path: "/settings", icon: "fas fa-cog" },
-      ],
+      ] as NavItem[],
     };
   },
   computed: {
-    userInitials() {
+    userInitials(): string {
       return this.userName
         .split(" ")
         .map((n) => n[0])
         .join("")
         .toUpperCase();
     },
-    pageTitle() {
+    pageTitle(): string {
       // Get current route name and format it
-      const route = this.$route.name || "";
+      const route = (this.$route.name as string) || "";
       return route.charAt(0).toUpperCase() + route.slice(1);
     },
   },
   methods: {
-    isActive(path) {
+    isActive(path: string): boolean {
       return (
         this.$route.path === path || this.$route.path.startsWith(path + "/")
       );
     },
-    toggleSidebar() {
+    toggleSidebar(): void {
       this.sidebarOpen = !this.sidebarOpen;
     },
-    toggleUserMenu() {
+    toggleUserMenu(): void {
       this.userMenuOpen = !this.userMenuOpen;
       if (this.userMenuOpen) {
         this.notificationsOpen = false;
       }
     },
-    toggleNotifications() {
+    toggleNotifications(): void {
       this.notificationsOpen = !this.notificationsOpen;
       if (this.notificationsOpen) {
         this.userMenuOpen = false;
       }
     },
-    logout() {
+    logout(): void {
       // TODO: Implement logout logic
       console.log("Logging out...");
       // this.$store.dispatch('auth/logout').then(() => this.$router.push('/login'));
     },
-    checkMobile() {
+    checkMobile(): void {
       this.isMobile = window.innerWidth < 768;
       if (this.isMobile) {
         this.sidebarOpen = false;
@@ -192,5 +200,5 @@ export default {
   beforeUnmount() {
     window.removeEventListener("resize", this.checkMobile);
   },
-};
+});
 </script>

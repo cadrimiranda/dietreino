@@ -1,6 +1,6 @@
-import { ref, reactive, computed, watch } from "vue";
+import { ref, reactive, computed, watch, ComputedRef, Ref } from "vue";
 import { useRouter } from "vue-router";
-import { ApolloLink, gql } from "@apollo/client/core";
+import { ApolloLink, gql, ApolloClient, Observable } from "@apollo/client/core";
 import { useApolloClient } from "@vue/apollo-composable";
 import { message } from "ant-design-vue";
 
@@ -8,6 +8,33 @@ import {
   LocalStorageTokenService,
   TokenValidator,
 } from "../security/authStorage";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
+
+interface LoginInput {
+  email: string;
+  password: string;
+}
+
+interface RefreshTokenInput {
+  refreshToken: string;
+}
+
+interface RefreshState {
+  inProgress: boolean;
+  queue: Array<(token: string | null) => void>;
+}
 
 const LOGIN_MUTATION = gql`
   mutation Login($loginInput: LoginInput!) {
@@ -40,17 +67,17 @@ const REFRESH_TOKEN_MUTATION = gql`
 `;
 
 export function useAuth() {
-  const loading = ref(false);
-  const error = ref("");
+  const loading = ref<boolean>(false);
+  const error = ref<string>("");
   const tokenStorage = new LocalStorageTokenService();
   const tokenValidator = new TokenValidator();
 
   // Refs para os tokens e usuário
-  const accessToken = ref(tokenStorage.getAccessToken() || "");
-  const refreshToken = ref(tokenStorage.getRefreshToken() || "");
-  const currentUser = ref(tokenStorage.getUser());
+  const accessToken = ref<string>(tokenStorage.getAccessToken() || "");
+  const refreshToken = ref<string>(tokenStorage.getRefreshToken() || "");
+  const currentUser = ref<User | null>(tokenStorage.getUser());
 
-  const refreshState = reactive({
+  const refreshState = reactive<RefreshState>({
     inProgress: false,
     queue: [],
   });
@@ -61,14 +88,17 @@ export function useAuth() {
   /**
    * Computed property para verificar se o usuário está autenticado
    */
-  const isAuthenticated = computed(() => {
+  const isAuthenticated: ComputedRef<boolean> = computed(() => {
     return tokenValidator.isTokenValid(accessToken.value);
   });
 
   /**
    * Login com email e senha
    */
-  const login = async (email, password) => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<AuthResponse> => {
     loading.value = true;
     error.value = "";
 
@@ -100,7 +130,7 @@ export function useAuth() {
       }
 
       throw new Error("Login falhou");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro de login:", err);
 
       if (err.graphQLErrors && err.graphQLErrors.length > 0) {
@@ -124,7 +154,7 @@ export function useAuth() {
   /**
    * Logout
    */
-  const logout = () => {
+  const logout = (): void => {
     accessToken.value = "";
     refreshToken.value = "";
     currentUser.value = null;
@@ -144,7 +174,7 @@ export function useAuth() {
   /**
    * Garantir que um token válido está disponível
    */
-  const ensureValidToken = async () => {
+  const ensureValidToken = async (): Promise<string | null> => {
     if (tokenValidator.isTokenValid(accessToken.value)) {
       return accessToken.value;
     }
@@ -156,9 +186,9 @@ export function useAuth() {
   /**
    * Atualizar o token
    */
-  const refreshAuthentication = async () => {
+  const refreshAuthentication = async (): Promise<string | null> => {
     if (refreshState.inProgress) {
-      return new Promise((resolve) => {
+      return new Promise<string | null>((resolve) => {
         refreshState.queue.push(resolve);
       });
     }
@@ -206,7 +236,9 @@ export function useAuth() {
         return null;
       }
     } catch (error) {
-      handleAuthFailure(error);
+      handleAuthFailure(
+        error instanceof Error ? error : new Error(String(error))
+      );
       return null;
     } finally {
       refreshState.inProgress = false;
@@ -216,7 +248,7 @@ export function useAuth() {
   /**
    * Lidar com falhas de autenticação
    */
-  const handleAuthFailure = (error) => {
+  const handleAuthFailure = (error: Error): void => {
     console.error("Authentication refresh failed:", error);
 
     accessToken.value = "";
@@ -241,30 +273,46 @@ export function useAuth() {
   /**
    * Criar middleware de autenticação para Apollo Client
    */
-  const createAuthLink = () => {
+  const createAuthLink = (): ApolloLink => {
     return new ApolloLink((operation, forward) => {
       if (operation.getContext().skipAuth) {
         return forward(operation);
       }
 
-      return new Promise(async (resolve) => {
-        try {
-          const token = await ensureValidToken();
+      return new Observable((observer) => {
+        let handle: any;
 
-          if (token) {
-            operation.setContext(({ headers = {} }) => ({
-              headers: {
-                ...headers,
-                Authorization: `Bearer ${token}`,
-              },
-            }));
+        Promise.resolve().then(async () => {
+          try {
+            const token = await ensureValidToken();
+
+            if (token) {
+              operation.setContext(({ headers = {} }) => ({
+                headers: {
+                  ...headers,
+                  Authorization: `Bearer ${token}`,
+                },
+              }));
+            }
+
+            handle = forward(operation).subscribe({
+              next: observer.next.bind(observer),
+              error: observer.error.bind(observer),
+              complete: observer.complete.bind(observer),
+            });
+          } catch (error) {
+            console.error("Auth middleware error:", error);
+            handle = forward(operation).subscribe({
+              next: observer.next.bind(observer),
+              error: observer.error.bind(observer),
+              complete: observer.complete.bind(observer),
+            });
           }
+        });
 
-          resolve(forward(operation));
-        } catch (error) {
-          console.error("Auth middleware error:", error);
-          resolve(forward(operation));
-        }
+        return () => {
+          if (handle) handle.unsubscribe();
+        };
       });
     });
   };
@@ -320,7 +368,9 @@ export function useAuth() {
  * Criar middleware de autenticação para Apollo Client
  * Esta função é para uso direto sem o composable Vue
  */
-export function createAuthMiddleware(apolloClient) {
+export function createAuthMiddleware(
+  apolloClient: ApolloClient<any>
+): ApolloLink {
   const { authLink } = useAuth();
   return authLink;
 }

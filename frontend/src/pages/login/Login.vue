@@ -94,11 +94,17 @@
   </div>
 </template>
 
-<script>
-import { defineComponent, reactive, toRefs, onMounted } from "vue";
+<script lang="ts">
+import { defineComponent, reactive, toRefs, onMounted, Ref } from "vue";
 import { UserOutlined, LockOutlined } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "../../composables/useAuth";
+
+interface FormState {
+  email: string;
+  password: string;
+  remember: boolean;
+}
 
 export default defineComponent({
   name: "LoginView",
@@ -111,7 +117,7 @@ export default defineComponent({
 
     const { login, loading, error, isAuthenticated } = useAuth();
 
-    const formState = reactive({
+    const formState = reactive<FormState>({
       email: "",
       password: "",
       remember: false,
@@ -123,7 +129,7 @@ export default defineComponent({
       }
     });
 
-    const onFinish = async (values) => {
+    const onFinish = async (values: FormState): Promise<void> => {
       try {
         await login(values.email, values.password);
         router.push("/dashboard");
