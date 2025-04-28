@@ -126,12 +126,24 @@ export default defineComponent({
     onMounted(() => {
       if (auth.isAuthenticated.value) {
         router.push("/dashboard");
+      } else {
+        const savedEmail = localStorage.getItem("email");
+        if (savedEmail) {
+          formState.email = savedEmail;
+          formState.remember = true;
+        }
       }
     });
 
     const onFinish = async (values: FormState): Promise<void> => {
       try {
         await auth.login(values.email, values.password);
+        if (formState.remember) {
+          localStorage.setItem("email", values.email);
+        } else {
+          localStorage.removeItem("email");
+        }
+
         router.push("/dashboard");
       } catch (err) {
         console.error("Falha no login:", err);
