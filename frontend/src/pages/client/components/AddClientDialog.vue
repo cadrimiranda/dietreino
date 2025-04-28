@@ -45,6 +45,7 @@
 </template>
 
 <script lang="ts">
+import { message } from "ant-design-vue";
 import { ref, computed, defineComponent } from "vue";
 
 interface NewClient {
@@ -99,39 +100,32 @@ export default defineComponent({
 
     async function addClient(): Promise<void> {
       try {
-        // Basic validation
-        if (!newClient.value.name || !newClient.value.email) {
-          // In Ant Design, you would typically use form validation
-          // This is a simplified version
+        // Validação mais robusta
+        if (!newClient.value.name?.trim()) {
+          message.error("Nome é obrigatório");
+          return;
+        }
+
+        if (!newClient.value.email?.trim()) {
+          message.error("Email é obrigatório");
           return;
         }
 
         emit("update:is-adding", true);
 
-        // Mock user creation - in a real implementation, this would be done by the parent component
-        const mockUser: MockUser = {
-          id: Math.floor(Math.random() * 1000),
-          name: newClient.value.name,
-          email: newClient.value.email,
-          generatedPassword: "Senha@F0rte123",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          phone: newClient.value.phone,
-        };
+        // Apenas emitir os dados, não fechar o modal aqui
+        // O modal será fechado pelo ClientList.vue após sucesso
+        emit("client-added", {
+          name: newClient.value.name.trim(),
+          email: newClient.value.email.trim(),
+          phone: newClient.value.phone?.trim() || "",
+        });
 
-        // Emit event to parent component
-        emit("client-added", mockUser);
-
-        // Clear form
-        newClient.value = { name: "", email: "", phone: "" };
-
-        // Close the dialog
-        closeDialog();
+        // NÃO limpar o form ou fechar o diálogo aqui, esperar confirmação
       } catch (error) {
         console.error("Error in addClient:", error);
-        // Here you could show an error message with Ant Design's message component
-      } finally {
         emit("update:is-adding", false);
+        message.error("Erro ao processar dados do cliente");
       }
     }
 

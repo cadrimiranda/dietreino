@@ -46,7 +46,6 @@ export function useUsers(): UseUsersReturn {
         id
         name
         email
-        generatedPassword
         createdAt
         updatedAt
         phone
@@ -55,17 +54,14 @@ export function useUsers(): UseUsersReturn {
   `;
 
   const CREATE_USER = gql`
-    mutation CreateUserWithGeneratedPassword(
-      $createUserInput: CreateUserWithPasswordInput!
-    ) {
-      createUserWithGeneratedPassword(createUserInput: $createUserInput) {
+    mutation upsertUser($userInput: UserInput!) {
+      upsertUser(userInput: $userInput) {
         id
-        name
         email
-        generatedPassword
-        createdAt
-        updatedAt
+        name
         phone
+        createdAt
+        generatedPassword
       }
     }
   `;
@@ -99,30 +95,16 @@ export function useUsers(): UseUsersReturn {
     state.error = newError;
   });
 
-  interface CreateUserResponse {
-    createUserWithGeneratedPassword: User;
-  }
-
-  interface CreateUserVariables {
-    variables: {
-      createUserInput: UserInput;
-    };
-  }
-
   // Create user mutation
-  const { mutate: createUser, loading: createLoading } = useMutation<
-    CreateUserResponse,
-    CreateUserVariables
-  >(CREATE_USER);
+  const { mutate: createUser, loading: createLoading } =
+    useMutation(CREATE_USER);
 
   interface DeleteUserResponse {
     deleteUser: User;
   }
 
   interface DeleteUserVariables {
-    variables: {
-      id: string;
-    };
+    id: string;
   }
 
   // Delete user mutation
@@ -133,19 +115,16 @@ export function useUsers(): UseUsersReturn {
 
   // Add a new user
   const addUser = async (userData: UserInput): Promise<User> => {
+    console.log("Adding user:", userData);
     try {
-      const response = await createUser({
-        variables: {
-          createUserInput: userData,
-        },
-      });
+      const response = await createUser({ userInput: userData });
 
       // Return the newly created user
       if (!response?.data) {
         throw new Error("Failed to create user");
       }
 
-      return response.data.createUserWithGeneratedPassword;
+      return response.data.upsertUser;
     } catch (err) {
       state.error = err as ApolloError;
       throw err;
@@ -156,7 +135,7 @@ export function useUsers(): UseUsersReturn {
   const deleteUser = async (id: string): Promise<User> => {
     try {
       const response = await deleteUserMutation({
-        variables: { id },
+        id,
       });
 
       // Optimistically update the local state

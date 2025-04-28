@@ -47,15 +47,13 @@
       />
     </div>
     <div v-else class="mt-4">
-      <!-- Grid View -->
       <ClientCardGrid
-        v-if="viewMode"
+        v-if="viewMode === 'grid'"
         :clients="filteredClients"
         @view-client="viewClient"
         @delete-client="deleteClient"
       />
 
-      <!-- Table View -->
       <ClientDataTable
         v-else
         :clients="filteredClients"
@@ -135,6 +133,13 @@ interface CreatedUser extends User {
   generatedPassword: string;
 }
 
+interface UserInput {
+  id: string | null;
+  name: string;
+  email: string;
+  phone?: string;
+}
+
 export default defineComponent({
   name: "ClientList",
   components: {
@@ -160,7 +165,7 @@ export default defineComponent({
     const usuarioCriado = ref<boolean>(false);
     const temporaryPassword = ref<string>("");
     const newlyCreatedUsername = ref<string>("");
-    const viewMode = ref<boolean>(true); // true = grid, false = table
+    const viewMode = ref<"grid" | "table">("grid");
     const toast = useToast();
 
     // Use our composable
@@ -228,39 +233,41 @@ export default defineComponent({
     }
 
     function handleViewModeChange(mode: "grid" | "table"): void {
-      viewMode.value = mode === "grid";
+      viewMode.value = mode;
     }
 
-    async function handleClientAdded(newClient: User): Promise<void> {
+    async function handleClientAdded(newClient: UserInput): Promise<void> {
       try {
-        const createdUser = (await addUser(newClient)) as CreatedUser;
+        console.log("Dados do formulário:", newClient); // Debug
+
+        const createdUser = await addUser(newClient);
+        console.log("Usuário criado:", createdUser); // Debug
 
         usuarioCriado.value = true;
-        temporaryPassword.value = createdUser.generatedPassword;
+        temporaryPassword.value = createdUser.generatedPassword || "";
         newlyCreatedUsername.value = createdUser.name;
 
         showAddClientModal.value = false;
 
-        // Refresh client list
-        refetch();
+        // Chame explicitamente o refetch e aguarde
+        await refetch();
 
-        // Show success toast
         toast.add({
           severity: "success",
-          summary: "Client Added",
-          detail: "New client has been successfully added.",
+          summary: "Cliente Adicionado",
+          detail: "Novo cliente adicionado com sucesso.",
           life: 3000,
         });
       } catch (error) {
-        console.error("Error adding client:", error);
-
-        // Show error toast
+        console.error("Erro ao adicionar cliente:", error);
         toast.add({
           severity: "error",
-          summary: "Error",
-          detail: "Failed to create client. Please try again.",
+          summary: "Erro",
+          detail: "Falha ao criar cliente. Por favor, tente novamente.",
           life: 3000,
         });
+      } finally {
+        isAddingClient.value = false;
       }
     }
 
@@ -276,7 +283,7 @@ export default defineComponent({
 
     // Watch for view mode changes to save to localStorage
     watch(viewMode, (newViewMode) => {
-      localStorage.setItem("clientViewMode", newViewMode ? "grid" : "table");
+      localStorage.setItem("clientViewMode", newViewMode);
     });
 
     // Load saved preferences from localStorage
@@ -294,7 +301,10 @@ export default defineComponent({
       }
 
       if (savedViewMode) {
-        viewMode.value = savedViewMode === "grid";
+        viewMode.value =
+          savedViewMode === "grid" || savedViewMode === "table"
+            ? savedViewMode
+            : "grid";
       }
     }
 
