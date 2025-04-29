@@ -6,34 +6,58 @@
     :width="450"
     @cancel="closeDialog"
   >
-    <form @submit.prevent="saveClient">
-      <div class="form-container">
-        <div class="mb-4">
-          <a-form-item label="Full Name" required>
-            <a-input v-model:value="clientData.name" placeholder="John Doe" />
-          </a-form-item>
-        </div>
+    <a-form @submit.prevent="saveClient" layout="vertical">
+      <a-form-item
+        label="Full Name"
+        required
+        :rules="[
+          {
+            required: true,
+            message: 'Por favor insira um nome',
+          },
+          {
+            min: 6,
+            message: 'O nome deve ter pelo menos 6 caracteres',
+          },
+        ]"
+      >
+        <a-input v-model:value="clientData.name" placeholder="John Doe" />
+      </a-form-item>
 
-        <div class="mb-4">
-          <a-form-item label="Email" required>
-            <a-input
-              v-model:value="clientData.email"
-              type="email"
-              placeholder="john@example.com"
-            />
-          </a-form-item>
-        </div>
+      <a-form-item
+        label="Email"
+        required
+        :rules="[
+          { required: true, message: 'Por favor insira seu email' },
+          { type: 'email', message: 'Email inválido' },
+        ]"
+      >
+        <a-input
+          v-model:value="clientData.email"
+          type="email"
+          placeholder="john@example.com"
+        />
+      </a-form-item>
 
-        <div class="mb-4">
-          <a-form-item label="Phone">
-            <a-input
-              v-model:value="clientData.phone"
-              placeholder="+1 (123) 456-7890"
-            />
-          </a-form-item>
-        </div>
-      </div>
-    </form>
+      <a-form-item
+        label="Phone"
+        :rules="[
+          {
+            required: true,
+            message: 'Por favor insira um número de celular',
+          },
+          {
+            min: 11,
+            message: 'O número deve ter pelo menos 11 caracteres',
+          },
+        ]"
+      >
+        <a-input
+          v-model:value="clientData.phone"
+          placeholder="(48) 99121-8736"
+        />
+      </a-form-item>
+    </a-form>
 
     <template #footer>
       <a-button @click="closeDialog"> Cancel </a-button>
@@ -46,6 +70,7 @@
 
 <script lang="ts">
 import { IUserEntity } from "@/composables/useUsers";
+import { StringUtils } from "@/utils/stringUtils";
 import { message } from "ant-design-vue";
 import { ref, computed, defineComponent, watch } from "vue";
 
@@ -141,6 +166,15 @@ export default defineComponent({
         if (!clientData.value.email?.trim()) {
           message.error(
             props.isEditing ? "Email is required" : "Email é obrigatório"
+          );
+          return;
+        }
+
+        if (!StringUtils.isValidEmail(clientData.value.email.trim())) {
+          message.error(
+            props.isEditing
+              ? "Invalid email format"
+              : "Formato de email inválido"
           );
           return;
         }
