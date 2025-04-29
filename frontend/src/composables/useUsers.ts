@@ -3,14 +3,17 @@ import { useQuery, useMutation } from "@vue/apollo-composable";
 import gql from "graphql-tag";
 import { ApolloError } from "@apollo/client";
 
-interface User {
-  id: string;
+export interface ICommonClientData {
+  id: number | string;
   name: string;
   email: string;
+  phone: string;
+}
+
+export interface IUserEntity extends ICommonClientData {
   generatedPassword?: string;
   createdAt: string;
   updatedAt: string;
-  phone?: string;
 }
 
 interface UserInput {
@@ -20,14 +23,14 @@ interface UserInput {
 }
 
 interface UsersState {
-  users: User[];
+  users: IUserEntity[];
   loading: boolean;
   error: ApolloError | null;
 }
 
 interface UseUsersReturn extends ToRefs<UsersState> {
   refetch: () => Promise<any> | undefined; // Updated to allow undefined return
-  addUser: (userData: UserInput) => Promise<User>;
+  upsertUser: (userData: UserInput) => Promise<IUserEntity>;
   deleteUser: (id: string) => Promise<boolean>;
   createLoading: Ref<boolean>;
   deleteLoading: Ref<boolean>;
@@ -53,7 +56,7 @@ export function useUsers(): UseUsersReturn {
     }
   `;
 
-  const CREATE_USER = gql`
+  const UPSERT_USER = gql`
     mutation upsertUser($userInput: UserInput!) {
       upsertUser(userInput: $userInput) {
         id
@@ -72,12 +75,10 @@ export function useUsers(): UseUsersReturn {
     }
   `;
 
-  // Query for users
-  const { result, loading, error, refetch } = useQuery<{ users: User[] }>(
-    GET_USERS
-  );
+  const { result, loading, error, refetch } = useQuery<{
+    users: IUserEntity[];
+  }>(GET_USERS);
 
-  // Watch the result and update our state
   watch(result, (newResult) => {
     if (newResult) {
       state.users = newResult.users;
@@ -93,28 +94,17 @@ export function useUsers(): UseUsersReturn {
   });
 
   // Create user mutation
-  const { mutate: createUser, loading: createLoading } =
-    useMutation(CREATE_USER);
-
-  interface DeleteUserResponse {
-    deleteUser: User;
-  }
-
-  interface DeleteUserVariables {
-    id: string;
-  }
+  const { mutate: upsertMutation, loading: createLoading } =
+    useMutation(UPSERT_USER);
 
   // Delete user mutation
-  const { mutate: deleteUserMutation, loading: deleteLoading } = useMutation<
-    DeleteUserResponse,
-    DeleteUserVariables
-  >(DELETE_USER);
+  const { mutate: deleteUserMutation, loading: deleteLoading } =
+    useMutation(DELETE_USER);
 
   // Add a new user
-  const addUser = async (userData: UserInput): Promise<User> => {
-    console.log("Adding user:", userData);
+  const upsertUser = async (userData: UserInput): Promise<IUserEntity> => {
     try {
-      const response = await createUser({ userInput: userData });
+      const response = await upsertMutation({ userInput: userData });
 
       // Return the newly created user
       if (!response?.data) {
@@ -152,7 +142,7 @@ export function useUsers(): UseUsersReturn {
   return {
     ...toRefs(state),
     refetch,
-    addUser,
+    upsertUser,
     deleteUser,
     createLoading,
     deleteLoading,

@@ -1,149 +1,106 @@
 <template>
-  <a-table
-    :dataSource="clients"
-    :columns="columns"
-    :pagination="{
-      pageSize: 10,
-      pageSizeOptions: ['5', '10', '20', '50'],
-      showSizeChanger: true,
-    }"
-    :rowKey="(record) => record.id"
-    size="small"
-    :striped="true"
-  >
-    <template #headerCell="{ column }">
-      <template v-if="column.key === 'name'">
-        <div>
-          <span>Client Name</span>
-        </div>
-      </template>
-    </template>
-
-    <template #bodyCell="{ column, record }">
-      <!-- Client Name Column -->
-      <template v-if="column.key === 'name'">
-        <div class="flex items-center">
-          <a-avatar
-            :style="getAvatarStyle(record.id)"
-            shape="circle"
-            class="mr-2"
-          >
-            {{ getInitials(record.name) }}
-          </a-avatar>
+  <div class="overflow-hidden rounded-xl border-0 transition-all duration-300">
+    <a-table
+      :dataSource="clients"
+      :columns="columns"
+      :pagination="{
+        pageSize: 10,
+        pageSizeOptions: ['5', '10', '20', '50'],
+        showSizeChanger: true,
+      }"
+      :rowKey="(record: IClientData) => record.id"
+      size="small"
+      :rowClassName="() => 'hover:bg-gray-50 transition-colors duration-200'"
+      class="rounded-xl overflow-hidden border-0 shadow-sm"
+    >
+      <template #headerCell="{ column }">
+        <template v-if="column.key === 'name'">
           <div>
-            <p class="font-medium">{{ record.name }}</p>
-            <p class="text-xs text-gray-500">{{ record.email }}</p>
+            <span class="font-semibold">Client Name</span>
           </div>
-        </div>
+        </template>
       </template>
 
-      <!-- Training Status Column -->
-      <template v-if="column.key === 'trainingStatus'">
-        <a-tag :color="getStatusColor(record.trainingStatus)">
-          {{ capitalizeFirst(record.trainingStatus) }}
-        </a-tag>
-      </template>
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'name'">
+          <div class="flex items-center py-2">
+            <a-avatar
+              :style="formatters.getAvatarStyle(record.name)"
+              shape="square"
+              :size="40"
+              class="mr-3 rounded-lg shadow-sm"
+            >
+              {{ formatters.getInitials(record.name) }}
+            </a-avatar>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-base truncate">{{ record.name }}</p>
+              <p class="text-xs text-gray-500 truncate">{{ record.email }}</p>
+            </div>
+          </div>
+        </template>
 
-      <!-- Diet Status Column -->
-      <template v-if="column.key === 'dietStatus'">
-        <a-tag :color="getStatusColor(record.dietStatus)">
-          {{ capitalizeFirst(record.dietStatus) }}
-        </a-tag>
-      </template>
+        <template v-if="column.key === 'trainingStatus'">
+          <a-tag
+            :color="formatters.getStatusColor(record.trainingStatus)"
+            class="flex justify-center py-1 rounded-md text-center"
+          >
+            {{ formatters.capitalizeFirst(record.trainingStatus) }}
+          </a-tag>
+        </template>
 
-      <!-- Date Added Column -->
-      <template v-if="column.key === 'createdAt'">
-        <span>{{ formatDate(record.createdAt) }}</span>
-      </template>
+        <template v-if="column.key === 'dietStatus'">
+          <a-tag
+            :color="formatters.getStatusColor(record.dietStatus)"
+            class="flex justify-center py-1 rounded-md text-center"
+          >
+            {{ formatters.capitalizeFirst(record.dietStatus) }}
+          </a-tag>
+        </template>
 
-      <!-- Actions Column -->
-      <template v-if="column.key === 'actions'">
-        <div class="flex justify-center gap-2">
-          <a-tooltip title="View Details">
+        <template v-if="column.key === 'createdAt'">
+          <span class="text-xs text-gray-500 flex items-center">
+            <calendar-outlined class="mr-1" />
+            {{ formatters.formatDate(record.createdAt) }}
+          </span>
+        </template>
+
+        <template v-if="column.key === 'actions'">
+          <div class="flex justify-end gap-2">
             <a-button
-              shape="circle"
+              type="primary"
               size="small"
+              class="rounded-lg shadow-sm h-8 flex items-center"
               @click="$emit('view-client', record.id)"
             >
-              <template #icon><eye-outlined /></template>
+              View
+              <right-outlined class="ml-1" />
             </a-button>
-          </a-tooltip>
-          <a-tooltip title="Edit Client">
-            <a-button shape="circle" type="primary" ghost size="small">
-              <template #icon><edit-outlined /></template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip title="Delete Client">
-            <a-button
-              shape="circle"
-              danger
-              ghost
-              size="small"
-              @click="confirmDeleteClient(record.id)"
-            >
-              <template #icon><delete-outlined /></template>
-            </a-button>
-          </a-tooltip>
-        </div>
+            <ClientActionsDropdown
+              :clientId="record.id"
+              :clientName="record.name"
+              @edit-client="$emit('edit-client', $event)"
+              @delete-client="handleClientDelete($event)"
+            />
+          </div>
+        </template>
       </template>
-    </template>
-  </a-table>
-
-  <!-- Modal for delete confirmation -->
-  <a-modal
-    v-model:visible="deleteModalVisible"
-    title="Confirm Deletion"
-    okText="Delete"
-    cancelText="Cancel"
-    :okButtonProps="{ danger: true }"
-    @ok="handleDelete"
-  >
-    <p>Are you sure you want to delete this client?</p>
-  </a-modal>
+    </a-table>
+  </div>
 </template>
 
 <script lang="ts">
-import { ref, reactive, defineComponent, PropType } from "vue";
+import { defineComponent, PropType, ref } from "vue";
 import { notification } from "ant-design-vue";
-import {
-  EyeOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
-} from "@ant-design/icons-vue";
-
-interface Client {
-  id: number | string;
-  name: string;
-  email: string;
-  trainingStatus: string;
-  dietStatus: string;
-  createdAt: Date;
-  phone?: string;
-}
-
-interface StatusOption {
-  text: string;
-  value: string;
-}
-
-interface Column {
-  title: string;
-  dataIndex?: string;
-  key: string;
-  sorter?: (a: Client, b: Client) => number;
-  filteredValue?: string[] | null;
-  onFilter?: (value: string, record: Client) => boolean;
-  filters?: StatusOption[];
-}
+import { CalendarOutlined, RightOutlined } from "@ant-design/icons-vue";
+import { formatters, statusFilters, Client } from "./clientUtils";
+import ClientActionsDropdown from "./ClientActionsDropdown.vue";
+import { IClientData } from "./types";
 
 export default defineComponent({
-  name: "ClientDataTable",
   components: {
-    EyeOutlined,
-    EditOutlined,
-    DeleteOutlined,
-    SearchOutlined,
+    CalendarOutlined,
+    RightOutlined,
+    ClientActionsDropdown,
   },
   props: {
     clients: {
@@ -151,136 +108,89 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ["view-client", "delete-client"],
+  emits: ["view-client", "edit-client", "delete-client"],
   setup(props, { emit }) {
-    const deleteModalVisible = ref<boolean>(false);
-    const clientIdToDelete = ref<number | string | null>(null);
-    const searchText = ref<string>("");
-    const searchedColumn = ref<string>("");
-
-    // Filter states for each column
-    const nameFilter = ref<string>("");
-    const trainingStatusFilter = ref<string | null>(null);
-    const dietStatusFilter = ref<string | null>(null);
-
-    const statusOptions: StatusOption[] = [
-      { text: "Active", value: "active" },
-      { text: "Pending", value: "pending" },
-      { text: "Expired", value: "expired" },
-    ];
-
-    const columns = reactive<Column[]>([
+    const columns = [
       {
         title: "Client Name",
         dataIndex: "name",
         key: "name",
-        sorter: (a, b) => a.name.localeCompare(b.name),
-        filteredValue: nameFilter.value ? [nameFilter.value] : null,
-        onFilter: (value, record) =>
-          record.name.toLowerCase().includes(value.toLowerCase()),
+        sorter: (a: Client, b: Client) => a.name.localeCompare(b.name),
       },
       {
         title: "Training",
         dataIndex: "trainingStatus",
         key: "trainingStatus",
-        sorter: (a, b) => a.trainingStatus.localeCompare(b.trainingStatus),
-        filters: statusOptions,
-        onFilter: (value, record) => record.trainingStatus === value,
+        sorter: (a: Client, b: Client) =>
+          a.trainingStatus.localeCompare(b.trainingStatus),
+        filters: statusFilters,
+        onFilter: (value: string, record: Client) =>
+          record.trainingStatus === value,
       },
       {
         title: "Diet",
         dataIndex: "dietStatus",
         key: "dietStatus",
-        sorter: (a, b) => a.dietStatus.localeCompare(b.dietStatus),
-        filters: statusOptions,
-        onFilter: (value, record) => record.dietStatus === value,
+        sorter: (a: Client, b: Client) =>
+          a.dietStatus.localeCompare(b.dietStatus),
+        filters: statusFilters,
+        onFilter: (value: string, record: Client) =>
+          record.dietStatus === value,
       },
       {
         title: "Date Added",
         dataIndex: "createdAt",
         key: "createdAt",
-        sorter: (a, b) =>
+        sorter: (a: Client, b: Client) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       },
       {
         title: "Actions",
         key: "actions",
       },
-    ]);
+    ];
 
-    function getInitials(name: string): string {
-      return name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .substring(0, 2);
-    }
-
-    function getAvatarStyle(id: number | string): Record<string, string> {
-      const numId = typeof id === "string" ? parseInt(id, 10) : id;
-      return {
-        backgroundColor: `hsl(${(numId * 137.5) % 360}, 70%, 50%)`,
-        color: "white",
-      };
-    }
-
-    function formatDate(date: Date): string {
-      return new Intl.DateTimeFormat("pt-BR", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }).format(date);
-    }
-
-    function capitalizeFirst(str: string): string {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    function getStatusColor(status: string): string {
-      const map: Record<string, string> = {
-        active: "success",
-        pending: "warning",
-        expired: "error",
-        default: "default",
-      };
-      return map[status] || "default";
-    }
-
-    function confirmDeleteClient(id: number | string): void {
-      clientIdToDelete.value = id;
-      deleteModalVisible.value = true;
-    }
-
-    function handleDelete(): void {
-      if (clientIdToDelete.value !== null) {
-        emit("delete-client", clientIdToDelete.value);
-        notification.success({
-          message: "Success",
-          description: "Client deleted successfully",
-          duration: 3,
-        });
-        deleteModalVisible.value = false;
-      }
-    }
+    const handleClientDelete = (clientId: number | string) => {
+      emit("delete-client", clientId);
+      notification.success({
+        message: "Success",
+        description: "Client deleted successfully",
+        duration: 3,
+      });
+    };
 
     return {
       columns,
-      getInitials,
-      getAvatarStyle,
-      formatDate,
-      capitalizeFirst,
-      getStatusColor,
-      confirmDeleteClient,
-      deleteModalVisible,
-      handleDelete,
-      searchText,
-      searchedColumn,
-      nameFilter,
-      trainingStatusFilter,
-      dietStatusFilter,
-      statusOptions,
+      formatters,
+      handleClientDelete,
     };
   },
 });
 </script>
+
+<style scoped>
+a-button:focus,
+a-dropdown:focus {
+  outline: 2px solid #1890ff;
+  outline-offset: 2px;
+}
+
+:deep(.ant-table) {
+  border-radius: 12px;
+}
+
+:deep(.ant-table-thead > tr > th) {
+  background-color: #f5f7fa;
+  padding: 12px 16px;
+  font-weight: 600;
+}
+
+:deep(.ant-table-tbody > tr > td) {
+  padding: 12px 16px;
+}
+
+:deep(.ant-table-row:hover) {
+  transform: translateY(-2px);
+  transition: transform 0.3s ease;
+}
+</style>

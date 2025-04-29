@@ -5,6 +5,7 @@
         :client="client"
         @view-client="$emit('view-client', client.id)"
         @delete-client="$emit('delete-client', client.id)"
+        @edit-client="$emit('edit-client', client.id)"
       />
     </a-col>
   </a-row>
@@ -13,16 +14,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import ClientCard from "@/pages/client/components/ClientCard.vue";
-
-interface Client {
-  id: number | string;
-  name: string;
-  email: string;
-  trainingStatus: string;
-  dietStatus: string;
-  createdAt: Date;
-  phone?: string;
-}
+import { IClientData } from "./types";
 
 export default defineComponent({
   name: "ClientCardGrid",
@@ -31,10 +23,10 @@ export default defineComponent({
   },
   props: {
     clients: {
-      type: Array as PropType<Client[]>,
+      type: Array as PropType<IClientData[]>,
       required: true,
     },
   },
-  emits: ["view-client", "delete-client"],
+  emits: ["view-client", "delete-client", "edit-client"],
 });
 </script>

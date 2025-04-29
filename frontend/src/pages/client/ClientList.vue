@@ -2,7 +2,7 @@
 <template>
   <div class="p-4">
     <!-- Page header -->
-    <ClientHeader @add-client="showAddClientModal = true" />
+    <ClientHeader @add-client="showAddClientDialog" />
 
     <!-- Search and filters -->
     <ClientFilters
@@ -43,7 +43,7 @@
     <div v-else-if="filteredClients.length === 0" class="mt-4">
       <ClientEmptyState
         :has-search-query="!!searchQuery"
-        @add-client="showAddClientModal = true"
+        @add-client="showAddClientDialog"
       />
     </div>
     <div v-else class="mt-4">
@@ -52,6 +52,7 @@
         :clients="filteredClients"
         @view-client="viewClient"
         @delete-client="deleteClient"
+        @edit-client="showEditClientDialog"
       />
 
       <ClientDataTable
@@ -62,11 +63,12 @@
       />
     </div>
 
-    <!-- Add Client Modal -->
-    <AddClientDialog
-      v-model:visible="showAddClientModal"
-      v-model:is-adding="isAddingClient"
-      @client-added="handleClientAdded"
+    <ClientDialog
+      v-model:visible="clientDialogVisible"
+      v-model:is-processing="isUpsertingClient"
+      :is-editing="clientToEdit !== null"
+      :client-to-edit="clientToEdit"
+      @client-saved="upsertClient"
     />
 
     <!-- Password Reveal Dialog -->
@@ -97,7 +99,7 @@ import ClientErrorState from "@/pages/client/components/ClientErrorState.vue";
 import ClientEmptyState from "@/pages/client/components/ClientEmptyState.vue";
 import ClientCardGrid from "@/pages/client/components/ClientCardGrid.vue";
 import ClientDataTable from "@/pages/client/components/ClientDataTable.vue";
-import AddClientDialog from "@/pages/client/components/AddClientDialog.vue";
+import ClientDialog from "@/pages/client/components/ClientDialog.vue";
 import PasswordRevealDialog from "@/pages/client/components/PasswordRevealDialog.vue";
 import ClientStats from "@/pages/client/components/ClientStats.vue";
 import Toast from "primevue/toast";
@@ -105,33 +107,8 @@ import ConfirmDialog from "primevue/confirmdialog";
 import { useToast } from "primevue/usetoast";
 
 import { TableOutlined, AppstoreOutlined } from "@ant-design/icons-vue";
-import { useUsers } from "@/composables/useUsers";
-
-// Define interfaces
-interface Client {
-  id: number | string;
-  name: string;
-  email: string;
-  password?: string;
-  trainingStatus: string;
-  dietStatus: string;
-  createdAt: Date;
-  phone?: string;
-}
-
-interface User {
-  id: number | string;
-  name: string;
-  email: string;
-  generatedPassword?: string;
-  createdAt: string;
-  updatedAt?: string;
-  phone?: string;
-}
-
-interface CreatedUser extends User {
-  generatedPassword: string;
-}
+import { IUserEntity, useUsers } from "@/composables/useUsers";
+import { IClientData } from "./components/types";
 
 interface UserInput {
   id: string | null;
@@ -150,7 +127,7 @@ export default defineComponent({
     ClientEmptyState,
     ClientCardGrid,
     ClientDataTable,
-    AddClientDialog,
+    ClientDialog,
     PasswordRevealDialog,
     ClientStats,
     Toast,
@@ -159,9 +136,11 @@ export default defineComponent({
     AppstoreOutlined,
   },
   setup() {
+    const clientDialogVisible = ref(false);
+    const clientToEdit = ref<IUserEntity | null>(null);
+
     const searchQuery = ref<string>("");
     const filterStatus = ref<string>("all");
-    const showAddClientModal = ref<boolean>(false);
     const usuarioCriado = ref<boolean>(false);
     const temporaryPassword = ref<string>("");
     const newlyCreatedUsername = ref<string>("");
@@ -174,37 +153,35 @@ export default defineComponent({
       loading,
       error,
       refetch,
-      addUser,
+      upsertUser,
       deleteUser,
-      createLoading: isAddingClient,
+      createLoading: isUpsertingClient,
     } = useUsers();
 
+    const generateStatus = () =>
+      Math.random() > 0.5
+        ? "active"
+        : Math.random() > 0.5
+        ? "pending"
+        : "expired";
+
     // Clients computed property
-    const clients = computed<Client[]>(() => {
-      return users.value.map((user: User) => ({
+    const clients = computed<IClientData[]>(() =>
+      users.value.map((user) => ({
         id: user.id,
         name: user.name,
         email: user.email,
         password: user.generatedPassword,
-        trainingStatus:
-          Math.random() > 0.5
-            ? "active"
-            : Math.random() > 0.5
-            ? "pending"
-            : "expired",
-        dietStatus:
-          Math.random() > 0.5
-            ? "active"
-            : Math.random() > 0.5
-            ? "pending"
-            : "expired",
-        createdAt: new Date(user.createdAt),
         phone: user.phone,
-      }));
-    });
+        createdAt: new Date(user.createdAt),
+        updatedAt: new Date(user.updatedAt),
+        trainingStatus: generateStatus(),
+        dietStatus: generateStatus(),
+      }))
+    );
 
     // Filtered clients based on search and filter
-    const filteredClients = computed<Client[]>(() => {
+    const filteredClients = computed<IClientData[]>(() => {
       let result = clients.value;
 
       if (searchQuery.value) {
@@ -227,29 +204,63 @@ export default defineComponent({
       return result;
     });
 
-    function viewClient(id: number | string): void {
-      console.log(`Navegando para o cliente ${id}`);
-      // this.$router.push(`/clients/${id}`);
-    }
-
     function handleViewModeChange(mode: "grid" | "table"): void {
       viewMode.value = mode;
     }
 
-    async function handleClientAdded(newClient: UserInput): Promise<void> {
+    const showAddClientDialog = () => {
+      clientToEdit.value = null;
+      clientDialogVisible.value = true;
+    };
+
+    const showEditClientDialog = (clientId: number | string) => {
+      const client = users.value.find((c) => c.id === clientId);
+      if (client) {
+        clientToEdit.value = { ...client };
+        clientDialogVisible.value = true;
+      }
+    };
+
+    // View client details
+    const viewClient = (clientId: number | string) => {
+      // Navigate to client details page
+      console.log(`Navigate to client details for ID: ${clientId}`);
+    };
+
+    async function upsertClient(newClient: UserInput): Promise<void> {
       try {
-        console.log("Dados do formulário:", newClient); // Debug
+        const isNewUser = clientToEdit.value === null;
+        const clientInput: UserInput = {
+          id: newClient.id,
+          name: newClient.name,
+          email: newClient.email,
+          phone: newClient.phone || "",
+        };
+        const createdUser = await upsertUser(clientInput);
 
-        const createdUser = await addUser(newClient);
-        console.log("Usuário criado:", createdUser); // Debug
+        if (isNewUser) {
+          usuarioCriado.value = isNewUser;
+          temporaryPassword.value = createdUser.generatedPassword || "";
+          newlyCreatedUsername.value = createdUser.name;
 
-        usuarioCriado.value = true;
-        temporaryPassword.value = createdUser.generatedPassword || "";
-        newlyCreatedUsername.value = createdUser.name;
+          toast.add({
+            severity: "success",
+            summary: "Cliente Adicionado",
+            detail: "Novo cliente adicionado com sucesso.",
+            life: 3000,
+          });
+        } else {
+          clientToEdit.value = null;
+          toast.add({
+            severity: "success",
+            summary: "Cliente Atualizado",
+            detail: "Cliente atualizado com sucesso.",
+            life: 3000,
+          });
+        }
 
-        showAddClientModal.value = false;
+        clientDialogVisible.value = false;
 
-        // Chame explicitamente o refetch e aguarde
         await refetch();
 
         toast.add({
@@ -266,8 +277,6 @@ export default defineComponent({
           detail: "Falha ao criar cliente. Por favor, tente novamente.",
           life: 3000,
         });
-      } finally {
-        isAddingClient.value = false;
       }
     }
 
@@ -332,8 +341,7 @@ export default defineComponent({
     return {
       searchQuery,
       filterStatus,
-      showAddClientModal,
-      isAddingClient,
+      isUpsertingClient,
       usuarioCriado,
       temporaryPassword,
       newlyCreatedUsername,
@@ -344,9 +352,13 @@ export default defineComponent({
       viewMode,
       viewClient,
       handleViewModeChange,
-      handleClientAdded,
+      upsertClient,
       deleteClient,
       refetch,
+      clientDialogVisible,
+      clientToEdit,
+      showAddClientDialog,
+      showEditClientDialog,
     };
   },
 });
