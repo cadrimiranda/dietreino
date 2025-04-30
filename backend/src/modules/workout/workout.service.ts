@@ -25,4 +25,8 @@ export class WorkoutService {
   delete(id: number) {
     return this.repository.delete(id);
   }
+
+  findByUserId(userId: string) {
+    return this.repository.findByUserId(userId);
+  }
 }

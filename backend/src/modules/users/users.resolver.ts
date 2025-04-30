@@ -17,10 +17,15 @@ import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../../entities';
+import { WorkoutType } from '../workout/workout.type';
+import { WorkoutService } from '../workout/workout.service';
 
 @Resolver(() => UserType)
 export class UsersResolver {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly workoutService: WorkoutService,
+  ) {}
 
   @Query(() => [UserType])
   @UseGuards(GqlAuthGuard, RolesGuard)
@@ -114,7 +119,6 @@ export class UsersResolver {
     return this.usersService.getClientForProfessional(clientId, professionalId);
   }
 
-  // Resolve fields para garantir que os objetos relacionados sejam carregados
   @ResolveField('trainer', () => UserType, { nullable: true })
   async resolveTrainer(@Parent() user: User) {
     if (user.trainerId) {
@@ -145,5 +149,13 @@ export class UsersResolver {
       return this.usersService.getClientsForNutritionist(user.id);
     }
     return [];
+  }
+
+  @ResolveField('workouts', () => [WorkoutType], { nullable: true })
+  async resolveWorkouts(@Parent() user: User) {
+    if (!user.id) {
+      return [];
+    }
+    return this.workoutService.findByUserId(user.id);
   }
 }
