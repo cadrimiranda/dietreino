@@ -18,7 +18,6 @@ import {
   LocalStorageTokenService,
   TokenValidator,
 } from "../security/authStorage";
-import WorkoutTable from "@/pages/workout/WorkoutTable.vue";
 import ClientWorkoutDetails from "@/pages/client/workout/ClientWorkoutDetails.vue";
 
 // Define component interfaces for the simple template components
