@@ -121,11 +121,9 @@ type UserType {
   id: ID!
   name: String!
   nutritionist: UserType
-  nutritionistId: ID
   phone: String!
   role: UserRole!
   trainer: UserType
-  trainerId: ID
   updatedAt: DateTime!
 }
 

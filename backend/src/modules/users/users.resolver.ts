@@ -1,4 +1,12 @@
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  ID,
+  ResolveField,
+  Parent,
+} from '@nestjs/graphql';
 import { UsersService } from './users.service';
 import { UserType } from './dto/user.type';
 import { UserInput } from './dto/user.input';
@@ -104,5 +112,38 @@ export class UsersResolver {
     @Args('professionalId', { type: () => ID }) professionalId: string,
   ): Promise<UserType> {
     return this.usersService.getClientForProfessional(clientId, professionalId);
+  }
+
+  // Resolve fields para garantir que os objetos relacionados sejam carregados
+  @ResolveField('trainer', () => UserType, { nullable: true })
+  async resolveTrainer(@Parent() user: User) {
+    if (user.trainerId) {
+      return this.usersService.findById(user.trainerId);
+    }
+    return null;
+  }
+
+  @ResolveField('nutritionist', () => UserType, { nullable: true })
+  async resolveNutritionist(@Parent() user: User) {
+    if (user.nutritionistId) {
+      return this.usersService.findById(user.nutritionistId);
+    }
+    return null;
+  }
+
+  @ResolveField('clients_as_trainer', () => [UserType], { nullable: true })
+  async resolveClientsAsTrainer(@Parent() user: User) {
+    if (user.role === UserRole.TRAINER) {
+      return this.usersService.getClientsForTrainer(user.id);
+    }
+    return [];
+  }
+
+  @ResolveField('clients_as_nutritionist', () => [UserType], { nullable: true })
+  async resolveClientsAsNutritionist(@Parent() user: User) {
+    if (user.role === UserRole.NUTRITIONIST) {
+      return this.usersService.getClientsForNutritionist(user.id);
+    }
+    return [];
   }
 }

@@ -27,12 +27,6 @@ export class UserType {
   @Field(() => UserRole)
   role: UserRole;
 
-  @Field(() => ID, { nullable: true })
-  trainerId: string;
-
-  @Field(() => ID, { nullable: true })
-  nutritionistId: string;
-
   @Field(() => UserType, { nullable: true })
   trainer: UserType;
 

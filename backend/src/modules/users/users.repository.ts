@@ -76,4 +76,11 @@ export class UsersRepository {
       nutritionist: client?.nutritionist || null,
     };
   }
+
+  async findByIdWithRelations(id: string): Promise<User | null> {
+    return this.repository.findOne({
+      where: { id },
+      relations: ['trainer', 'nutritionist'],
+    });
+  }
 }

@@ -17,7 +17,7 @@ export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
   async findById(id: string): Promise<User> {
-    const user = await this.usersRepository.findById(id);
+    const user = await this.usersRepository.findByIdWithRelations(id);
     if (!user) {
       throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
     }
@@ -42,7 +42,6 @@ export class UsersService {
     currentUser?: User,
   ): Promise<User & { generatedPassword?: string }> {
     const isUpdate = !!data.id;
-
     // Aplicar auto-vinculação com o profissional atual se necessário
     data = this.applyProfessionalAutoLink(data, currentUser);
 
