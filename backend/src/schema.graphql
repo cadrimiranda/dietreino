@@ -34,6 +34,7 @@ type LoginResponse {
 }
 
 type Mutation {
+  addWorkoutToUser(clientId: ID!, workoutInput: CreateWorkoutInput!): WorkoutType!
   assignNutritionist(clientId: ID!, nutritionistId: ID!): UserType!
   assignTrainer(clientId: ID!, trainerId: ID!): UserType!
   createWorkout(createWorkoutInput: CreateWorkoutInput!): WorkoutType!
@@ -42,16 +43,10 @@ type Mutation {
   extractWorkoutSheet(file: Upload!): [SheetExercises!]!
   login(loginInput: LoginInput!): LoginResponse!
   me: UserType!
-  processWorkoutFile(input: ProcessWorkoutFileInput!): WorkoutPreviewType!
   processXlsx(file: Upload!): XlsxData!
   refreshToken(refreshTokenInput: RefreshTokenInput!): LoginResponse!
   updateWorkout(updateWorkoutInput: UpdateWorkoutInput!): WorkoutType
   upsertUser(userInput: UserInput!): UserType!
-}
-
-input ProcessWorkoutFileInput {
-  file: Upload!
-  userId: String!
 }
 
 type Query {
@@ -125,24 +120,7 @@ type UserType {
   role: UserRole!
   trainer: UserType
   updatedAt: DateTime!
-}
-
-type WorkoutExercisePreviewType {
-  exerciseName: String!
-  notes: String
-  order: Int!
-  repetitions: String!
-  rest: String!
-  sets: Int!
-}
-
-type WorkoutPreviewType {
-  exercises: [WorkoutExercisePreviewType!]!
-  isActive: Boolean!
-  name: String!
-  userId: String!
-  weekEnd: Int!
-  weekStart: Int!
+  workouts: [WorkoutType!]
 }
 
 type WorkoutType {

@@ -19,6 +19,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../../entities';
 import { WorkoutType } from '../workout/workout.type';
 import { WorkoutService } from '../workout/workout.service';
+import { CreateWorkoutInput } from '../workout/dto/create-workout.input';
 
 @Resolver(() => UserType)
 export class UsersResolver {
@@ -117,6 +118,27 @@ export class UsersResolver {
     @Args('professionalId', { type: () => ID }) professionalId: string,
   ): Promise<UserType> {
     return this.usersService.getClientForProfessional(clientId, professionalId);
+  }
+
+  @Mutation(() => WorkoutType)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
+  async addWorkoutToUser(
+    @Args('clientId', { type: () => ID }) clientId: string,
+    @Args('workoutInput') input: CreateWorkoutInput,
+    @CurrentUser() currentUser: User,
+  ): Promise<WorkoutType> {
+    await this.usersService.getClientForProfessional(clientId, currentUser.id);
+
+    const workout = await this.workoutService.create({
+      user_id: clientId,
+      name: input.name,
+      week_start: input.weekStart,
+      week_end: input.weekEnd,
+      is_active: input.isActive ?? false,
+    });
+
+    return this.workoutService.toWorkoutType(workout);
   }
 
   @ResolveField('trainer', () => UserType, { nullable: true })

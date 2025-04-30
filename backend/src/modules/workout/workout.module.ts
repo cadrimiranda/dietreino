@@ -5,10 +5,9 @@ import { WorkoutRepository } from './workout.repository';
 import { WorkoutService } from './workout.service';
 import { WorkoutResolver } from './workout.resolver';
 import { XlsxModule } from '../xlsx/xlsx.module';
-import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Workout]), XlsxModule, UsersModule],
+  imports: [TypeOrmModule.forFeature([Workout]), XlsxModule],
   providers: [WorkoutRepository, WorkoutService, WorkoutResolver],
   exports: [WorkoutService],
 })

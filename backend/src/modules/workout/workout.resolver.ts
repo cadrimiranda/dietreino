@@ -4,38 +4,15 @@ import { WorkoutType } from './workout.type';
 import { CreateWorkoutInput } from './dto/create-workout.input';
 import { UpdateWorkoutInput } from './dto/update-workout.input';
 import { Workout } from '../../entities/workout.entity';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User } from 'src/entities';
-import { UserRole } from 'src/utils/roles.enum';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
-import { UseGuards } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
 
 @Resolver(() => WorkoutType)
 export class WorkoutResolver {
-  constructor(
-    private readonly workoutService: WorkoutService,
-    private readonly usersService: UsersService,
-  ) {}
-
-  private toWorkoutType = (entity: Workout): WorkoutType => {
-    return {
-      id: entity.id,
-      userId: entity.user_id,
-      name: entity.name,
-      weekStart: entity.week_start,
-      weekEnd: entity.week_end,
-      isActive: entity.is_active,
-      createdAt: entity.created_at,
-    };
-  };
+  constructor(private readonly workoutService: WorkoutService) {}
 
   @Query(() => [WorkoutType])
   async workouts(): Promise<WorkoutType[]> {
     const entities = await this.workoutService.findAll();
-    return entities.map(this.toWorkoutType);
+    return entities.map(this.workoutService.toWorkoutType);
   }
 
   @Query(() => WorkoutType, { nullable: true })
@@ -43,7 +20,7 @@ export class WorkoutResolver {
     @Args('id', { type: () => ID }) id: number,
   ): Promise<WorkoutType | null> {
     const entity = await this.workoutService.findById(id);
-    return entity ? this.toWorkoutType(entity) : null;
+    return entity ? this.workoutService.toWorkoutType(entity) : null;
   }
 
   @Mutation(() => WorkoutType)
@@ -57,7 +34,7 @@ export class WorkoutResolver {
       week_end: input.weekEnd,
       is_active: input.isActive ?? false,
     });
-    return this.toWorkoutType(entity);
+    return this.workoutService.toWorkoutType(entity);
   }
 
   @Mutation(() => WorkoutType, { nullable: true })
@@ -73,7 +50,7 @@ export class WorkoutResolver {
       Number(input.id),
       updateData,
     );
-    return entity ? this.toWorkoutType(entity) : null;
+    return entity ? this.workoutService.toWorkoutType(entity) : null;
   }
 
   @Mutation(() => Boolean)
@@ -82,26 +59,5 @@ export class WorkoutResolver {
   ): Promise<boolean> {
     await this.workoutService.delete(id);
     return true;
-  }
-
-  @Mutation(() => WorkoutType)
-  @UseGuards(GqlAuthGuard, RolesGuard)
-  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
-  async addWorkoutToUser(
-    @Args('userId', { type: () => ID }) userId: string,
-    @Args('workoutInput') input: CreateWorkoutInput,
-    @CurrentUser() currentUser: User,
-  ): Promise<WorkoutType> {
-    await this.usersService.getClientForProfessional(userId, currentUser.id);
-
-    const entity = await this.workoutService.create({
-      user_id: userId,
-      name: input.name,
-      week_start: input.weekStart,
-      week_end: input.weekEnd,
-      is_active: input.isActive ?? false,
-    });
-
-    return this.toWorkoutType(entity);
   }
 }
