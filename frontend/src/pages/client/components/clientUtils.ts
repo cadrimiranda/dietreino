@@ -9,12 +9,7 @@ export interface Client {
   phone?: string;
 }
 
-export type StatusType =
-  | "active"
-  | "pending"
-  | "inactive"
-  | "completed"
-  | "overdue";
+export type StatusType = "ativo" | "pendente" | "inativo" | "atrasado";
 
 export const formatters = {
   getInitials(name: string): string {
@@ -67,9 +62,8 @@ export const formatters = {
 };
 
 export const statusFilters = [
-  { text: "Active", value: "active" },
-  { text: "Pending", value: "pending" },
-  { text: "Inactive", value: "inactive" },
-  { text: "Completed", value: "completed" },
-  { text: "Overdue", value: "overdue" },
+  { text: "Ativo", value: "ativo" },
+  { text: "Pendente", value: "pendente" },
+  { text: "Inativo", value: "inativo" },
+  { text: "Atrasado", value: "atrasado" },
 ];

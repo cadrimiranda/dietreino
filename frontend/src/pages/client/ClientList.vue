@@ -109,6 +109,7 @@ import { useToast } from "primevue/usetoast";
 import { TableOutlined, AppstoreOutlined } from "@ant-design/icons-vue";
 import { IUserEntity, useUsers } from "@/composables/useUsers";
 import { IClientData } from "./components/types";
+import { useRouter } from "vue-router";
 
 interface UserInput {
   id: string | null;
@@ -146,6 +147,7 @@ export default defineComponent({
     const newlyCreatedUsername = ref<string>("");
     const viewMode = ref<"grid" | "table">("grid");
     const toast = useToast();
+    const router = useRouter();
 
     // Use our composable
     const {
@@ -160,10 +162,10 @@ export default defineComponent({
 
     const generateStatus = () =>
       Math.random() > 0.5
-        ? "active"
+        ? "ativo"
         : Math.random() > 0.5
-        ? "pending"
-        : "expired";
+        ? "inativo"
+        : "expirado";
 
     // Clients computed property
     const clients = computed<IClientData[]>(() =>
@@ -221,10 +223,9 @@ export default defineComponent({
       }
     };
 
-    // View client details
     const viewClient = (clientId: number | string) => {
-      // Navigate to client details page
-      console.log(`Navigate to client details for ID: ${clientId}`);
+      alert(`Viewing client with ID: ${clientId}`);
+      router.push(`/clients/${clientId}`);
     };
 
     async function upsertClient(newClient: UserInput): Promise<void> {

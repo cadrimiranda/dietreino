@@ -36,14 +36,8 @@
 
       <div class="bg-gray-50 rounded-lg p-3 mb-3">
         <div class="grid grid-cols-2 gap-3">
-          <ClientStatusDisplay
-            label="Training Status"
-            :status="client.trainingStatus"
-          />
-          <ClientStatusDisplay
-            label="Diet Status"
-            :status="client.dietStatus"
-          />
+          <ClientStatusDisplay label="Treino" :status="client.trainingStatus" />
+          <ClientStatusDisplay label="Dieta" :status="client.dietStatus" />
         </div>
       </div>
 
@@ -60,7 +54,7 @@
           class="rounded-lg shadow-sm h-8 flex items-center"
           @click="$emit('view-client', client.id)"
         >
-          View Details
+          Detalhes
           <right-outlined class="ml-1" />
         </a-button>
       </div>

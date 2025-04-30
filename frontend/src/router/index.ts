@@ -7,7 +7,6 @@ import {
   NavigationGuardNext,
 } from "vue-router";
 import { message } from "ant-design-vue";
-import { computed } from "vue";
 import MainLayout from "../components/MainLayout.vue";
 import Login from "../pages/login/Login.vue";
 import Dashboard from "../components/Dashboard.vue";
@@ -19,6 +18,8 @@ import {
   LocalStorageTokenService,
   TokenValidator,
 } from "../security/authStorage";
+import WorkoutTable from "@/pages/workout/WorkoutTable.vue";
+import ClientWorkoutDetails from "@/pages/client/workout/ClientWorkoutDetails.vue";
 
 // Define component interfaces for the simple template components
 interface TemplateComponent {
@@ -76,8 +77,19 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: "clients",
-        name: "Clients",
-        component: ClientList,
+        meta: { requiresAuth: true },
+        children: [
+          {
+            path: "",
+            name: "ClientList",
+            component: ClientList,
+          },
+          {
+            path: ":clientId",
+            name: "ClientView",
+            component: ClientWorkoutDetails,
+          },
+        ],
       },
       {
         path: "clients/:id",

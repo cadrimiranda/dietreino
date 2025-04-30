@@ -3,11 +3,11 @@
     <template #overlay>
       <a-menu @click="handleMenuClick" class="rounded-lg">
         <a-menu-item key="edit" class="px-4 py-2">
-          <edit-outlined class="mr-2" /> Edit Client
+          <edit-outlined class="mr-2" /> Editar
         </a-menu-item>
         <a-menu-divider />
         <a-menu-item key="delete" class="px-4 py-2 text-red-500">
-          <delete-outlined class="mr-2" /> Delete Client
+          <delete-outlined class="mr-2" /> Excluir
         </a-menu-item>
       </a-menu>
     </template>
