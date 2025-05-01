@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { WorkoutExerciseRepository } from './workout-exercise.repository';
 import { WorkoutExercise } from '../../entities/workout-exercise.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { RepScheme } from '../../entities/rep-scheme.entity';
-import { RestInterval } from '../../entities/rest-interval.entity';
+import { RepSchemeService } from '../rep-scheme/rep-scheme.service';
+import { RestIntervalService } from '../rest-interval/rest-interval.service';
 
 interface RepSchemeData {
   sets: number;
@@ -34,10 +32,8 @@ interface WorkoutExerciseCreateData {
 export class WorkoutExerciseService {
   constructor(
     private readonly repository: WorkoutExerciseRepository,
-    @InjectRepository(RepScheme)
-    private readonly repSchemeRepository: Repository<RepScheme>,
-    @InjectRepository(RestInterval)
-    private readonly restIntervalRepository: Repository<RestInterval>,
+    private readonly repSchemeService: RepSchemeService,
+    private readonly restIntervalService: RestIntervalService,
   ) {}
 
   create(data: Partial<WorkoutExercise>) {
@@ -63,30 +59,29 @@ export class WorkoutExerciseService {
   async createWithRelationships(
     data: WorkoutExerciseCreateData,
   ): Promise<WorkoutExercise> {
-    // 1. Extrair os dados para relações
     const { repSchemes, restIntervals, ...workoutExerciseData } = data;
 
-    // 2. Criar o workout_exercise
     const workoutExercise = await this.create(workoutExerciseData);
 
-    // 3. Criar os rep_schemes
     if (repSchemes && repSchemes.length > 0) {
-      for (const schemeData of repSchemes) {
-        await this.repSchemeRepository.save({
-          workout_exercise_id: workoutExercise.id,
-          ...schemeData,
-        });
-      }
+      const repSchemesWithId = repSchemes.map((scheme) => ({
+        workout_exercise_id: workoutExercise.id,
+        sets: scheme.sets,
+        min_reps: scheme.min_reps,
+        max_reps: scheme.max_reps,
+      }));
+
+      await this.repSchemeService.bulkCreate(repSchemesWithId);
     }
 
-    // 4. Criar os rest_intervals
     if (restIntervals && restIntervals.length > 0) {
-      for (const intervalData of restIntervals) {
-        await this.restIntervalRepository.save({
-          workout_exercise_id: workoutExercise.id,
-          ...intervalData,
-        });
-      }
+      const restIntervalsWithId = restIntervals.map((interval) => ({
+        workout_exercise_id: workoutExercise.id,
+        interval_time: interval.interval_time,
+        order: interval.order,
+      }));
+
+      await this.restIntervalService.bulkCreate(restIntervalsWithId);
     }
 
     return workoutExercise;
