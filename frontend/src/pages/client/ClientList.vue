@@ -89,7 +89,7 @@
 </template>
 
 <script lang="ts">
-import { ref, computed, watch, defineComponent } from "vue";
+import { ref, computed, watch, defineComponent, onMounted } from "vue";
 
 // Import components
 import ClientHeader from "@/pages/client/components/ClientHeader.vue";
@@ -158,7 +158,12 @@ export default defineComponent({
       upsertUser,
       deleteUser,
       createLoading: isUpsertingClient,
+      resetState,
     } = useUsers({});
+
+    onMounted(() => {
+      resetState();
+    });
 
     const generateStatus = () =>
       Math.random() > 0.5

@@ -83,6 +83,7 @@ interface UseUsersReturn extends ToRefs<UsersState> {
   extractSheetLoading: Ref<boolean>;
   importSheetLoading: Ref<boolean>;
   user: Ref<{ user: IUserEntity } | undefined>;
+  resetState: () => void;
 }
 
 export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
@@ -182,7 +183,7 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
 
   const { result, loading, error, refetch } = useQuery<{
     users: IUserEntity[];
-  }>(GET_USERS, null, { enabled: !userId });
+  }>(GET_USERS, null, { enabled: !userId, fetchPolicy: "network-only" });
 
   watch(result, (newResult) => {
     if (newResult) {
@@ -287,6 +288,12 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
     }
   };
 
+  const resetState = () => {
+    state.loading = true;
+    state.error = null;
+    refetch?.();
+  };
+
   return {
     ...toRefs(state),
     refetch,
@@ -300,5 +307,6 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
     importSheetLoading,
     userLoading,
     user,
+    resetState,
   };
 }
