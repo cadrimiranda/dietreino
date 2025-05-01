@@ -158,7 +158,7 @@ export default defineComponent({
       upsertUser,
       deleteUser,
       createLoading: isUpsertingClient,
-    } = useUsers();
+    } = useUsers({});
 
     const generateStatus = () =>
       Math.random() > 0.5
@@ -224,7 +224,6 @@ export default defineComponent({
     };
 
     const viewClient = (clientId: number | string) => {
-      alert(`Viewing client with ID: ${clientId}`);
       router.push(`/clients/${clientId}`);
     };
 

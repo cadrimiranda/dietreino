@@ -1,5 +1,5 @@
 import { reactive, toRefs, watch, ToRefs, Ref } from "vue";
-import { useQuery, useMutation } from "@vue/apollo-composable";
+import { useQuery, useMutation, useLazyQuery } from "@vue/apollo-composable";
 import gql from "graphql-tag";
 import { ApolloError } from "@apollo/client";
 
@@ -22,6 +22,49 @@ interface UserInput {
   phone?: string;
 }
 
+interface RepRange {
+  minReps: number;
+  maxReps: number;
+  sets: number;
+}
+
+interface ExerciseInfo {
+  name: string;
+  rawReps: string;
+  repSchemes: RepRange[];
+  restIntervals: string;
+}
+
+interface SheetExercises {
+  sheetName: string;
+  exercises: ExerciseInfo[];
+}
+
+interface ImportSheetWorkoutInput {
+  userId: string;
+  workoutName: string;
+  sheetName: string;
+  weekStart: number;
+  weekEnd: number;
+  isActive: boolean;
+  exercises: {
+    name: string;
+    rawReps: string;
+    repSchemes: RepRange[];
+    restIntervals: string[];
+  }[];
+}
+
+interface WorkoutType {
+  id: string;
+  name: string;
+  userId: string;
+  weekStart: number;
+  weekEnd: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
 interface UsersState {
   users: IUserEntity[];
   loading: boolean;
@@ -29,19 +72,49 @@ interface UsersState {
 }
 
 interface UseUsersReturn extends ToRefs<UsersState> {
-  refetch: () => Promise<any> | undefined; // Updated to allow undefined return
+  refetch: () => Promise<any> | undefined;
   upsertUser: (userData: UserInput) => Promise<IUserEntity>;
   deleteUser: (id: string) => Promise<boolean>;
+  extractWorkoutSheet: (file: File) => Promise<SheetExercises[]>;
+  importSheetWorkout: (input: ImportSheetWorkoutInput) => Promise<WorkoutType>;
   createLoading: Ref<boolean>;
   deleteLoading: Ref<boolean>;
+  userLoading: Ref<boolean>;
+  extractSheetLoading: Ref<boolean>;
+  importSheetLoading: Ref<boolean>;
+  user: Ref<{ user: IUserEntity } | undefined>;
 }
 
-export function useUsers(): UseUsersReturn {
+export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
   const state = reactive<UsersState>({
     users: [],
     loading: true,
     error: null,
   });
+
+  const GET_USER = gql`
+    query GetUser($id: ID!) {
+      user(id: $id) {
+        id
+        name
+        email
+        createdAt
+        updatedAt
+        nutritionist {
+          id
+          name
+        }
+        trainer {
+          id
+          name
+        }
+        workouts {
+          id
+          name
+        }
+      }
+    }
+  `;
 
   const GET_USERS = gql`
     query GetUsers {
@@ -75,9 +148,41 @@ export function useUsers(): UseUsersReturn {
     }
   `;
 
+  const EXTRACT_WORKOUT_SHEET = gql`
+    mutation ExtractWorkoutSheet($file: Upload!) {
+      extractWorkoutSheet(file: $file) {
+        sheetName
+        exercises {
+          name
+          rawReps
+          repSchemes {
+            minReps
+            maxReps
+            sets
+          }
+          restIntervals
+        }
+      }
+    }
+  `;
+
+  const IMPORT_SHEET_WORKOUT = gql`
+    mutation ImportSheetWorkout($input: ImportSheetWorkoutInput!) {
+      importSheetWorkout(input: $input) {
+        id
+        name
+        userId
+        weekStart
+        weekEnd
+        isActive
+        createdAt
+      }
+    }
+  `;
+
   const { result, loading, error, refetch } = useQuery<{
     users: IUserEntity[];
-  }>(GET_USERS);
+  }>(GET_USERS, null, { enabled: !userId });
 
   watch(result, (newResult) => {
     if (newResult) {
@@ -93,20 +198,29 @@ export function useUsers(): UseUsersReturn {
     state.error = newError;
   });
 
-  // Create user mutation
+  const { loading: userLoading, result: user } = useQuery<
+    {
+      user: IUserEntity;
+    },
+    { id: string }
+  >(GET_USER, { id: userId as string }, { enabled: !!userId });
+
   const { mutate: upsertMutation, loading: createLoading } =
     useMutation(UPSERT_USER);
 
-  // Delete user mutation
   const { mutate: deleteUserMutation, loading: deleteLoading } =
     useMutation(DELETE_USER);
 
-  // Add a new user
+  const { mutate: extractWorkoutSheetMutation, loading: extractSheetLoading } =
+    useMutation(EXTRACT_WORKOUT_SHEET);
+
+  const { mutate: importSheetWorkoutMutation, loading: importSheetLoading } =
+    useMutation(IMPORT_SHEET_WORKOUT);
+
   const upsertUser = async (userData: UserInput): Promise<IUserEntity> => {
     try {
       const response = await upsertMutation({ userInput: userData });
 
-      // Return the newly created user
       if (!response?.data) {
         throw new Error("Failed to create user");
       }
@@ -118,14 +232,12 @@ export function useUsers(): UseUsersReturn {
     }
   };
 
-  // Delete a user by ID
   const deleteUser = async (id: string): Promise<boolean> => {
     try {
       const response = await deleteUserMutation({
         id,
       });
 
-      // Optimistically update the local state
       state.users = state.users.filter((user) => user.id !== id);
 
       if (!response?.data) {
@@ -139,12 +251,54 @@ export function useUsers(): UseUsersReturn {
     return Promise.resolve(true);
   };
 
+  const extractWorkoutSheet = async (file: File): Promise<SheetExercises[]> => {
+    try {
+      const response = await extractWorkoutSheetMutation({
+        file,
+      });
+
+      if (!response?.data) {
+        throw new Error("Failed to extract workout sheet");
+      }
+
+      return response.data.extractWorkoutSheet;
+    } catch (err) {
+      state.error = err as ApolloError;
+      throw err;
+    }
+  };
+
+  const importSheetWorkout = async (
+    input: ImportSheetWorkoutInput
+  ): Promise<WorkoutType> => {
+    try {
+      const response = await importSheetWorkoutMutation({
+        input,
+      });
+
+      if (!response?.data) {
+        throw new Error("Failed to import workout sheet");
+      }
+
+      return response.data.importSheetWorkout;
+    } catch (err) {
+      state.error = err as ApolloError;
+      throw err;
+    }
+  };
+
   return {
     ...toRefs(state),
     refetch,
     upsertUser,
     deleteUser,
+    extractWorkoutSheet,
+    importSheetWorkout,
     createLoading,
     deleteLoading,
+    extractSheetLoading,
+    importSheetLoading,
+    userLoading,
+    user,
   };
 }

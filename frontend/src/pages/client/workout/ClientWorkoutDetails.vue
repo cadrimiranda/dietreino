@@ -81,9 +81,11 @@
 </template>
 
 <script lang="ts">
-import { ref, reactive, defineComponent, onMounted } from "vue";
+import { ref, reactive, defineComponent, onMounted, watch } from "vue";
 import { UserOutlined, PrinterOutlined } from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
+import { IUserEntity, useUsers } from "@/composables/useUsers";
+import { useRoute } from "vue-router";
 
 export default defineComponent({
   name: "ClientWorkoutDetails",
@@ -102,11 +104,30 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const client = reactive({
-      id: props.clientId,
-      name: "Carlos Miranda",
-      email: "cadriano.miranda@gmail.com",
+    const router = useRoute();
+    const userId = router.params.clientId as string;
+    const { user } = useUsers({ userId });
+
+    const client = reactive<IUserEntity>({
+      id: "",
+      name: "",
+      email: "",
+      phone: "",
+      createdAt: "",
+      updatedAt: "",
     });
+
+    // Observe as mudanças em user e atualize client quando os dados chegarem
+    watch(
+      user,
+      (newUser) => {
+        console.log("User data:", newUser);
+        if (newUser && newUser && newUser.user) {
+          Object.assign(client, newUser.user);
+        }
+      },
+      { immediate: true }
+    );
 
     const workout = reactive({
       id: props.workoutId,
@@ -215,7 +236,7 @@ export default defineComponent({
       const opt = {
         margin: 10,
         filename: `treino-${client.name
-          .toLowerCase()
+          ?.toLowerCase()
           .replace(/\s+/g, "-")}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
