@@ -11,7 +11,7 @@ export class ExercisesResolver {
 
   private toExerciseType = (entity: Exercise): ExerciseType => {
     return {
-      id: String(entity.id),
+      id: entity.id,
       name: entity.name,
       muscleGroup: entity.muscle_group,
       videoLink: entity.video_link,

@@ -1,13 +1,32 @@
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  ID,
+  Parent,
+  ResolveField,
+} from '@nestjs/graphql';
 import { WorkoutExerciseService } from './workout-exercise.service';
 import { WorkoutExerciseType } from './dto/workout-exercise.type';
 import { CreateWorkoutExerciseInput } from './dto/create-workout-exercise.input';
 import { UpdateWorkoutExerciseInput } from './dto/update-workout-exercise.input';
 import { WorkoutExercise } from '../../entities/workout-exercise.entity';
+import { ExerciseType } from '../exercise/dto/exercise.type';
+import { ExerciseService } from '../exercise/exercise.service';
+import { RepSchemeService } from '../rep-scheme/rep-scheme.service';
+import { RestIntervalService } from '../rest-interval/rest-interval.service';
+import { RepSchemeType } from '../rep-scheme/dto/rep-scheme.type';
+import { RestIntervalType } from '../rest-interval/dto/rest-interval.type';
 
 @Resolver(() => WorkoutExerciseType)
 export class WorkoutExerciseResolver {
-  constructor(private readonly service: WorkoutExerciseService) {}
+  constructor(
+    private readonly service: WorkoutExerciseService,
+    private readonly exerciseService: ExerciseService,
+    private readonly repSchemeService: RepSchemeService,
+    private readonly restIntervalService: RestIntervalService,
+  ) {}
 
   private toType = (entity: WorkoutExercise): WorkoutExerciseType => {
     return {
@@ -19,6 +38,14 @@ export class WorkoutExerciseResolver {
       repetitions: entity.repetitions,
       rest: entity.rest,
       notes: entity.notes,
+      exercise: {
+        id: entity.exercise.id,
+        name: entity.exercise.name,
+        muscleGroup: entity.exercise.muscle_group,
+        videoLink: entity.exercise.video_link,
+      },
+      repSchemes: [],
+      restIntervals: [],
     };
   };
 
@@ -76,5 +103,20 @@ export class WorkoutExerciseResolver {
   ): Promise<boolean> {
     await this.service.delete(id);
     return true;
+  }
+
+  @ResolveField('exercise', () => ExerciseType, { nullable: true })
+  async resolveExercise(@Parent() workoutExercise: WorkoutExercise) {
+    return this.exerciseService.findById(workoutExercise.exercise_id);
+  }
+
+  @ResolveField('repSchemes', () => [RepSchemeType], { nullable: true })
+  async resolveRepSchemes(@Parent() workoutExercise: WorkoutExercise) {
+    return this.repSchemeService.findByWorkoutExerciseId(workoutExercise.id);
+  }
+
+  @ResolveField('restIntervals', () => [RestIntervalType], { nullable: true })
+  async resolveRestIntervals(@Parent() workoutExercise: WorkoutExercise) {
+    return this.restIntervalService.findByWorkoutExerciseId(workoutExercise.id);
   }
 }

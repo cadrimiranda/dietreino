@@ -1,4 +1,7 @@
 import { ObjectType, Field, Int, ID } from '@nestjs/graphql';
+import { ExerciseType } from '../../exercise/dto/exercise.type';
+import { RepSchemeType } from '../../rep-scheme/dto/rep-scheme.type';
+import { RestIntervalType } from '../../rest-interval/dto/rest-interval.type';
 
 @ObjectType()
 export class WorkoutExerciseType {
@@ -25,4 +28,13 @@ export class WorkoutExerciseType {
 
   @Field({ nullable: true })
   notes?: string;
+
+  @Field(() => ExerciseType, { nullable: true })
+  exercise: ExerciseType;
+
+  @Field(() => [RepSchemeType], { nullable: true })
+  repSchemes: RepSchemeType[];
+
+  @Field(() => [RestIntervalType], { nullable: true })
+  restIntervals: RestIntervalType[];
 }

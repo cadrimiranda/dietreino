@@ -34,4 +34,12 @@ export class WorkoutExerciseRepository {
   async delete(id: number): Promise<void> {
     await this.repository.delete(id);
   }
+
+  async findByWorkoutId(workoutId: number): Promise<WorkoutExercise[]> {
+    return this.repository.find({
+      where: { workout_id: workoutId },
+      relations: ['exercise'],
+      order: { order: 'ASC' },
+    });
+  }
 }

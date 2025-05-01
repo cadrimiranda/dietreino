@@ -126,6 +126,19 @@ input RepSchemeInput {
   sets: Int!
 }
 
+type RepSchemeType {
+  id: ID!
+  max_reps: Int!
+  min_reps: Int!
+  sets: Int!
+}
+
+type RestIntervalType {
+  id: ID!
+  interval_time: String!
+  order: Int!
+}
+
 type SheetData {
   data: [[String!]!]!
   name: String!
@@ -199,12 +212,15 @@ type UserType {
 }
 
 type WorkoutExerciseType {
+  exercise: ExerciseType
   exerciseId: Int!
   id: ID!
   notes: String
   order: Int!
+  repSchemes: [RepSchemeType!]
   repetitions: String!
   rest: String!
+  restIntervals: [RestIntervalType!]
   sets: Int!
   workoutId: Int!
 }
@@ -217,6 +233,7 @@ type WorkoutType {
   userId: String!
   weekEnd: Int!
   weekStart: Int!
+  workoutExercises: [WorkoutExerciseType!]
 }
 
 type XlsxData {

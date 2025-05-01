@@ -14,7 +14,7 @@ export class WorkoutService {
     private readonly workoutExerciseService: WorkoutExerciseService,
   ) {}
 
-  toWorkoutType(workout: Workout): WorkoutType {
+  toWorkoutType(workout: Workout): Partial<WorkoutType> {
     return {
       id: workout.id,
       userId: workout.user_id,
@@ -52,7 +52,7 @@ export class WorkoutService {
 
   async importSheetWorkout(
     input: ImportSheetWorkoutInput,
-  ): Promise<WorkoutType> {
+  ): Promise<Partial<WorkoutType>> {
     // 1. Criar o workout
     const workout = await this.create({
       user_id: input.userId,

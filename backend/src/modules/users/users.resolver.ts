@@ -127,7 +127,7 @@ export class UsersResolver {
     @Args('clientId', { type: () => ID }) clientId: string,
     @Args('workoutInput') input: CreateWorkoutInput,
     @CurrentUser() currentUser: User,
-  ): Promise<WorkoutType> {
+  ): Promise<Partial<WorkoutType>> {
     await this.usersService.getClientForProfessional(clientId, currentUser.id);
 
     const workout = await this.workoutService.create({

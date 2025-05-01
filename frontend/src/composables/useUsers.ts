@@ -112,6 +112,24 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
         workouts {
           id
           name
+          workoutExercises {
+            id
+            exercise {
+              id
+              name
+              video_link
+            }
+            repSchemes {
+              id
+              sets
+              min_reps
+              max_reps
+            }
+            restIntervals {
+              id
+              interval_time
+              order
+            }
         }
       }
     }

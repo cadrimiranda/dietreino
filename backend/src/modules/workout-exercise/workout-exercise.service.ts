@@ -86,4 +86,8 @@ export class WorkoutExerciseService {
 
     return workoutExercise;
   }
+
+  async findByWorkoutId(workoutId: number): Promise<WorkoutExercise[]> {
+    return this.repository.findByWorkoutId(workoutId);
+  }
 }
