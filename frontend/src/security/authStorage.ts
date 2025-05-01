@@ -96,8 +96,7 @@ export class TokenValidator {
 
     try {
       const decoded = jwtDecode<JwtPayload>(token);
-      // Margem de segurança de 30 segundos
-      return decoded.exp * 1000 > Date.now() + 30000;
+      return decoded.exp * 1000 > Date.now() + 120000;
     } catch {
       return false;
     }

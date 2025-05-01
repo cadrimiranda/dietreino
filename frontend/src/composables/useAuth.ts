@@ -1,4 +1,3 @@
-// src/composables/useAuth.ts
 import { ref, reactive, computed, watch, ComputedRef, Ref } from "vue";
 import { useRouter } from "vue-router";
 import { ApolloLink, gql, ApolloClient, Observable } from "@apollo/client/core";
@@ -67,11 +66,9 @@ const REFRESH_TOKEN_MUTATION = gql`
   }
 `;
 
-// Create a singleton instance of token storage and validator
 const tokenStorage = new LocalStorageTokenService();
 const tokenValidator = new TokenValidator();
 
-// IMPORTANT: Create these shared refs outside the composable
 const accessToken = ref<string>(tokenStorage.getAccessToken() || "");
 const refreshToken = ref<string>(tokenStorage.getRefreshToken() || "");
 const currentUser = ref<User | null>(tokenStorage.getUser());
@@ -81,66 +78,106 @@ const isAuthenticated = computed(() => {
   return tokenValidator.isTokenValid(accessToken.value);
 });
 
-// Shared refresh state
 const refreshState = reactive<RefreshState>({
   inProgress: false,
   queue: [],
 });
 
+async function refreshAccessToken(
+  apolloClient: ApolloClient<any>
+): Promise<boolean> {
+  if (refreshState.inProgress) {
+    return new Promise((resolve) => {
+      refreshState.queue.push((success) => {
+        resolve(!!success);
+      });
+    });
+  }
+
+  refreshState.inProgress = true;
+
+  try {
+    const { data } = await apolloClient.mutate({
+      mutation: REFRESH_TOKEN_MUTATION,
+      variables: {
+        refreshTokenInput: { refreshToken: refreshToken.value },
+      },
+      context: { skipAuth: true },
+    });
+
+    const result = data?.refreshToken;
+    if (result?.accessToken && result?.refreshToken) {
+      accessToken.value = result.accessToken;
+      refreshToken.value = result.refreshToken;
+      tokenStorage.setAccessToken(result.accessToken);
+      tokenStorage.setRefreshToken(result.refreshToken);
+
+      if (result.user) {
+        currentUser.value = result.user;
+        tokenStorage.setUser(result.user);
+      }
+
+      refreshState.queue.forEach((callback) => callback(accessToken.value));
+      refreshState.queue = [];
+      refreshState.inProgress = false;
+      return true;
+    }
+
+    throw new Error("Failed to refresh token");
+  } catch (err) {
+    console.error("Failed to refresh token:", err);
+    accessToken.value = "";
+    refreshToken.value = "";
+    currentUser.value = null;
+    tokenStorage.clearTokens();
+
+    refreshState.queue.forEach((callback) => callback(null));
+    refreshState.queue = [];
+    refreshState.inProgress = false;
+
+    window.dispatchEvent(new CustomEvent("auth:session-expired"));
+    return false;
+  }
+}
+
 // Create auth link factory function instead of exporting the link directly
 export function createAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
   return new ApolloLink((operation, forward) => {
+    // Pule autenticação se indicado no contexto
     if (operation.getContext().skipAuth) {
       return forward(operation);
     }
 
     return new Observable((observer) => {
       let handle: any;
+      let isRefreshing = false;
 
       Promise.resolve().then(async () => {
         try {
-          // Check if token is valid
-          if (
-            !tokenValidator.isTokenValid(accessToken.value) &&
-            refreshToken.value
-          ) {
-            try {
-              // Try to refresh the token
-              const { data } = await apolloClient.mutate({
-                mutation: REFRESH_TOKEN_MUTATION,
-                variables: {
-                  refreshTokenInput: { refreshToken: refreshToken.value },
-                },
-                context: { skipAuth: true },
-              });
+          if (!tokenValidator.isTokenValid(accessToken.value)) {
+            if (refreshToken.value) {
+              isRefreshing = true;
+              const success = await refreshAccessToken(apolloClient);
+              isRefreshing = false;
 
-              const result = data?.refreshToken;
-              if (result?.accessToken && result?.refreshToken) {
-                // Update tokens
-                accessToken.value = result.accessToken;
-                refreshToken.value = result.refreshToken;
-                tokenStorage.setAccessToken(result.accessToken);
-                tokenStorage.setRefreshToken(result.refreshToken);
-
-                if (result.user) {
-                  currentUser.value = result.user;
-                  tokenStorage.setUser(result.user);
-                }
+              if (!success) {
+                handle = forward(operation).subscribe({
+                  next: observer.next.bind(observer),
+                  error: observer.error.bind(observer),
+                  complete: observer.complete.bind(observer),
+                });
+                return;
               }
-            } catch (err) {
-              console.error("Failed to refresh token:", err);
-              // Clear token on error
-              accessToken.value = "";
-              refreshToken.value = "";
-              currentUser.value = null;
-              tokenStorage.clearTokens();
-
-              // Dispatch event but don't redirect here
-              window.dispatchEvent(new CustomEvent("auth:session-expired"));
+            } else {
+              handle = forward(operation).subscribe({
+                next: observer.next.bind(observer),
+                error: observer.error.bind(observer),
+                complete: observer.complete.bind(observer),
+              });
+              return;
             }
           }
 
-          // Proceed with the operation
           if (accessToken.value) {
             operation.setContext(({ headers = {} }) => ({
               headers: {
@@ -152,7 +189,39 @@ export function createAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
 
           handle = forward(operation).subscribe({
             next: observer.next.bind(observer),
-            error: observer.error.bind(observer),
+            error: (error) => {
+              if (
+                error.networkError?.statusCode === 401 &&
+                refreshToken.value &&
+                !isRefreshing
+              ) {
+                isRefreshing = true;
+                refreshAccessToken(apolloClient).then((success) => {
+                  isRefreshing = false;
+                  if (success) {
+                    // Tente a operação novamente com o novo token
+                    operation.setContext(({ headers = {} }) => ({
+                      headers: {
+                        ...headers,
+                        Authorization: `Bearer ${accessToken.value}`,
+                      },
+                    }));
+
+                    forward(operation).subscribe({
+                      next: observer.next.bind(observer),
+                      error: observer.error.bind(observer),
+                      complete: observer.complete.bind(observer),
+                    });
+                  } else {
+                    // Propague o erro original
+                    observer.error(error);
+                  }
+                });
+              } else {
+                // Propague outros erros
+                observer.error(error);
+              }
+            },
             complete: observer.complete.bind(observer),
           });
         } catch (error) {
@@ -208,12 +277,10 @@ export function useAuth() {
       const result = data.login;
 
       if (result.accessToken && result.refreshToken) {
-        // Update the tokens and the user
         accessToken.value = result.accessToken;
         refreshToken.value = result.refreshToken;
         currentUser.value = result.user;
 
-        // Save to storage
         tokenStorage.setAccessToken(result.accessToken);
         tokenStorage.setRefreshToken(result.refreshToken);
         tokenStorage.setUser(result.user);
@@ -268,15 +335,13 @@ export function useAuth() {
       });
   };
 
-  // Set up event listener for session expiration
   if (typeof window !== "undefined") {
     window.addEventListener("auth:session-expired", () => {
       message.warning("Sua sessão expirou. Por favor, faça login novamente.");
-      logout();
+      router.push("/login");
     });
   }
 
-  // Return the composable API
   return {
     loading,
     error,
@@ -287,7 +352,6 @@ export function useAuth() {
   };
 }
 
-// Setup function for creating the auth link in main.ts
 export function setupAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
   return createAuthLink(apolloClient);
 }

@@ -1,4 +1,3 @@
-// src/router/index.ts
 import {
   createRouter,
   createWebHistory,
@@ -20,7 +19,6 @@ import {
 } from "../security/authStorage";
 import ClientWorkoutDetails from "@/pages/client/workout/ClientWorkoutDetails.vue";
 
-// Define component interfaces for the simple template components
 interface TemplateComponent {
   template: string;
 }
@@ -37,15 +35,16 @@ const ProgressView: TemplateComponent = {
 };
 const Settings: TemplateComponent = { template: "<div>Settings</div>" };
 
-// Avoid using useAuth directly in router setup
-// Instead, use the token validator directly to check authentication
 const tokenService = new LocalStorageTokenService();
 const tokenValidator = new TokenValidator();
 
-// Check authentication status without using useAuth
 function isAuthenticated(): boolean {
   const token = tokenService.getAccessToken();
-  return tokenValidator.isTokenValid(token);
+  if (!tokenValidator.isTokenValid(token)) {
+    const refreshTokenValue = tokenService.getRefreshToken();
+    return !!refreshTokenValue;
+  }
+  return true;
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -143,7 +142,6 @@ router.beforeEach(
   ) => {
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-    // Check authentication without composable
     const authenticated = isAuthenticated();
 
     if (requiresAuth && !authenticated) {
