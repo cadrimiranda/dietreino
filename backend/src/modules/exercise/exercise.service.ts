@@ -25,4 +25,8 @@ export class ExerciseService {
   delete(id: number) {
     return this.repository.delete(id);
   }
+
+  async findByName(name: string): Promise<Exercise | null> {
+    return this.repository.findByName(name);
+  }
 }

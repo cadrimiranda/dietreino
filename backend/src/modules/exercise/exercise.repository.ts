@@ -10,6 +10,10 @@ export class ExerciseRepository {
     private readonly repository: Repository<Exercise>,
   ) {}
 
+  async findByName(name: string): Promise<Exercise | null> {
+    return this.repository.findOne({ where: { name } });
+  }
+
   async create(data: Partial<Exercise>): Promise<Exercise> {
     const entity = this.repository.create(data);
     return this.repository.save(entity);

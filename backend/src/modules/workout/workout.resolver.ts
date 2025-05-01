@@ -4,6 +4,12 @@ import { WorkoutType } from './workout.type';
 import { CreateWorkoutInput } from './dto/create-workout.input';
 import { UpdateWorkoutInput } from './dto/update-workout.input';
 import { Workout } from '../../entities/workout.entity';
+import { UseGuards } from '@nestjs/common';
+import { UserRole } from 'src/utils/roles.enum';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { ImportSheetWorkoutInput } from './dto/import-sheet-workout.input';
 
 @Resolver(() => WorkoutType)
 export class WorkoutResolver {
@@ -59,5 +65,14 @@ export class WorkoutResolver {
   ): Promise<boolean> {
     await this.workoutService.delete(id);
     return true;
+  }
+
+  @Mutation(() => WorkoutType)
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
+  async importSheetWorkout(
+    @Args('input') input: ImportSheetWorkoutInput,
+  ): Promise<WorkoutType> {
+    return this.workoutService.importSheetWorkout(input);
   }
 }
