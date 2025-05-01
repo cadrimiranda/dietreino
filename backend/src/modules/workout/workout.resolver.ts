@@ -5,7 +5,7 @@ import { CreateWorkoutInput } from './dto/create-workout.input';
 import { UpdateWorkoutInput } from './dto/update-workout.input';
 import { Workout } from '../../entities/workout.entity';
 import { UseGuards } from '@nestjs/common';
-import { UserRole } from 'src/utils/roles.enum';
+import { UserRole } from '../../utils/roles.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
