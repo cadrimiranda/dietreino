@@ -172,7 +172,6 @@ export default defineComponent({
         ? "inativo"
         : "expirado";
 
-    // Clients computed property
     const clients = computed<IClientData[]>(() =>
       users.value.map((user) => ({
         id: user.id,
@@ -187,7 +186,6 @@ export default defineComponent({
       }))
     );
 
-    // Filtered clients based on search and filter
     const filteredClients = computed<IClientData[]>(() => {
       let result = clients.value;
 

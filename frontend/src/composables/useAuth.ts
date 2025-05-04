@@ -1,6 +1,8 @@
-import { ref, reactive, computed, watch, ComputedRef, Ref } from "vue";
+import { ref, reactive, computed } from "vue";
 import { useRouter } from "vue-router";
-import { ApolloLink, gql, ApolloClient, Observable } from "@apollo/client/core";
+import { ApolloLink, ApolloClient, Observable } from "@apollo/client/core";
+
+import gql from "graphql-tag";
 import { useApolloClient } from "@vue/apollo-composable";
 import { message } from "ant-design-vue";
 

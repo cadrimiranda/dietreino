@@ -1,7 +1,8 @@
 import { reactive, toRefs, watch, ToRefs, Ref } from "vue";
-import { useQuery, useMutation, useLazyQuery } from "@vue/apollo-composable";
-import gql from "graphql-tag";
+import { useQuery, useMutation } from "@vue/apollo-composable";
 import { ApolloError } from "@apollo/client";
+import { UserType } from "@/generated/graphql";
+import gql from "graphql-tag";
 
 export interface ICommonClientData {
   id: number | string;
@@ -26,18 +27,6 @@ interface RepRange {
   minReps: number;
   maxReps: number;
   sets: number;
-}
-
-interface ExerciseInfo {
-  name: string;
-  rawReps: string;
-  repSchemes: RepRange[];
-  restIntervals: string;
-}
-
-interface SheetExercises {
-  sheetName: string;
-  exercises: ExerciseInfo[];
 }
 
 interface ImportSheetWorkoutInput {
@@ -71,22 +60,7 @@ interface UsersState {
   error: ApolloError | null;
 }
 
-interface UseUsersReturn extends ToRefs<UsersState> {
-  refetch: () => Promise<any> | undefined;
-  upsertUser: (userData: UserInput) => Promise<IUserEntity>;
-  deleteUser: (id: string) => Promise<boolean>;
-  extractWorkoutSheet: (file: File) => Promise<SheetExercises[]>;
-  importSheetWorkout: (input: ImportSheetWorkoutInput) => Promise<WorkoutType>;
-  createLoading: Ref<boolean>;
-  deleteLoading: Ref<boolean>;
-  userLoading: Ref<boolean>;
-  extractSheetLoading: Ref<boolean>;
-  importSheetLoading: Ref<boolean>;
-  user: Ref<{ user: IUserEntity } | undefined>;
-  resetState: () => void;
-}
-
-export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
+export function useUsers({ userId }: { userId?: string }) {
   const state = reactive<UsersState>({
     users: [],
     loading: true,
@@ -101,36 +75,6 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
         email
         createdAt
         updatedAt
-        nutritionist {
-          id
-          name
-        }
-        trainer {
-          id
-          name
-        }
-        workouts {
-          id
-          name
-          workoutExercises {
-            id
-            exercise {
-              id
-              name
-              video_link
-            }
-            repSchemes {
-              id
-              sets
-              min_reps
-              max_reps
-            }
-            restIntervals {
-              id
-              interval_time
-              order
-            }
-        }
       }
     }
   `;
@@ -144,6 +88,39 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
         createdAt
         updatedAt
         phone
+        nutritionist {
+          id
+          name
+        }
+        trainer {
+          id
+          name
+        }
+        workouts {
+          id
+          name
+          weekStart
+          weekEnd
+          workoutExercises {
+            id
+            exercise {
+              id
+              name
+              videoLink
+            }
+            repSchemes {
+              id
+              sets
+              min_reps
+              max_reps
+            }
+            restIntervals {
+              id
+              interval_time
+              order
+            }
+          }
+        }
       }
     }
   `;
@@ -164,24 +141,6 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
   const DELETE_USER = gql`
     mutation DeleteUser($id: ID!) {
       deleteUser(id: $id)
-    }
-  `;
-
-  const EXTRACT_WORKOUT_SHEET = gql`
-    mutation ExtractWorkoutSheet($file: Upload!) {
-      extractWorkoutSheet(file: $file) {
-        sheetName
-        exercises {
-          name
-          rawReps
-          repSchemes {
-            minReps
-            maxReps
-            sets
-          }
-          restIntervals
-        }
-      }
     }
   `;
 
@@ -219,7 +178,7 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
 
   const { loading: userLoading, result: user } = useQuery<
     {
-      user: IUserEntity;
+      user: UserType;
     },
     { id: string }
   >(GET_USER, { id: userId as string }, { enabled: !!userId });
@@ -229,9 +188,6 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
 
   const { mutate: deleteUserMutation, loading: deleteLoading } =
     useMutation(DELETE_USER);
-
-  const { mutate: extractWorkoutSheetMutation, loading: extractSheetLoading } =
-    useMutation(EXTRACT_WORKOUT_SHEET);
 
   const { mutate: importSheetWorkoutMutation, loading: importSheetLoading } =
     useMutation(IMPORT_SHEET_WORKOUT);
@@ -270,23 +226,6 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
     return Promise.resolve(true);
   };
 
-  const extractWorkoutSheet = async (file: File): Promise<SheetExercises[]> => {
-    try {
-      const response = await extractWorkoutSheetMutation({
-        file,
-      });
-
-      if (!response?.data) {
-        throw new Error("Failed to extract workout sheet");
-      }
-
-      return response.data.extractWorkoutSheet;
-    } catch (err) {
-      state.error = err as ApolloError;
-      throw err;
-    }
-  };
-
   const importSheetWorkout = async (
     input: ImportSheetWorkoutInput
   ): Promise<WorkoutType> => {
@@ -317,11 +256,9 @@ export function useUsers({ userId }: { userId?: string }): UseUsersReturn {
     refetch,
     upsertUser,
     deleteUser,
-    extractWorkoutSheet,
     importSheetWorkout,
     createLoading,
     deleteLoading,
-    extractSheetLoading,
     importSheetLoading,
     userLoading,
     user,
