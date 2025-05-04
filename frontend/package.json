@@ -4,18 +4,22 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run generate && vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate": "graphql-codegen --config codegen.yml",
+    "generate:watch": "graphql-codegen --config codegen.yml --watch"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@primeuix/themes": "^1.0.3",
+    "@types/apollo-upload-client": "^18.0.0",
     "@vue/apollo-composable": "^4.2.2",
     "@vue/apollo-option": "^4.2.2",
     "@vue/compiler-sfc": "^3.5.13",
     "ant-design-vue": "^4.2.6",
+    "apollo-upload-client": "^18.0.1",
     "autoprefixer": "^10.4.21",
     "date-fns": "^4.1.0",
     "graphql": "^16.10.0",
@@ -29,6 +33,11 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.5",
+    "@graphql-codegen/introspection": "^4.0.3",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.0",
+    "@graphql-codegen/typescript-vue-apollo": "^4.1.1",
     "@vitejs/plugin-vue": "^5.2.2",
     "@vue/cli-plugin-typescript": "~5.0.0",
     "@vue/tsconfig": "^0.7.0",
