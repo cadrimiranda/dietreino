@@ -29,9 +29,21 @@ class ExerciseInfoInput {
 }
 
 @InputType()
+class WorkoutExercise {
+  @Field()
+  sheetName: string;
+
+  @Field(() => [ExerciseInfoInput])
+  exercises: ExerciseInfoInput[];
+}
+
+@InputType()
 export class ImportSheetWorkoutInput {
   @Field(() => ID)
   userId: string;
+
+  @Field(() => Number)
+  workoutId?: number;
 
   @Field()
   workoutName: string;
@@ -45,9 +57,6 @@ export class ImportSheetWorkoutInput {
   @Field(() => Boolean, { defaultValue: false })
   isActive: boolean;
 
-  @Field()
-  sheetName: string;
-
-  @Field(() => [ExerciseInfoInput])
-  exercises: ExerciseInfoInput[];
+  @Field(() => [WorkoutExercise])
+  sheets: WorkoutExercise[];
 }

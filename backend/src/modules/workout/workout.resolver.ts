@@ -7,6 +7,8 @@ import {
   Parent,
   ResolveField,
 } from '@nestjs/graphql';
+import { FileUpload, GraphQLUpload } from 'graphql-upload-minimal';
+
 import { WorkoutService } from './workout.service';
 import { WorkoutType } from './workout.type';
 import { CreateWorkoutInput } from './dto/create-workout.input';
@@ -20,6 +22,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { ImportSheetWorkoutInput } from './dto/import-sheet-workout.input';
 import { WorkoutExerciseType } from '../workout-exercise/dto/workout-exercise.type';
 import { WorkoutExerciseService } from '../workout-exercise/workout-exercise.service';
+import { ImportXlsxUserWorkoutInput } from './dto/import-xlsx-user-workout-input';
 
 @Resolver(() => WorkoutType)
 export class WorkoutResolver {
@@ -28,12 +31,16 @@ export class WorkoutResolver {
     private readonly workoutExerciseService: WorkoutExerciseService,
   ) {}
 
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   @Query(() => [WorkoutType])
   async workouts(): Promise<Partial<WorkoutType>[]> {
     const entities = await this.workoutService.findAll();
     return entities.map(this.workoutService.toWorkoutType);
   }
 
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   @Query(() => WorkoutType, { nullable: true })
   async workout(
     @Args('id', { type: () => ID }) id: number,
@@ -42,20 +49,8 @@ export class WorkoutResolver {
     return entity ? this.workoutService.toWorkoutType(entity) : null;
   }
 
-  @Mutation(() => WorkoutType)
-  async createWorkout(
-    @Args('createWorkoutInput') input: CreateWorkoutInput,
-  ): Promise<Partial<WorkoutType>> {
-    const entity = await this.workoutService.create({
-      user_id: input.userId,
-      name: input.name,
-      week_start: input.weekStart,
-      week_end: input.weekEnd,
-      is_active: input.isActive ?? false,
-    });
-    return this.workoutService.toWorkoutType(entity);
-  }
-
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER)
   @Mutation(() => WorkoutType, { nullable: true })
   async updateWorkout(
     @Args('updateWorkoutInput') input: UpdateWorkoutInput,
@@ -72,6 +67,8 @@ export class WorkoutResolver {
     return entity ? this.workoutService.toWorkoutType(entity) : null;
   }
 
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER)
   @Mutation(() => Boolean)
   async deleteWorkout(
     @Args('id', { type: () => ID }) id: number,
@@ -82,13 +79,15 @@ export class WorkoutResolver {
 
   @Mutation(() => WorkoutType)
   @UseGuards(GqlAuthGuard, RolesGuard)
-  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
-  async importSheetWorkout(
-    @Args('input') input: ImportSheetWorkoutInput,
-  ): Promise<Partial<WorkoutType>> {
-    return this.workoutService.importSheetWorkout(input);
+  @Roles(UserRole.TRAINER)
+  async importXlsxAndCreateWorkout(
+    @Args('input') input: ImportXlsxUserWorkoutInput,
+  ) {
+    return this.workoutService.importXlsxUserWorkout(input);
   }
 
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
   @ResolveField('workoutExercises', () => [WorkoutExerciseType], {
     nullable: true,
   })

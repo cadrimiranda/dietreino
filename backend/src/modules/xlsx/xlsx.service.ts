@@ -19,7 +19,7 @@ export class XlsxService {
    * @param buffer Buffer do arquivo Excel
    * @returns Array de objetos contendo nome da aba e dados
    */
-  processXlsxFile(buffer: Buffer): SheetData[] {
+  private processXlsxFile(buffer: Buffer): SheetData[] {
     // Carrega o arquivo a partir do buffer
     const workbook = XLSX.read(buffer, { type: 'buffer' });
 
@@ -81,11 +81,10 @@ export class XlsxService {
    * @param upload Promise do arquivo carregado
    * @returns Dados processados do arquivo
    */
-  async processXlsx(
-    upload: Promise<FileUpload>,
+  private async processXlsx(
+    upload: FileUpload,
   ): Promise<{ sheets: SheetData[] }> {
-    const uploadResult = await upload;
-    const tempFilename = `${uuid()}-${uploadResult.filename}`;
+    const tempFilename = `${uuid()}-${upload.filename}`;
     const tempFilePath = join(process.cwd(), 'temp', tempFilename);
 
     if (!fs.existsSync(join(process.cwd(), 'temp'))) {
@@ -93,7 +92,7 @@ export class XlsxService {
     }
 
     const writeStream = createWriteStream(tempFilePath);
-    const readStream: fs.ReadStream = uploadResult.createReadStream();
+    const readStream: fs.ReadStream = upload.createReadStream();
 
     await new Promise<void>((resolve, reject) => {
       readStream
@@ -125,9 +124,7 @@ export class XlsxService {
    * @param upload Promise do arquivo carregado
    * @returns Array de exercícios por folha com seus esquemas de repetições
    */
-  async extractWorkoutSheet(
-    upload: Promise<FileUpload>,
-  ): Promise<SheetExercises[]> {
+  async extractWorkoutSheet(upload: FileUpload): Promise<SheetExercises[]> {
     // Utiliza o método processXlsx para obter todos os dados
     const processedData = await this.processXlsx(upload);
 

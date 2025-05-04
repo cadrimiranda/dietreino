@@ -23,9 +23,9 @@ export class WorkoutRepository {
     return this.repository.find();
   }
 
-  async update(id: number, data: Partial<Workout>): Promise<Workout | null> {
+  async update(id: number, data: Partial<Workout>): Promise<Workout> {
     await this.repository.update(id, data);
-    return this.findById(id);
+    return this.findById(id) as Promise<Workout>;
   }
 
   async delete(id: number): Promise<void> {
