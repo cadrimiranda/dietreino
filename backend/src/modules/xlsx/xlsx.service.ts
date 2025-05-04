@@ -153,18 +153,19 @@ export class XlsxService {
             // Continua coletando até que o padrão pare
             while (i < sheet.data.length && this.isExerciseRow(sheet.data[i])) {
               const exerciseName = sheet.data[i][0].trim();
-              const repsString = sheet.data[i][1].trim();
+              const rawReps = sheet.data[i][1]?.trim() || '';
+              const repsString = sheet.data[i][2].trim();
 
               // Parse das repetições
               const repSchemes = this.parseRepetitions(repsString);
 
-              const restString = sheet.data[i][2]?.trim() || '';
+              const restString = sheet.data[i][3]?.trim() || '';
               const restIntervals = this.parseRestIntervals(restString);
 
               // Armazena o exercício com as repetições no map
               exercisesMap.set(exerciseName, {
                 name: exerciseName,
-                rawReps: repsString,
+                rawReps,
                 repSchemes,
                 restIntervals,
               });
@@ -274,12 +275,6 @@ export class XlsxService {
             result.push({ sets, minReps: singleRep, maxReps: singleRep });
           }
         }
-
-        // Log para debug
-        console.log(
-          `Parsed scheme "${scheme}" into:`,
-          result[result.length - 1],
-        );
       } catch (error) {
         // Em caso de erro na análise, ignora este esquema
         console.error(
@@ -300,58 +295,79 @@ export class XlsxService {
    * - "2min"
    * - "1:30"
    * - "2:00"
-   * - "60s - 90s"
-   * - "1min - 2min"
+   * - "60-90s"
+   * - "1-2min"
    */
   private parseRestIntervals(restString: string): string[] {
-    // Se a string estiver vazia, retorna um array vazio
-    if (!restString || restString.trim() === '') {
-      return [];
+    // Remove espaços em branco
+    const trimmedString = restString.trim();
+    // Verificar se é um intervalo (contém hífen)
+    if (trimmedString.includes('-')) {
+      const [start, end] = trimmedString.split('-');
+
+      // Determinar o sufixo (s ou min)
+      let suffix = '';
+      if (end.includes('s')) suffix = 's';
+      else if (end.includes('min.')) suffix = 'min.';
+      else if (end.includes('min')) suffix = 'min';
+      else if (end.match(/^\d+$/)) suffix = '';
+
+      // Preparar as partes para processamento
+      const cleanEnd = suffix ? end.replace(suffix, '') : end;
+      const cleanStart = start;
+
+      // Obter os valores individuais em segundos
+      const startSeconds = this.convertToSeconds(
+        cleanStart + (start.match(/^\d+$/) ? suffix : ''),
+      );
+      const endSeconds = this.convertToSeconds(cleanEnd + suffix);
+
+      return [`${startSeconds}`, `${endSeconds}`];
     }
 
-    // Verifica se é um intervalo (contém "-")
-    if (restString.includes('-')) {
-      const [start, end] = restString.split('-').map((s) => s.trim());
-      const startSeconds = convertToSeconds(start);
-      const endSeconds = convertToSeconds(end);
-
-      return [`${startSeconds}s - ${endSeconds}s`];
-    } else {
-      // É um valor único
-      const seconds = convertToSeconds(restString);
-      return [`${seconds}s`];
-    }
-
-    /**
-     * Converte uma string de tempo para segundos
-     * @param timeString - A string de tempo a ser convertida
-     * @returns O tempo em segundos
-     */
-    function convertToSeconds(timeString: string): number {
-      // Verifica se é no formato "Xs" (Ex: "60s")
-      if (/^\d+s$/.test(timeString)) {
-        return parseInt(timeString.replace('s', ''), 10);
-      }
-
-      // Verifica se é no formato "Xmin" (Ex: "1min")
-      if (/^\d+min$/.test(timeString)) {
-        return parseInt(timeString.replace('min', ''), 10) * 60;
-      }
-
-      // Verifica se é no formato "X:Y" (Ex: "1:30")
-      if (/^\d+:\d+$/.test(timeString)) {
-        const [minutes, seconds] = timeString.split(':').map(Number);
-        return minutes * 60 + seconds;
-      }
-
-      // Tenta converter diretamente para número, assumindo que é em segundos
-      const parsed = parseInt(timeString, 10);
-      if (!isNaN(parsed)) {
-        return parsed;
-      }
-
-      // Se não conseguir identificar o formato, retorna 0
-      return 0;
-    }
+    // Para formatos não-intervalo, converter e retornar como string
+    return [`${this.convertToSeconds(trimmedString)}`];
   }
+
+  /**
+   * Função auxiliar para converter uma string de tempo em segundos
+   */
+  private convertToSeconds(timeString: string): number {
+    const trimmed = timeString.trim();
+
+    // Verificar formato minutos:segundos (1:30)
+    if (trimmed.includes(':')) {
+      const [minutes, seconds] = trimmed.split(':');
+      return parseInt(minutes) * 60 + parseInt(seconds);
+    }
+
+    // Verificar formato de segundos (60s)
+    if (trimmed.endsWith('s')) {
+      return parseInt(trimmed.replace('s', ''));
+    }
+
+    // Verificar formato de minutos (1min)
+    if (trimmed.endsWith('min')) {
+      return parseInt(trimmed.replace('min', '')) * 60;
+    }
+
+    // Verificar formato de minutos (1min)
+    if (trimmed.endsWith('min.')) {
+      return parseInt(trimmed.replace('min.', '')) * 60;
+    }
+
+    // Se for apenas um número, assumir que são segundos
+    if (!isNaN(parseInt(trimmed))) {
+      return parseInt(trimmed);
+    }
+
+    return 0;
+  }
+}
+
+if (process.env.NODE_ENV === 'test') {
+  exports.__test__ = {
+    // @ts-ignore
+    parseRestIntervals: XlsxService.prototype.parseRestIntervals,
+  };
 }

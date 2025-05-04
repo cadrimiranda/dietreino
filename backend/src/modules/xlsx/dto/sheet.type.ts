@@ -38,7 +38,7 @@ export class ExerciseInfo {
   @Field(() => [RepRange])
   repSchemes: RepRange[];
 
-  @Field(() => String)
+  @Field(() => [String])
   restIntervals: string[];
 }
 

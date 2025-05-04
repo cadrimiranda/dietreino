@@ -35,7 +35,7 @@ type ExerciseInfo {
   name: String!
   rawReps: String!
   repSchemes: [RepRange!]!
-  restIntervals: String!
+  restIntervals: [String!]!
 }
 
 input ExerciseInfoInput {
