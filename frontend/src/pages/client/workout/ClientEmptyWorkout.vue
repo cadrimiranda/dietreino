@@ -22,7 +22,7 @@
         :multiple="multiple"
         :disabled="disabled"
         style="display: none"
-        @change="handleFileChange"
+        @change="emit('file-upload', $event)"
       />
     </div>
   </div>
@@ -52,7 +52,8 @@ export default defineComponent({
       required: true,
     },
   },
-  setup() {
+  emits: ["file-upload"],
+  setup(_, { emit }) {
     const { processWorkout, loading } = useProcessWorkout();
     const fileInput = ref<HTMLInputElement | null>(null);
 
@@ -67,20 +68,11 @@ export default defineComponent({
       fileInput.value?.click();
     }
 
-    function handleFileChange(event: Event) {
-      const target = event.target as HTMLInputElement;
-      if (!target.files) return;
-
-      console.log("Selected files:", target.files);
-
-      processWorkout(target.files[0]);
-    }
-
     return {
       fileInput,
       handleClick,
-      handleFileChange,
       isLoading: loading.value,
+      emit,
       ...props,
     };
   },

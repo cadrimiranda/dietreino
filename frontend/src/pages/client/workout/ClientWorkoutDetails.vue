@@ -76,7 +76,11 @@
               </a-tab-pane>
             </a-tabs>
           </div>
-          <EmptyWorkoutState v-else :clientId="userId" />
+          <EmptyWorkoutState
+            v-else
+            :clientId="userId"
+            @file-upload="handleFileChange"
+          />
         </div>
       </div>
     </div>
@@ -94,6 +98,7 @@ import { message } from "ant-design-vue";
 import { IUserEntity, useUsers } from "@/composables/useUsers";
 import { useRoute } from "vue-router";
 import EmptyWorkoutState from "./ClientEmptyWorkout.vue";
+import { useProcessWorkout } from "./useProcessWorkout";
 
 export default defineComponent({
   name: "ClientWorkoutDetails",
@@ -103,10 +108,18 @@ export default defineComponent({
     EmptyWorkoutState,
   },
   setup() {
+    const { processWorkout, loading } = useProcessWorkout();
     const route = useRoute();
     const userId = route.params.clientId as string;
     const workoutId = route.params.workoutId as string;
     const { user, userLoading: isLoading } = useUsers({ userId });
+
+    function handleFileChange(event: Event) {
+      const target = event.target as HTMLInputElement;
+      if (!target.files) return;
+
+      processWorkout(target.files[0]);
+    }
 
     const client = reactive<IUserEntity>({
       id: "",
@@ -172,15 +185,12 @@ export default defineComponent({
                   .join(", ");
               }
 
-              // Formatar o descanso
-              let restFormatted = "";
-              if (restIntervals.length > 0) {
-                // Assumindo que queremos apenas o primeiro intervalo
-                restFormatted = `${restIntervals[0].interval_time}s`;
-              }
-
-              // Determinar a folha (aqui estamos usando uma lógica simples - ajuste conforme necessário)
-              // Neste exemplo, estamos criando uma única folha "Treino Completo"
+              const restFormatted = restIntervals.reduce((acc, interval) => {
+                if (acc) {
+                  return `${acc} - ${interval.interval_time}s`;
+                }
+                return `${interval.interval_time}s`;
+              }, "");
               const sheetTitle = "Treino Completo";
 
               if (!exercisesMap.has(sheetTitle)) {
@@ -236,6 +246,7 @@ export default defineComponent({
       hasWorkout,
       isLoading,
       userId,
+      handleFileChange,
     };
   },
 });
