@@ -170,7 +170,7 @@ export default defineComponent({
 
           // Encontrar o workout específico pelo ID
           const foundWorkout = newUser.user.workouts?.find(
-            (w) => w.id === workoutId
+            (w) => w.id === workoutId || w.isActive
           );
 
           if (foundWorkout) {

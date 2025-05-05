@@ -25,22 +25,12 @@ export type CreateExerciseInput = {
   videoLink?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type CreateWorkoutExerciseInput = {
-  exerciseId: Scalars['Int']['input'];
-  notes?: InputMaybe<Scalars['String']['input']>;
-  order: Scalars['Int']['input'];
-  repetitions: Scalars['String']['input'];
-  rest: Scalars['String']['input'];
-  sets: Scalars['Int']['input'];
-  workoutId: Scalars['Int']['input'];
-};
-
 export type CreateWorkoutInput = {
   isActive?: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
   userId: Scalars['String']['input'];
-  weekEnd: Scalars['Int']['input'];
-  weekStart: Scalars['Int']['input'];
+  weekEnd: Scalars['DateTime']['input'];
+  weekStart: Scalars['DateTime']['input'];
 };
 
 export type ExerciseInfo = {
@@ -86,7 +76,6 @@ export type Mutation = {
   assignNutritionist: UserType;
   assignTrainer: UserType;
   createExercise: ExerciseType;
-  createWorkoutExercise: WorkoutExerciseType;
   deleteExercise: Scalars['Boolean']['output'];
   deleteUser: Scalars['Boolean']['output'];
   deleteWorkout: Scalars['Boolean']['output'];
@@ -98,7 +87,6 @@ export type Mutation = {
   refreshToken: LoginResponse;
   updateExercise?: Maybe<ExerciseType>;
   updateWorkout?: Maybe<WorkoutType>;
-  updateWorkoutExercise?: Maybe<WorkoutExerciseType>;
   upsertUser: UserType;
 };
 
@@ -123,11 +111,6 @@ export type MutationAssignTrainerArgs = {
 
 export type MutationCreateExerciseArgs = {
   createExerciseInput: CreateExerciseInput;
-};
-
-
-export type MutationCreateWorkoutExerciseArgs = {
-  createWorkoutExerciseInput: CreateWorkoutExerciseInput;
 };
 
 
@@ -178,11 +161,6 @@ export type MutationUpdateExerciseArgs = {
 
 export type MutationUpdateWorkoutArgs = {
   updateWorkoutInput: UpdateWorkoutInput;
-};
-
-
-export type MutationUpdateWorkoutExerciseArgs = {
-  updateWorkoutExerciseInput: UpdateWorkoutExerciseInput;
 };
 
 
@@ -286,23 +264,12 @@ export type UpdateExerciseInput = {
   videoLink?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type UpdateWorkoutExerciseInput = {
-  exerciseId?: InputMaybe<Scalars['Int']['input']>;
-  id: Scalars['ID']['input'];
-  notes?: InputMaybe<Scalars['String']['input']>;
-  order?: InputMaybe<Scalars['Int']['input']>;
-  repetitions?: InputMaybe<Scalars['String']['input']>;
-  rest?: InputMaybe<Scalars['String']['input']>;
-  sets?: InputMaybe<Scalars['Int']['input']>;
-  workoutId?: InputMaybe<Scalars['Int']['input']>;
-};
-
 export type UpdateWorkoutInput = {
   id: Scalars['ID']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
-  weekEnd?: InputMaybe<Scalars['Int']['input']>;
-  weekStart?: InputMaybe<Scalars['Int']['input']>;
+  weekEnd?: InputMaybe<Scalars['DateTime']['input']>;
+  weekStart?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 export type UserInput = {
@@ -342,16 +309,12 @@ export type UserType = {
 export type WorkoutExerciseType = {
   __typename?: 'WorkoutExerciseType';
   exercise?: Maybe<ExerciseType>;
-  exerciseId: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   order: Scalars['Int']['output'];
   repSchemes?: Maybe<Array<RepSchemeType>>;
-  repetitions: Scalars['String']['output'];
-  rest: Scalars['String']['output'];
   restIntervals?: Maybe<Array<RestIntervalType>>;
   sets: Scalars['Int']['output'];
-  workoutId: Scalars['Int']['output'];
 };
 
 export type WorkoutType = {
@@ -361,7 +324,7 @@ export type WorkoutType = {
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   userId: Scalars['String']['output'];
-  weekEnd: Scalars['Int']['output'];
-  weekStart: Scalars['Int']['output'];
+  weekEnd: Scalars['DateTime']['output'];
+  weekStart: Scalars['DateTime']['output'];
   workoutExercises?: Maybe<Array<WorkoutExerciseType>>;
 };

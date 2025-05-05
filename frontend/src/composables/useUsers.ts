@@ -75,6 +75,41 @@ export function useUsers({ userId }: { userId?: string }) {
         email
         createdAt
         updatedAt
+        phone
+        nutritionist {
+          id
+          name
+        }
+        trainer {
+          id
+          name
+        }
+        workouts {
+          id
+          name
+          weekStart
+          weekEnd
+          isActive
+          workoutExercises {
+            id
+            exercise {
+              id
+              name
+              videoLink
+            }
+            repSchemes {
+              id
+              sets
+              min_reps
+              max_reps
+            }
+            restIntervals {
+              id
+              interval_time
+              order
+            }
+          }
+        }
       }
     }
   `;
@@ -95,31 +130,6 @@ export function useUsers({ userId }: { userId?: string }) {
         trainer {
           id
           name
-        }
-        workouts {
-          id
-          name
-          weekStart
-          weekEnd
-          workoutExercises {
-            id
-            exercise {
-              id
-              name
-              videoLink
-            }
-            repSchemes {
-              id
-              sets
-              min_reps
-              max_reps
-            }
-            restIntervals {
-              id
-              interval_time
-              order
-            }
-          }
         }
       }
     }
