@@ -31,7 +31,6 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import { ScheduleOutlined, PlusOutlined } from "@ant-design/icons-vue";
-import { useProcessWorkout } from "./useProcessWorkout";
 
 interface FileUploadProps {
   accept: string;
@@ -47,14 +46,13 @@ export default defineComponent({
     PlusOutlined,
   },
   props: {
-    clientId: {
-      type: String,
-      required: true,
+    isLoading: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ["file-upload"],
-  setup(_, { emit }) {
-    const { processWorkout, loading } = useProcessWorkout();
+  setup({ isLoading }, { emit }) {
     const fileInput = ref<HTMLInputElement | null>(null);
 
     const props: FileUploadProps = {
@@ -71,8 +69,8 @@ export default defineComponent({
     return {
       fileInput,
       handleClick,
-      isLoading: loading.value,
       emit,
+      isLoading,
       ...props,
     };
   },

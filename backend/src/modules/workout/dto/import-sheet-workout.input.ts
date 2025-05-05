@@ -48,11 +48,11 @@ export class ImportSheetWorkoutInput {
   @Field()
   workoutName: string;
 
-  @Field(() => Int)
-  weekStart: number;
+  @Field(() => String)
+  weekStart: string;
 
-  @Field(() => Int)
-  weekEnd: number;
+  @Field(() => String)
+  weekEnd: string;
 
   @Field(() => Boolean, { defaultValue: false })
   isActive: boolean;

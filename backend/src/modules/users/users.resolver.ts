@@ -178,6 +178,8 @@ export class UsersResolver {
     if (!user.id) {
       return [];
     }
-    return this.workoutService.findByUserId(user.id);
+    const workouts = await this.workoutService.findByUserId(user.id);
+    console.log('Workouts:', workouts);
+    return workouts;
   }
 }

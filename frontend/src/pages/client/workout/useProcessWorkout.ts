@@ -1,46 +1,57 @@
 import {
-  MutationExtractWorkoutSheetArgs,
-  SheetExercises,
+  MutationImportXlsxAndCreateWorkoutArgs,
+  WorkoutType,
 } from "@/generated/graphql";
 import { useMutation } from "@vue/apollo-composable";
 import gql from "graphql-tag";
 
 export function useProcessWorkout() {
   const EXTRACT_WORKOUT = gql`
-    mutation extractWorkoutSheet($file: Upload!) {
-      extractWorkoutSheet(file: $file) {
-        sheetName
-        exercises {
-          name
-          rawReps
+    mutation importXlsxAndCreateWorkout($input: ImportXlsxUserWorkoutInput!) {
+      importXlsxAndCreateWorkout(input: $input) {
+        id
+        isActive
+        name
+        userId
+        weekEnd
+        weekStart
+        workoutExercises {
+          id
+          notes
+          exercise {
+            id
+            name
+          }
           repSchemes {
-            minReps
-            maxReps
+            id
+            max_reps
+            min_reps
             sets
           }
-          restIntervals
+          restIntervals {
+            id
+            interval_time
+            order
+          }
         }
       }
     }
   `;
 
   const { mutate, loading } = useMutation<
-    Array<SheetExercises>,
-    MutationExtractWorkoutSheetArgs
+    WorkoutType,
+    MutationImportXlsxAndCreateWorkoutArgs
   >(EXTRACT_WORKOUT);
 
-  const processWorkout = async (file: File) => {
+  const processWorkout = async (
+    input: MutationImportXlsxAndCreateWorkoutArgs
+  ) => {
     try {
-      const data = await mutate(
-        {
-          file,
+      const data = await mutate(input, {
+        context: {
+          hasUpload: true,
         },
-        {
-          context: {
-            hasUpload: true,
-          },
-        }
-      );
+      });
       return data?.data || [];
     } catch (error) {
       console.error("Error processing workout:", error);

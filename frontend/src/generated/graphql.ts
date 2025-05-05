@@ -51,13 +51,6 @@ export type ExerciseInfo = {
   restIntervals: Array<Scalars['String']['output']>;
 };
 
-export type ExerciseInfoInput = {
-  name: Scalars['String']['input'];
-  rawReps: Scalars['String']['input'];
-  repSchemes: Array<RepSchemeInput>;
-  restIntervals: Array<Scalars['String']['input']>;
-};
-
 export type ExerciseType = {
   __typename?: 'ExerciseType';
   id: Scalars['ID']['output'];
@@ -66,13 +59,12 @@ export type ExerciseType = {
   videoLink?: Maybe<Scalars['String']['output']>;
 };
 
-export type ImportSheetWorkoutInput = {
-  exercises: Array<ExerciseInfoInput>;
-  isActive?: Scalars['Boolean']['input'];
-  sheetName: Scalars['String']['input'];
-  userId: Scalars['ID']['input'];
-  weekEnd: Scalars['Int']['input'];
-  weekStart: Scalars['Int']['input'];
+export type ImportXlsxUserWorkoutInput = {
+  file: Scalars['Upload']['input'];
+  userId: Scalars['String']['input'];
+  weekEnd: Scalars['String']['input'];
+  weekStart: Scalars['String']['input'];
+  workoutId?: InputMaybe<Scalars['Float']['input']>;
   workoutName: Scalars['String']['input'];
 };
 
@@ -94,17 +86,15 @@ export type Mutation = {
   assignNutritionist: UserType;
   assignTrainer: UserType;
   createExercise: ExerciseType;
-  createWorkout: WorkoutType;
   createWorkoutExercise: WorkoutExerciseType;
   deleteExercise: Scalars['Boolean']['output'];
   deleteUser: Scalars['Boolean']['output'];
   deleteWorkout: Scalars['Boolean']['output'];
   deleteWorkoutExercise: Scalars['Boolean']['output'];
   extractWorkoutSheet: Array<SheetExercises>;
-  importSheetWorkout: WorkoutType;
+  importXlsxAndCreateWorkout: WorkoutType;
   login: LoginResponse;
   me: UserType;
-  processXlsx: XlsxData;
   refreshToken: LoginResponse;
   updateExercise?: Maybe<ExerciseType>;
   updateWorkout?: Maybe<WorkoutType>;
@@ -133,11 +123,6 @@ export type MutationAssignTrainerArgs = {
 
 export type MutationCreateExerciseArgs = {
   createExerciseInput: CreateExerciseInput;
-};
-
-
-export type MutationCreateWorkoutArgs = {
-  createWorkoutInput: CreateWorkoutInput;
 };
 
 
@@ -171,18 +156,13 @@ export type MutationExtractWorkoutSheetArgs = {
 };
 
 
-export type MutationImportSheetWorkoutArgs = {
-  input: ImportSheetWorkoutInput;
+export type MutationImportXlsxAndCreateWorkoutArgs = {
+  input: ImportXlsxUserWorkoutInput;
 };
 
 
 export type MutationLoginArgs = {
   loginInput: LoginInput;
-};
-
-
-export type MutationProcessXlsxArgs = {
-  file: Scalars['Upload']['input'];
 };
 
 
@@ -270,12 +250,6 @@ export type RepRange = {
   maxReps: Scalars['Int']['output'];
   minReps: Scalars['Int']['output'];
   sets: Scalars['Int']['output'];
-};
-
-export type RepSchemeInput = {
-  maxReps: Scalars['Int']['input'];
-  minReps: Scalars['Int']['input'];
-  sets: Scalars['Int']['input'];
 };
 
 export type RepSchemeType = {
@@ -390,9 +364,4 @@ export type WorkoutType = {
   weekEnd: Scalars['Int']['output'];
   weekStart: Scalars['Int']['output'];
   workoutExercises?: Maybe<Array<WorkoutExerciseType>>;
-};
-
-export type XlsxData = {
-  __typename?: 'XlsxData';
-  sheets: Array<SheetData>;
 };

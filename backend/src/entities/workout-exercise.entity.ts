@@ -5,6 +5,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  RelationId,
 } from 'typeorm';
 import { Workout } from './workout.entity';
 import { Exercise } from './exercise.entity';
@@ -17,36 +18,30 @@ export class WorkoutExercise {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  workout_id: number;
-
   @ManyToOne(() => Workout, (workout) => workout.workoutExercises, {
     onDelete: 'CASCADE',
+    eager: false,
   })
-  @JoinColumn({ name: 'workout_id' })
+  @JoinColumn()
   workout: Workout;
 
-  @Column()
-  exercise_id: number;
+  @RelationId((workoutExercise: WorkoutExercise) => workoutExercise.workout)
+  workoutId: number;
 
-  @ManyToOne(() => Exercise, (exercise: Exercise) => exercise.workoutExercises)
-  @JoinColumn({ name: 'exercise_id' })
+  @ManyToOne(() => Exercise, (exercise) => exercise.workoutExercises, {
+    eager: false,
+  })
+  @JoinColumn()
   exercise: Exercise;
+
+  @RelationId((workoutExercise: WorkoutExercise) => workoutExercise.exercise)
+  exerciseId: number;
 
   @Column({ type: 'int' })
   order: number;
 
   @Column({ type: 'int' })
   sets: number;
-
-  @Column({ length: 20 })
-  repetitions: string;
-
-  @Column({ length: 100, nullable: true })
-  raw_reps: string;
-
-  @Column({ length: 20 })
-  rest: string;
 
   @Column({ type: 'text', nullable: true })
   notes: string;

@@ -7,6 +7,7 @@ import { ExerciseService } from '../exercise/exercise.service';
 import { WorkoutExerciseService } from '../workout-exercise/workout-exercise.service';
 import { ImportXlsxUserWorkoutInput } from './dto/import-xlsx-user-workout-input';
 import { XlsxService } from '../xlsx/xlsx.service';
+import { Transaction } from 'typeorm';
 
 @Injectable()
 export class WorkoutService {
@@ -50,14 +51,17 @@ export class WorkoutService {
   }
 
   findByUserId(userId: string) {
-    return this.repository.findByUserId(userId);
+    return this.repository
+      .findByUserId(userId)
+      .then((workouts) => workouts.map(this.toWorkoutType));
   }
 
   async importXlsxUserWorkout(
     input: ImportXlsxUserWorkoutInput,
   ): Promise<Partial<WorkoutType>> {
     const { file, ...rest } = input;
-    const xlsxData = await this.xlsxService.extractWorkoutSheet(file);
+    const upload = await file;
+    const xlsxData = await this.xlsxService.extractWorkoutSheet(upload);
 
     const importInput: ImportSheetWorkoutInput = {
       ...rest,
@@ -75,12 +79,15 @@ export class WorkoutService {
     const existingWorkout = workoutId ? await this.findById(workoutId) : null;
     let workout: Workout;
 
+    const week_start = new Date(input.weekStart);
+    const week_end = new Date(input.weekEnd);
+
     if (existingWorkout) {
       // Se o workout já existe, atualize-o
       workout = (await this.update(existingWorkout.id, {
         name: input.workoutName,
-        week_start: input.weekStart,
-        week_end: input.weekEnd,
+        week_end,
+        week_start,
         is_active: input.isActive,
       })) as Workout;
     } else {
@@ -88,9 +95,9 @@ export class WorkoutService {
       workout = await this.create({
         user_id: input.userId,
         name: input.workoutName,
-        week_start: input.weekStart,
-        week_end: input.weekEnd,
         is_active: input.isActive,
+        week_end,
+        week_start,
       });
     }
 
@@ -114,13 +121,10 @@ export class WorkoutService {
 
         // 2.2 Criar o workout_exercise com seus relacionamentos
         await this.workoutExerciseService.createWithRelationships({
-          workout_id: workout.id,
-          exercise_id: exercise.id,
+          workout,
+          exercise,
           order: i + 1,
           sets: exerciseInfo.repSchemes[0]?.sets || 0,
-          repetitions: this.formatRepetitions(exerciseInfo.repSchemes),
-          raw_reps: exerciseInfo.rawReps,
-          rest: exerciseInfo.restIntervals.join(', '),
           repSchemes: exerciseInfo.repSchemes.map((rs) => ({
             sets: rs.sets,
             min_reps: rs.minReps,

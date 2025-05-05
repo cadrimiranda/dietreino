@@ -8,11 +8,11 @@ export class CreateWorkoutInput {
   @Field(() => String)
   name: string;
 
-  @Field(() => Int)
-  weekStart: number;
+  @Field(() => Date)
+  weekStart: Date;
 
-  @Field(() => Int)
-  weekEnd: number;
+  @Field(() => Date)
+  weekEnd: Date;
 
   @Field(() => Boolean, { defaultValue: false })
   isActive?: boolean;

@@ -3,6 +3,7 @@ import { WorkoutExerciseRepository } from './workout-exercise.repository';
 import { WorkoutExercise } from '../../entities/workout-exercise.entity';
 import { RepSchemeService } from '../rep-scheme/rep-scheme.service';
 import { RestIntervalService } from '../rest-interval/rest-interval.service';
+import { Exercise, Workout } from 'src/entities';
 
 interface RepSchemeData {
   sets: number;
@@ -16,13 +17,10 @@ interface RestIntervalData {
 }
 
 interface WorkoutExerciseCreateData {
-  workout_id: number;
-  exercise_id: number;
+  workout: Workout;
+  exercise: Exercise;
   order: number;
   sets: number;
-  repetitions: string;
-  raw_reps?: string;
-  rest: string;
   notes?: string;
   repSchemes?: RepSchemeData[];
   restIntervals?: RestIntervalData[];
@@ -66,6 +64,7 @@ export class WorkoutExerciseService {
     if (repSchemes && repSchemes.length > 0) {
       const repSchemesWithId = repSchemes.map((scheme) => ({
         workout_exercise_id: workoutExercise.id,
+        workoutExercise,
         sets: scheme.sets,
         min_reps: scheme.min_reps,
         max_reps: scheme.max_reps,
@@ -77,6 +76,7 @@ export class WorkoutExerciseService {
     if (restIntervals && restIntervals.length > 0) {
       const restIntervalsWithId = restIntervals.map((interval) => ({
         workout_exercise_id: workoutExercise.id,
+        workoutExercise,
         interval_time: interval.interval_time,
         order: interval.order,
       }));

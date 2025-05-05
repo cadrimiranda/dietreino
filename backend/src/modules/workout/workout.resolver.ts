@@ -7,11 +7,8 @@ import {
   Parent,
   ResolveField,
 } from '@nestjs/graphql';
-import { FileUpload, GraphQLUpload } from 'graphql-upload-minimal';
-
 import { WorkoutService } from './workout.service';
 import { WorkoutType } from './workout.type';
-import { CreateWorkoutInput } from './dto/create-workout.input';
 import { UpdateWorkoutInput } from './dto/update-workout.input';
 import { Workout } from '../../entities/workout.entity';
 import { UseGuards } from '@nestjs/common';
@@ -19,7 +16,6 @@ import { UserRole } from '../../utils/roles.enum';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { ImportSheetWorkoutInput } from './dto/import-sheet-workout.input';
 import { WorkoutExerciseType } from '../workout-exercise/dto/workout-exercise.type';
 import { WorkoutExerciseService } from '../workout-exercise/workout-exercise.service';
 import { ImportXlsxUserWorkoutInput } from './dto/import-xlsx-user-workout-input';

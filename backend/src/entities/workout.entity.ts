@@ -25,11 +25,11 @@ export class Workout {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ type: 'int' })
-  week_start: number;
+  @Column({ type: 'timestamp with time zone' })
+  week_start: Date;
 
-  @Column({ type: 'int' })
-  week_end: number;
+  @Column({ type: 'timestamp with time zone' })
+  week_end: Date;
 
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   created_at: Date;

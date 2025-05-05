@@ -12,11 +12,11 @@ export class WorkoutType {
   @Field(() => String)
   name: string;
 
-  @Field(() => Int)
-  weekStart: number;
+  @Field(() => Date)
+  weekStart: Date;
 
-  @Field(() => Int)
-  weekEnd: number;
+  @Field(() => Date)
+  weekEnd: Date;
 
   @Field(() => Boolean)
   isActive: boolean;

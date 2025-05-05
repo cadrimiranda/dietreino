@@ -6,18 +6,18 @@ export class ImportXlsxUserWorkoutInput {
   @Field(() => String)
   userId: string;
 
-  @Field(() => Number)
+  @Field(() => Number, { nullable: true })
   workoutId?: number;
 
   @Field(() => String)
   workoutName: string;
 
   @Field(() => String)
-  weekStart: number;
+  weekStart: string;
 
   @Field(() => String)
-  weekEnd: number;
+  weekEnd: string;
 
   @Field(() => GraphQLUpload)
-  file: FileUpload;
+  file: Promise<FileUpload>;
 }

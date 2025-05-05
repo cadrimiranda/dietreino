@@ -4,8 +4,8 @@
       <div>
         <h1 class="text-2xl font-bold">Treino do Cliente</h1>
         <p class="text-gray-600" v-if="hasWorkout">
-          {{ workout.name }} - Semana {{ workout.weekStart }}-{{
-            workout.weekEnd
+          {{ workout.name }} - {{ new Date(workout.weekStart) }}-{{
+            new Date(workout.weekEnd)
           }}
         </p>
       </div>
@@ -111,14 +111,25 @@ export default defineComponent({
     const { processWorkout, loading } = useProcessWorkout();
     const route = useRoute();
     const userId = route.params.clientId as string;
-    const workoutId = route.params.workoutId as string;
+    const workoutId = route.params.workoutId as string | undefined;
     const { user, userLoading: isLoading } = useUsers({ userId });
 
     function handleFileChange(event: Event) {
       const target = event.target as HTMLInputElement;
       if (!target.files) return;
 
-      processWorkout(target.files[0]);
+      const endDate = new Date();
+      endDate.setFullYear(2025, 11, 11);
+      processWorkout({
+        input: {
+          file: target.files[0],
+          userId,
+          weekStart: new Date().toISOString(),
+          weekEnd: endDate.toISOString(),
+          workoutName: "Treino de Força",
+          workoutId: workoutId ? Number(workoutId) : undefined,
+        },
+      });
     }
 
     const client = reactive<IUserEntity>({

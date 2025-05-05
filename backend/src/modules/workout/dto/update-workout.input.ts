@@ -8,11 +8,11 @@ export class UpdateWorkoutInput {
   @Field(() => String, { nullable: true })
   name?: string;
 
-  @Field(() => Int, { nullable: true })
-  weekStart?: number;
+  @Field(() => Date, { nullable: true })
+  weekStart: Date;
 
-  @Field(() => Int, { nullable: true })
-  weekEnd?: number;
+  @Field(() => Date, { nullable: true })
+  weekEnd?: Date;
 
   @Field(() => Boolean, { nullable: true })
   isActive?: boolean;

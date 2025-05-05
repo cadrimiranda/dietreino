@@ -37,7 +37,7 @@ export class WorkoutExerciseRepository {
 
   async findByWorkoutId(workoutId: number): Promise<WorkoutExercise[]> {
     return this.repository.find({
-      where: { workout_id: workoutId },
+      where: { workout: { id: workoutId } },
       relations: ['exercise'],
       order: { order: 'ASC' },
     });
