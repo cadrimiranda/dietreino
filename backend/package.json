@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "start:dev": "node --inspect=0.0.0.0:9229 -r ts-node/register src/main.ts",
+    "dev": "node --inspect=0.0.0.0:9229 -r ts-node/register src/main.ts",
     "start": "nest start",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

@@ -49,7 +49,7 @@ services:
       - /app/node_modules
     networks:
       - dietreino-network
-    command: npm run start:dev
+    command: npm run dev
     restart: unless-stopped
 
   pgadmin:
