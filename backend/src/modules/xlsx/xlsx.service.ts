@@ -159,6 +159,10 @@ export class XlsxService {
               const restString = sheet.data[i][3]?.trim() || '';
               const restIntervals = this.parseRestIntervals(restString);
 
+              if (repSchemes.length === 1) {
+                repSchemes[0].sets = Number(rawReps);
+              }
+
               // Armazena o exercício com as repetições no map
               exercisesMap.set(exerciseName, {
                 name: exerciseName,
@@ -188,9 +192,7 @@ export class XlsxService {
         if (exercisesMap.size > 0) {
           sheetExercises.push({
             sheetName: sheet.name,
-            exercises: Array.from(exercisesMap.values()).sort((a, b) =>
-              a.name.localeCompare(b.name),
-            ),
+            exercises: Array.from(exercisesMap.values()),
           });
         }
       });
