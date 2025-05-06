@@ -28,20 +28,6 @@ export class UsersResolver {
     private readonly workoutService: WorkoutService,
   ) {}
 
-  @Mutation(() => EncodePassword)
-  encodePassword() {
-    return { password: this.usersService.encodePassword('JG#Ra8i3%1^g') };
-  }
-
-  @Mutation(() => EncodePassword)
-  async decodePassword() {
-    const password = await this.usersService.verifyPassword(
-      'JG#Ra8i3%1^g',
-      'f22f7acaff067ddc8c9a5cb67f08611b:b77ffdab6d88972ed1b62101f921c3fba45c3c6d1215c20a8d7cd2434b604dffcee00ba12f1214ec4e8a5e88bae816cf02a73084d44dfd4722010182f7222eea',
-    );
-    return { password: password ? 'ACERTOU' : 'ERROU' };
-  }
-
   @Query(() => [UserType])
   @UseGuards(GqlAuthGuard, RolesGuard)
   @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
