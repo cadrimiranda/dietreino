@@ -18,7 +18,7 @@ export abstract class BaseService<T extends BaseEntity> {
     return this.baseRepository.findOne(where);
   }
 
-  async create(data: DeepPartial<T>): Promise<T> {
+  async create(data: QueryDeepPartialEntity<T>): Promise<T> {
     return this.baseRepository.create(data);
   }
 
@@ -26,7 +26,7 @@ export abstract class BaseService<T extends BaseEntity> {
     return this.baseRepository.update(id, data);
   }
 
-  async upsert(data: DeepPartial<T>): Promise<T> {
+  async upsert(data: QueryDeepPartialEntity<T>): Promise<T> {
     return this.baseRepository.upsert(data);
   }
 
