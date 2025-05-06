@@ -10,7 +10,11 @@ import {
   LocalStorageTokenService,
   TokenValidator,
 } from "../security/authStorage";
-import { LoginResponse, MutationLoginArgs } from "@/generated/graphql";
+import {
+  LoginResponse,
+  MutationLoginArgs,
+  MutationRefreshTokenArgs,
+} from "@/generated/graphql";
 
 interface User {
   id: string;
@@ -100,7 +104,10 @@ async function refreshAccessToken(
   refreshState.inProgress = true;
 
   try {
-    const { data } = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate<
+      { refreshToken: LoginResponse },
+      MutationRefreshTokenArgs
+    >({
       mutation: REFRESH_TOKEN_MUTATION,
       variables: {
         refreshTokenInput: { refreshToken: refreshToken.value },
