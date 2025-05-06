@@ -19,12 +19,6 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
-export type CreateExerciseInput = {
-  muscleGroup: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-  videoLink?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type CreateWorkoutInput = {
   isActive?: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
@@ -44,9 +38,14 @@ export type ExerciseInfo = {
 export type ExerciseType = {
   __typename?: 'ExerciseType';
   id: Scalars['ID']['output'];
-  muscleGroup: Scalars['String']['output'];
   name: Scalars['String']['output'];
   videoLink?: Maybe<Scalars['String']['output']>;
+};
+
+export type ExerciseUpsertDto = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  name: Scalars['String']['input'];
+  videoLink?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ImportXlsxUserWorkoutInput = {
@@ -75,18 +74,16 @@ export type Mutation = {
   addWorkoutToUser: WorkoutType;
   assignNutritionist: UserType;
   assignTrainer: UserType;
-  createExercise: ExerciseType;
   deleteExercise: Scalars['Boolean']['output'];
   deleteUser: Scalars['Boolean']['output'];
   deleteWorkout: Scalars['Boolean']['output'];
-  deleteWorkoutExercise: Scalars['Boolean']['output'];
   extractWorkoutSheet: Array<SheetExercises>;
   importXlsxAndCreateWorkout: WorkoutType;
   login: LoginResponse;
   me: UserType;
   refreshToken: LoginResponse;
-  updateExercise?: Maybe<ExerciseType>;
   updateWorkout?: Maybe<WorkoutType>;
+  upsertExercise: ExerciseType;
   upsertUser: UserType;
 };
 
@@ -109,11 +106,6 @@ export type MutationAssignTrainerArgs = {
 };
 
 
-export type MutationCreateExerciseArgs = {
-  createExerciseInput: CreateExerciseInput;
-};
-
-
 export type MutationDeleteExerciseArgs = {
   id: Scalars['ID']['input'];
 };
@@ -125,11 +117,6 @@ export type MutationDeleteUserArgs = {
 
 
 export type MutationDeleteWorkoutArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationDeleteWorkoutExerciseArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -154,13 +141,13 @@ export type MutationRefreshTokenArgs = {
 };
 
 
-export type MutationUpdateExerciseArgs = {
-  updateExerciseInput: UpdateExerciseInput;
+export type MutationUpdateWorkoutArgs = {
+  updateWorkoutInput: UpdateWorkoutInput;
 };
 
 
-export type MutationUpdateWorkoutArgs = {
-  updateWorkoutInput: UpdateWorkoutInput;
+export type MutationUpsertExerciseArgs = {
+  input: ExerciseUpsertDto;
 };
 
 
@@ -178,8 +165,6 @@ export type Query = {
   user: UserType;
   users: Array<UserType>;
   workout?: Maybe<WorkoutType>;
-  workoutExercise?: Maybe<WorkoutExerciseType>;
-  workoutExercises: Array<WorkoutExerciseType>;
   workouts: Array<WorkoutType>;
 };
 
@@ -214,11 +199,6 @@ export type QueryWorkoutArgs = {
   id: Scalars['ID']['input'];
 };
 
-
-export type QueryWorkoutExerciseArgs = {
-  id: Scalars['ID']['input'];
-};
-
 export type RefreshTokenInput = {
   refreshToken: Scalars['String']['input'];
 };
@@ -228,21 +208,6 @@ export type RepRange = {
   maxReps: Scalars['Int']['output'];
   minReps: Scalars['Int']['output'];
   sets: Scalars['Int']['output'];
-};
-
-export type RepSchemeType = {
-  __typename?: 'RepSchemeType';
-  id: Scalars['ID']['output'];
-  max_reps: Scalars['Int']['output'];
-  min_reps: Scalars['Int']['output'];
-  sets: Scalars['Int']['output'];
-};
-
-export type RestIntervalType = {
-  __typename?: 'RestIntervalType';
-  id: Scalars['ID']['output'];
-  interval_time: Scalars['String']['output'];
-  order: Scalars['Int']['output'];
 };
 
 export type SheetData = {
@@ -255,13 +220,6 @@ export type SheetExercises = {
   __typename?: 'SheetExercises';
   exercises: Array<ExerciseInfo>;
   sheetName: Scalars['String']['output'];
-};
-
-export type UpdateExerciseInput = {
-  id: Scalars['ID']['input'];
-  muscleGroup?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  videoLink?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateWorkoutInput = {
@@ -306,17 +264,6 @@ export type UserType = {
   workouts?: Maybe<Array<WorkoutType>>;
 };
 
-export type WorkoutExerciseType = {
-  __typename?: 'WorkoutExerciseType';
-  exercise?: Maybe<ExerciseType>;
-  id: Scalars['ID']['output'];
-  notes?: Maybe<Scalars['String']['output']>;
-  order: Scalars['Int']['output'];
-  repSchemes?: Maybe<Array<RepSchemeType>>;
-  restIntervals?: Maybe<Array<RestIntervalType>>;
-  sets: Scalars['Int']['output'];
-};
-
 export type WorkoutType = {
   __typename?: 'WorkoutType';
   createdAt: Scalars['DateTime']['output'];
@@ -326,5 +273,4 @@ export type WorkoutType = {
   userId: Scalars['String']['output'];
   weekEnd: Scalars['DateTime']['output'];
   weekStart: Scalars['DateTime']['output'];
-  workoutExercises?: Maybe<Array<WorkoutExerciseType>>;
 };

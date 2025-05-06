@@ -10,6 +10,7 @@ import {
   LocalStorageTokenService,
   TokenValidator,
 } from "../security/authStorage";
+import { LoginResponse, MutationLoginArgs } from "@/generated/graphql";
 
 interface User {
   id: string;
@@ -269,30 +270,32 @@ export function useAuth() {
         throw new Error("Apollo client not initialized");
       }
 
-      const { data } = await apolloClient.mutate({
+      const { data } = await apolloClient.mutate<
+        { login: LoginResponse },
+        MutationLoginArgs
+      >({
         mutation: LOGIN_MUTATION,
-        variables: {
-          loginInput: { email, password },
-        },
+        variables: { loginInput: { email, password } },
       });
 
-      const result = data.login;
+      const result = data?.login;
 
-      if (result.accessToken && result.refreshToken) {
-        accessToken.value = result.accessToken;
-        refreshToken.value = result.refreshToken;
-        currentUser.value = result.user;
-
-        tokenStorage.setAccessToken(result.accessToken);
-        tokenStorage.setRefreshToken(result.refreshToken);
-        tokenStorage.setUser(result.user);
-
-        message.success(`Bem-vindo, ${result.user.name}!`);
-
-        return result;
+      if (!result || (!result.accessToken && !result.refreshToken)) {
+        console.log(result);
+        throw new Error("Login falhou");
       }
 
-      throw new Error("Login falhou");
+      accessToken.value = result.accessToken;
+      refreshToken.value = result.refreshToken;
+      currentUser.value = result.user;
+
+      tokenStorage.setAccessToken(result.accessToken);
+      tokenStorage.setRefreshToken(result.refreshToken);
+      tokenStorage.setUser(result.user);
+
+      message.success(`Bem-vindo, ${result.user.name}!`);
+
+      return result;
     } catch (err: any) {
       console.error("Erro de login:", err);
 
