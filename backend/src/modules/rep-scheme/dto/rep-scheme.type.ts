@@ -3,14 +3,14 @@ import { ObjectType, Field, Int, ID } from '@nestjs/graphql';
 @ObjectType()
 export class RepSchemeType {
   @Field(() => ID)
-  id: number;
+  id: string;
 
   @Field(() => Int)
   sets: number;
 
   @Field(() => Int)
-  min_reps: number;
+  minReps: number;
 
   @Field(() => Int)
-  max_reps: number;
+  maxReps: number;
 }

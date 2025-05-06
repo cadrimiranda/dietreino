@@ -7,7 +7,7 @@ export class ImportXlsxUserWorkoutInput {
   userId: string;
 
   @Field(() => Number, { nullable: true })
-  workoutId?: number;
+  workoutId?: string;
 
   @Field(() => String)
   workoutName: string;

@@ -6,14 +6,16 @@ import { WorkoutService } from './workout.service';
 import { WorkoutResolver } from './workout.resolver';
 import { XlsxModule } from '../xlsx/xlsx.module';
 import { ExercisesModule } from '../exercise/exercise.module';
-import { WorkoutExerciseModule } from '../workout-exercise/workout-exercise.module';
+import { TrainingDayExerciseModule } from '../training-day-exercise/training-day-exercise.module';
+import { TrainingDayModule } from '../training-day/training-day.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Workout]),
     XlsxModule,
     ExercisesModule,
-    WorkoutExerciseModule,
+    TrainingDayExerciseModule,
+    TrainingDayModule,
   ],
   providers: [WorkoutRepository, WorkoutService, WorkoutResolver],
   exports: [WorkoutService],

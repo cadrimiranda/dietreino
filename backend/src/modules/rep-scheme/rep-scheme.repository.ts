@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RepScheme } from '../../entities/rep-scheme.entity';
+import { RepSchemeUpsertDto } from './dto/repSchemeUpsert';
 
 @Injectable()
 export class RepSchemeRepository {
@@ -15,15 +16,19 @@ export class RepSchemeRepository {
     return this.repository.save(entity);
   }
 
-  async findById(id: number): Promise<RepScheme | null> {
+  async findById(id: string): Promise<RepScheme | null> {
     return this.repository.findOneBy({ id });
   }
 
-  async findByWorkoutExerciseId(
-    workoutExerciseId: number,
+  async findByTrainingDayExercise(
+    trainingDayExerciseId: string,
   ): Promise<RepScheme[]> {
     return this.repository.find({
-      where: { workout_exercise_id: workoutExerciseId },
+      where: {
+        trainingDayExercise: {
+          id: trainingDayExerciseId,
+        },
+      },
       order: { id: 'ASC' },
     });
   }
@@ -33,18 +38,18 @@ export class RepSchemeRepository {
   }
 
   async update(
-    id: number,
+    id: string,
     data: Partial<RepScheme>,
   ): Promise<RepScheme | null> {
     await this.repository.update(id, data);
     return this.findById(id);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     await this.repository.delete(id);
   }
 
-  async bulkCreate(dataArray: Partial<RepScheme>[]): Promise<RepScheme[]> {
+  async bulkCreate(dataArray: RepSchemeUpsertDto[]): Promise<RepScheme[]> {
     const entities = this.repository.create(dataArray);
     return this.repository.save(entities);
   }

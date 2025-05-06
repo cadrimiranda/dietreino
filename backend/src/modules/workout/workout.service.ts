@@ -3,19 +3,25 @@ import { WorkoutRepository } from './workout.repository';
 import { Workout } from '../../entities/workout.entity';
 import { WorkoutType } from './workout.type';
 import { ImportSheetWorkoutInput } from './dto/import-sheet-workout.input';
-import { ExerciseService } from '../exercise/exercise.service';
-import { WorkoutExerciseService } from '../workout-exercise/workout-exercise.service';
 import { ImportXlsxUserWorkoutInput } from './dto/import-xlsx-user-workout-input';
 import { XlsxService } from '../xlsx/xlsx.service';
-import { Transaction } from 'typeorm';
+import { DataSource } from 'typeorm';
+import { TrainingDayService } from '../training-day/training-day.service';
+import {
+  TrainingDayExerciseService,
+  WorkoutExerciseCreateData,
+} from '../training-day-exercise/training-day-exercise.service';
+import { TrainingDay } from '@/entities';
+import { InjectDataSource } from '@nestjs/typeorm';
 
 @Injectable()
 export class WorkoutService {
   constructor(
     private readonly repository: WorkoutRepository,
-    private readonly exerciseService: ExerciseService,
-    private readonly workoutExerciseService: WorkoutExerciseService,
+    private readonly trainingDayService: TrainingDayService,
+    private readonly trainingDayExerciseService: TrainingDayExerciseService,
     private readonly xlsxService: XlsxService,
+    @InjectDataSource() private dataSource: DataSource,
   ) {}
 
   toWorkoutType(workout: Workout): Partial<WorkoutType> {
@@ -34,7 +40,7 @@ export class WorkoutService {
     return this.repository.create(data);
   }
 
-  findById(id: number) {
+  findById(id: string) {
     return this.repository.findById(id);
   }
 
@@ -42,11 +48,11 @@ export class WorkoutService {
     return this.repository.findAll();
   }
 
-  update(id: number, data: Partial<Workout>) {
+  update(id: string, data: Partial<Workout>) {
     return this.repository.update(id, data);
   }
 
-  delete(id: number) {
+  delete(id: string) {
     return this.repository.delete(id);
   }
 
@@ -83,7 +89,6 @@ export class WorkoutService {
     const week_end = new Date(input.weekEnd);
 
     if (existingWorkout) {
-      // Se o workout já existe, atualize-o
       workout = (await this.update(existingWorkout.id, {
         name: input.workoutName,
         week_end,
@@ -91,7 +96,6 @@ export class WorkoutService {
         is_active: input.isActive,
       })) as Workout;
     } else {
-      // Se o workout não existe, crie um novo
       workout = await this.create({
         user_id: input.userId,
         name: input.workoutName,
@@ -101,44 +105,45 @@ export class WorkoutService {
       });
     }
 
-    // 2. Processar cada exercício
-
+    let day = 0;
+    let trainingDay: TrainingDay | null = null;
+    let trainingDayExercises: WorkoutExerciseCreateData[] = [];
     for (let sheet in input.sheets) {
       const sheetData = input.sheets[sheet];
+
+      trainingDay = await this.trainingDayService.create({
+        dayOfWeek: day,
+        focus: sheetData.sheetName,
+        name: sheetData.sheetName,
+        order: day,
+      });
 
       for (let i = 0; i < sheetData.exercises.length; i++) {
         const exerciseInfo = sheetData.exercises[i];
 
-        // 2.1 Verificar se o exercício já existe ou criar um novo
-        let exercise = await this.exerciseService.findByName(exerciseInfo.name);
-
-        if (!exercise) {
-          exercise = await this.exerciseService.create({
-            name: exerciseInfo.name,
-            muscle_group: '',
-          });
-        }
-
-        // 2.2 Criar o workout_exercise com seus relacionamentos
-        await this.workoutExerciseService.createWithRelationships({
-          workout,
-          exercise,
-          order: i + 1,
-          sets: exerciseInfo.repSchemes[0]?.sets || 0,
+        trainingDayExercises.push({
+          exerciseName: exerciseInfo.name,
+          trainingDayId: trainingDay.id,
           repSchemes: exerciseInfo.repSchemes.map((rs) => ({
             sets: rs.sets,
-            min_reps: rs.minReps,
             max_reps: rs.maxReps,
+            min_reps: rs.minReps,
           })),
           restIntervals: exerciseInfo.restIntervals.map((interval, idx) => ({
             interval_time: interval,
-            order: idx + 1,
+            order: idx,
           })),
         });
       }
+
+      await this.trainingDayExerciseService.createBatchByTrainingDay(
+        trainingDayExercises,
+      );
+
+      trainingDay = null;
+      trainingDayExercises = [];
     }
 
-    // 3. Buscar e retornar o workout completo
     const createdWorkout = await this.findById(workout.id);
     if (!createdWorkout) {
       throw new NotFoundException(`Workout with ID ${workout.id} not found`);

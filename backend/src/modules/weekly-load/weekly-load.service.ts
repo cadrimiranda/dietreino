@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { WeeklyLoadRepository } from './weekly-load.repository';
-import { WeeklyLoad } from '../../entities/weekly-load.entity';
+import { WeeklyLoad } from '@/entities';
 
 @Injectable()
 export class WeeklyLoadService {
   constructor(private readonly repository: WeeklyLoadRepository) {}
 
-  create(data: Partial<WeeklyLoad>) {
+  create(data: Omit<WeeklyLoad, 'id'>) {
     return this.repository.create(data);
   }
 
-  findById(id: number) {
+  findById(id: string) {
     return this.repository.findById(id);
   }
 
@@ -18,11 +18,11 @@ export class WeeklyLoadService {
     return this.repository.findAll();
   }
 
-  update(id: number, data: Partial<WeeklyLoad>) {
+  update(id: string, data: WeeklyLoad) {
     return this.repository.update(id, data);
   }
 
-  delete(id: number) {
+  delete(id: string) {
     return this.repository.delete(id);
   }
 }

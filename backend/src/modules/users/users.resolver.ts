@@ -143,16 +143,16 @@ export class UsersResolver {
 
   @ResolveField('trainer', () => UserType, { nullable: true })
   async resolveTrainer(@Parent() user: User) {
-    if (user.trainerId) {
-      return this.usersService.findById(user.trainerId);
+    if (user.trainer) {
+      return this.usersService.findById(user.trainer.id);
     }
     return null;
   }
 
   @ResolveField('nutritionist', () => UserType, { nullable: true })
   async resolveNutritionist(@Parent() user: User) {
-    if (user.nutritionistId) {
-      return this.usersService.findById(user.nutritionistId);
+    if (user.nutritionist) {
+      return this.usersService.findById(user.nutritionist.id);
     }
     return null;
   }
@@ -179,7 +179,6 @@ export class UsersResolver {
       return [];
     }
     const workouts = await this.workoutService.findByUserId(user.id);
-    console.log('Workouts:', workouts);
     return workouts;
   }
 }

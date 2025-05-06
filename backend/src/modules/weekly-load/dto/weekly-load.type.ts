@@ -3,10 +3,10 @@ import { ObjectType, Field, Int, ID } from '@nestjs/graphql';
 @ObjectType()
 export class WeeklyLoadType {
   @Field(() => ID)
-  id: number;
+  id: string;
 
   @Field(() => Int)
-  workoutExerciseId: number;
+  trainingDayExerciseId: string;
 
   @Field(() => Int)
   week: number;

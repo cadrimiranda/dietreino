@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RestInterval } from '../../entities/rest-interval.entity';
+import { RestIntervalUpsertDto } from './dto/restIntervalUpsert';
 
 @Injectable()
 export class RestIntervalRepository {
@@ -15,15 +16,19 @@ export class RestIntervalRepository {
     return this.repository.save(entity);
   }
 
-  async findById(id: number): Promise<RestInterval | null> {
+  async findById(id: string): Promise<RestInterval | null> {
     return this.repository.findOneBy({ id });
   }
 
-  async findByWorkoutExerciseId(
-    workoutExerciseId: number,
+  async findByTrainingDayExercise(
+    trainingDayExerciseId: string,
   ): Promise<RestInterval[]> {
     return this.repository.find({
-      where: { workout_exercise_id: workoutExerciseId },
+      where: {
+        trainingDayExercise: {
+          id: trainingDayExerciseId,
+        },
+      },
       order: { order: 'ASC' },
     });
   }
@@ -33,14 +38,14 @@ export class RestIntervalRepository {
   }
 
   async update(
-    id: number,
+    id: string,
     data: Partial<RestInterval>,
   ): Promise<RestInterval | null> {
     await this.repository.update(id, data);
     return this.findById(id);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     await this.repository.delete(id);
   }
 

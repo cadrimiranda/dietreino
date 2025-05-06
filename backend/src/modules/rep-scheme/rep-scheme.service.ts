@@ -1,43 +1,92 @@
-import { Injectable } from '@nestjs/common';
-import { RepSchemeRepository } from './rep-scheme.repository';
-import { RepScheme } from '../../entities/rep-scheme.entity';
-
-interface RepSchemeData {
-  workout_exercise_id: number;
-  sets: number;
-  min_reps: number;
-  max_reps: number;
-}
+import { RepScheme } from '@/entities';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { RepSchemeUpsertDto } from './dto/repSchemeUpsert';
 
 @Injectable()
 export class RepSchemeService {
-  constructor(private readonly repository: RepSchemeRepository) {}
+  constructor(
+    @InjectRepository(RepScheme)
+    private repSchemeRepository: Repository<RepScheme>,
+  ) {}
 
-  create(data: Partial<RepScheme>) {
-    return this.repository.create(data);
+  async bulkUpsert(dtos: RepSchemeUpsertDto[]): Promise<RepScheme[]> {
+    const updates: RepSchemeUpsertDto[] = dtos.filter((dto) => !!dto.id);
+    const inserts: RepSchemeUpsertDto[] = dtos.filter((dto) => !dto.id);
+
+    const updatePromises = updates.map(async (dto) => {
+      const existingRepScheme = await this.findById(dto.id as string);
+      existingRepScheme.sets = dto.sets;
+      existingRepScheme.minReps = dto.minReps;
+      existingRepScheme.maxReps = dto.maxReps;
+      existingRepScheme.trainingDayExercise = {
+        id: dto.trainingDayExerciseId,
+      } as any;
+
+      return existingRepScheme;
+    });
+
+    const updatedEntities = await Promise.all(updatePromises);
+
+    const newEntities = inserts.map((dto) =>
+      this.repSchemeRepository.create({
+        sets: dto.sets,
+        minReps: dto.minReps,
+        maxReps: dto.maxReps,
+        trainingDayExercise: { id: dto.trainingDayExerciseId } as any,
+      }),
+    );
+
+    const allEntities = [...updatedEntities, ...newEntities];
+    return this.repSchemeRepository.save(allEntities);
   }
 
-  findById(id: number) {
-    return this.repository.findById(id);
+  async upsert(dto: RepSchemeUpsertDto): Promise<RepScheme> {
+    if (dto.id) {
+      const existingRepScheme = await this.findById(dto.id);
+
+      existingRepScheme.sets = dto.sets;
+      existingRepScheme.minReps = dto.minReps;
+      existingRepScheme.maxReps = dto.maxReps;
+      existingRepScheme.trainingDayExercise = {
+        id: dto.trainingDayExerciseId,
+      } as any;
+
+      return this.repSchemeRepository.save(existingRepScheme);
+    }
+
+    const newRepScheme = this.repSchemeRepository.create({
+      sets: dto.sets,
+      minReps: dto.minReps,
+      maxReps: dto.maxReps,
+      trainingDayExercise: { id: dto.trainingDayExerciseId } as any,
+    });
+
+    return this.repSchemeRepository.save(newRepScheme);
   }
 
-  findByWorkoutExerciseId(workoutExerciseId: number) {
-    return this.repository.findByWorkoutExerciseId(workoutExerciseId);
+  async findById(id: string): Promise<RepScheme> {
+    const repScheme = await this.repSchemeRepository.findOne({
+      where: { id },
+      relations: ['trainingDayExercise'],
+    });
+
+    if (!repScheme) {
+      throw new NotFoundException(
+        `Esquema de repetições com ID ${id} não encontrado`,
+      );
+    }
+
+    return repScheme;
   }
 
-  findAll() {
-    return this.repository.findAll();
-  }
+  async deleteById(id: string): Promise<boolean> {
+    await this.findById(id);
 
-  update(id: number, data: Partial<RepScheme>) {
-    return this.repository.update(id, data);
-  }
+    const result = await this.repSchemeRepository.delete(id);
+    if (!result.affected) return false;
 
-  delete(id: number) {
-    return this.repository.delete(id);
-  }
-
-  bulkCreate(dataArray: RepSchemeData[]) {
-    return this.repository.bulkCreate(dataArray);
+    return result.affected > 0;
   }
 }

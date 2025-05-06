@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RestIntervalRepository } from './rest-interval.repository';
 import { RestInterval } from '../../entities/rest-interval.entity';
-
-interface RestIntervalData {
-  workout_exercise_id: number;
-  interval_time: string;
-  order: number;
-}
+import { RestIntervalUpsertDto } from './dto/restIntervalUpsert';
 
 @Injectable()
 export class RestIntervalService {
@@ -16,27 +11,33 @@ export class RestIntervalService {
     return this.repository.create(data);
   }
 
-  findById(id: number) {
+  findById(id: string) {
     return this.repository.findById(id);
   }
 
-  findByWorkoutExerciseId(workoutExerciseId: number) {
-    return this.repository.findByWorkoutExerciseId(workoutExerciseId);
+  findByTrainingDayExercise(trainingDayExerciseId: string) {
+    return this.repository.findByTrainingDayExercise(trainingDayExerciseId);
   }
 
   findAll() {
     return this.repository.findAll();
   }
 
-  update(id: number, data: Partial<RestInterval>) {
+  update(id: string, data: Partial<RestInterval>) {
     return this.repository.update(id, data);
   }
 
-  delete(id: number) {
+  delete(id: string) {
     return this.repository.delete(id);
   }
 
-  bulkCreate(dataArray: RestIntervalData[]) {
-    return this.repository.bulkCreate(dataArray);
+  bulkCreate(dataArray: RestIntervalUpsertDto[]) {
+    return this.repository.bulkCreate(
+      dataArray.map((data) => ({
+        trainingDayExercise: { id: data.trainingDayExerciseId } as any,
+        intervalTime: data.intervalTime,
+        order: data.order,
+      })),
+    );
   }
 }

@@ -1,19 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { TrainingDayExercise } from './training-day-exercise.entity';
+import { BaseEntity } from '@/utils/base/base.entity';
 
 @Entity('exercises')
-export class Exercise {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class Exercise extends BaseEntity {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 50 })
-  muscle_group: string;
-
   @Column({ type: 'text', nullable: true })
-  video_link: string;
+  videoLink: string;
 
   @OneToMany(
     () => TrainingDayExercise,

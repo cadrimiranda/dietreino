@@ -10,7 +10,7 @@ export class ExerciseService {
     return this.repository.create(data);
   }
 
-  findById(id: number) {
+  findById(id: string) {
     return this.repository.findById(id);
   }
 
@@ -18,11 +18,11 @@ export class ExerciseService {
     return this.repository.findAll();
   }
 
-  update(id: number, data: Partial<Exercise>) {
+  update(id: string, data: Partial<Exercise>) {
     return this.repository.update(id, data);
   }
 
-  delete(id: number) {
+  delete(id: string) {
     return this.repository.delete(id);
   }
 

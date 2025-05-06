@@ -10,12 +10,12 @@ export class WeeklyLoadRepository {
     private readonly repository: Repository<WeeklyLoad>,
   ) {}
 
-  async create(data: Partial<WeeklyLoad>): Promise<WeeklyLoad> {
+  async create(data: Omit<WeeklyLoad, 'id'>): Promise<WeeklyLoad> {
     const entity = this.repository.create(data);
     return this.repository.save(entity);
   }
 
-  async findById(id: number): Promise<WeeklyLoad | null> {
+  async findById(id: string): Promise<WeeklyLoad | null> {
     return this.repository.findOneBy({ id });
   }
 
@@ -23,15 +23,12 @@ export class WeeklyLoadRepository {
     return this.repository.find();
   }
 
-  async update(
-    id: number,
-    data: Partial<WeeklyLoad>,
-  ): Promise<WeeklyLoad | null> {
+  async update(id: string, data: WeeklyLoad): Promise<WeeklyLoad | null> {
     await this.repository.update(id, data);
     return this.findById(id);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     await this.repository.delete(id);
   }
 }

@@ -1,4 +1,3 @@
-// src/modules/workout/dto/import-sheet-workout.input.ts
 import { Field, InputType, ID, Int } from '@nestjs/graphql';
 
 @InputType()
@@ -43,7 +42,7 @@ export class ImportSheetWorkoutInput {
   userId: string;
 
   @Field(() => Number)
-  workoutId?: number;
+  workoutId?: string;
 
   @Field()
   workoutName: string;

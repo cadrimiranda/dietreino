@@ -1,21 +1,10 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { Workout } from './workout.entity';
 import { TrainingDayExercise } from './training-day-exercise.entity';
+import { BaseEntity } from '../utils/base/base.entity';
 
 @Entity('training_days')
-export class TrainingDay {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class TrainingDay extends BaseEntity {
   @Column()
   workout_id: number;
 
@@ -26,7 +15,7 @@ export class TrainingDay {
   workout: Workout;
 
   @Column({ type: 'int' })
-  day_of_week: number;
+  dayOfWeek: number;
 
   @Column({ type: 'text', nullable: true })
   focus: string;
@@ -36,12 +25,6 @@ export class TrainingDay {
 
   @Column({ type: 'int' })
   order: number;
-
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
 
   @OneToMany(
     () => TrainingDayExercise,

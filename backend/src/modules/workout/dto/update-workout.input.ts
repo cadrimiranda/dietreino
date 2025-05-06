@@ -3,7 +3,7 @@ import { InputType, Field, Int, ID } from '@nestjs/graphql';
 @InputType()
 export class UpdateWorkoutInput {
   @Field(() => ID)
-  id: number;
+  id: string;
 
   @Field(() => String, { nullable: true })
   name?: string;

@@ -1,6 +1,5 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   OneToMany,
@@ -9,13 +8,10 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { TrainingDay } from './training-day.entity';
-import { Stretch } from './stretch.entity';
+import { BaseEntity } from '@/utils/base/base.entity';
 
 @Entity('workout')
-export class Workout {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class Workout extends BaseEntity {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
@@ -43,7 +39,4 @@ export class Workout {
 
   @OneToMany(() => TrainingDay, (td: TrainingDay) => td.workout)
   trainingDays: TrainingDay[];
-
-  @OneToMany(() => Stretch, (stretch: Stretch) => stretch.workout)
-  stretches: Stretch[];
 }

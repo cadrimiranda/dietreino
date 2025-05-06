@@ -1,18 +1,9 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  RelationId,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { TrainingDayExercise } from './training-day-exercise.entity';
+import { BaseEntity } from '@/utils/base/base.entity';
 
 @Entity('weekly_loads')
-export class WeeklyLoad {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class WeeklyLoad extends BaseEntity {
   @ManyToOne(
     () => TrainingDayExercise,
     (tde: TrainingDayExercise) => tde.weeklyLoads,
@@ -22,9 +13,6 @@ export class WeeklyLoad {
   )
   @JoinColumn({ name: 'training_day_exercise_id' })
   trainingDayExercise: TrainingDayExercise;
-
-  @RelationId((weeklyLoad: WeeklyLoad) => weeklyLoad.trainingDayExercise)
-  trainingDayExerciseId: number;
 
   @Column({ type: 'int' })
   week: number;

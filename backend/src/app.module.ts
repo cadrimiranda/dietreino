@@ -40,6 +40,7 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     UsersModule,
     WorkoutModule,
+
     XlsxModule,
     AuthModule,
   ],

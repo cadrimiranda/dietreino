@@ -19,7 +19,7 @@ export class ExerciseRepository {
     return this.repository.save(entity);
   }
 
-  async findById(id: number): Promise<Exercise | null> {
+  async findById(id: string): Promise<Exercise | null> {
     return this.repository.findOneBy({ id });
   }
 
@@ -27,12 +27,12 @@ export class ExerciseRepository {
     return this.repository.find();
   }
 
-  async update(id: number, data: Partial<Exercise>): Promise<Exercise | null> {
+  async update(id: string, data: Partial<Exercise>): Promise<Exercise | null> {
     await this.repository.update(id, data);
     return this.findById(id);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     await this.repository.delete(id);
   }
 }

@@ -1,25 +1,12 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-  ManyToOne,
-  JoinColumn,
-  RelationId,
-} from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { Workout } from './workout.entity';
 import { UserRole } from '../utils/roles.enum';
 import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { BaseEntity } from '@/utils/base/base.entity';
 
 @ObjectType()
 @Entity('users')
-export class User {
-  @Field(() => ID)
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class User extends BaseEntity {
   @Field()
   @Column()
   name: string;
@@ -28,20 +15,12 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ select: false })
   password: string;
 
   @Field({ nullable: true })
   @Column({ name: 'phone', nullable: true })
   phone: string;
-
-  @Field()
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  @Field()
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
 
   @Field(() => [Workout], { nullable: true })
   @OneToMany(() => Workout, (workout) => workout.user)
@@ -64,19 +43,7 @@ export class User {
   @JoinColumn({ name: 'trainer_id' })
   trainer: User;
 
-  @RelationId((user: User) => user.trainer)
-  trainerId: string;
-
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'nutritionist_id' })
   nutritionist: User;
-
-  @RelationId((user: User) => user.nutritionist)
-  nutritionistId: string;
-
-  @OneToMany(() => User, (user) => user.trainer)
-  clients_as_trainer: User[];
-
-  @OneToMany(() => User, (user) => user.nutritionist)
-  clients_as_nutritionist: User[];
 }

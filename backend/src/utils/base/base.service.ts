@@ -1,4 +1,4 @@
-import { DeepPartial, FindOneOptions } from 'typeorm';
+import { FindOneOptions } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { BaseEntity } from './base.entity';
 import { BaseRepository } from './base.repository';

@@ -2,12 +2,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-input CreateExerciseInput {
-  muscleGroup: String!
-  name: String!
-  videoLink: String
-}
-
 input CreateWorkoutInput {
   isActive: Boolean! = false
   name: String!
@@ -30,7 +24,12 @@ type ExerciseInfo {
 
 type ExerciseType {
   id: ID!
-  muscleGroup: String!
+  name: String!
+  videoLink: String
+}
+
+input ExerciseUpsertDto {
+  id: ID
   name: String!
   videoLink: String
 }
@@ -59,18 +58,16 @@ type Mutation {
   addWorkoutToUser(clientId: ID!, workoutInput: CreateWorkoutInput!): WorkoutType!
   assignNutritionist(clientId: ID!, nutritionistId: ID!): UserType!
   assignTrainer(clientId: ID!, trainerId: ID!): UserType!
-  createExercise(createExerciseInput: CreateExerciseInput!): ExerciseType!
   deleteExercise(id: ID!): Boolean!
   deleteUser(id: ID!): Boolean!
   deleteWorkout(id: ID!): Boolean!
-  deleteWorkoutExercise(id: ID!): Boolean!
   extractWorkoutSheet(file: Upload!): [SheetExercises!]!
   importXlsxAndCreateWorkout(input: ImportXlsxUserWorkoutInput!): WorkoutType!
   login(loginInput: LoginInput!): LoginResponse!
   me: UserType!
   refreshToken(refreshTokenInput: RefreshTokenInput!): LoginResponse!
-  updateExercise(updateExerciseInput: UpdateExerciseInput!): ExerciseType
   updateWorkout(updateWorkoutInput: UpdateWorkoutInput!): WorkoutType
+  upsertExercise(input: ExerciseUpsertDto!): ExerciseType!
   upsertUser(userInput: UserInput!): UserType!
 }
 
@@ -83,8 +80,6 @@ type Query {
   user(id: ID!): UserType!
   users: [UserType!]!
   workout(id: ID!): WorkoutType
-  workoutExercise(id: ID!): WorkoutExerciseType
-  workoutExercises: [WorkoutExerciseType!]!
   workouts: [WorkoutType!]!
 }
 
@@ -98,19 +93,6 @@ type RepRange {
   sets: Int!
 }
 
-type RepSchemeType {
-  id: ID!
-  max_reps: Int!
-  min_reps: Int!
-  sets: Int!
-}
-
-type RestIntervalType {
-  id: ID!
-  interval_time: String!
-  order: Int!
-}
-
 type SheetData {
   data: [[String!]!]!
   name: String!
@@ -119,13 +101,6 @@ type SheetData {
 type SheetExercises {
   exercises: [ExerciseInfo!]!
   sheetName: String!
-}
-
-input UpdateExerciseInput {
-  id: ID!
-  muscleGroup: String
-  name: String
-  videoLink: String
 }
 
 input UpdateWorkoutInput {
@@ -172,16 +147,6 @@ type UserType {
   workouts: [WorkoutType!]
 }
 
-type WorkoutExerciseType {
-  exercise: ExerciseType
-  id: ID!
-  notes: String
-  order: Int!
-  repSchemes: [RepSchemeType!]
-  restIntervals: [RestIntervalType!]
-  sets: Int!
-}
-
 type WorkoutType {
   createdAt: DateTime!
   id: ID!
@@ -190,5 +155,4 @@ type WorkoutType {
   userId: String!
   weekEnd: DateTime!
   weekStart: DateTime!
-  workoutExercises: [WorkoutExerciseType!]
 }

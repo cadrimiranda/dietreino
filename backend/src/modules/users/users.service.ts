@@ -142,12 +142,12 @@ export class UsersService {
         ? false
         : data.trainerId !== undefined
           ? data.trainerId
-          : existingUser.trainerId;
+          : existingUser.trainer.id;
       const willHaveNutritionist = isRemovingNutritionist
         ? false
         : data.nutritionistId !== undefined
           ? data.nutritionistId
-          : existingUser.nutritionistId;
+          : existingUser.nutritionist.id;
 
       if (!willHaveTrainer && !willHaveNutritionist) {
         throw new Error(
@@ -332,7 +332,9 @@ export class UsersService {
       throw new Error('Usuário não é um treinador');
     }
 
-    return this.usersRepository.update(clientId, { trainerId });
+    return this.usersRepository.update(clientId, {
+      trainer: { id: trainerId } as any,
+    });
   }
 
   async assignClientToNutritionist(
@@ -345,7 +347,9 @@ export class UsersService {
       throw new Error('Usuário não é um nutricionista');
     }
 
-    return this.usersRepository.update(clientId, { nutritionistId });
+    return this.usersRepository.update(clientId, {
+      nutritionist: { id: nutritionistId } as any,
+    });
   }
 
   async getClientForProfessional(

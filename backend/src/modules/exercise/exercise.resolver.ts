@@ -1,9 +1,8 @@
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { ExerciseService } from './exercise.service';
 import { ExerciseType } from './dto/exercise.type';
-import { CreateExerciseInput } from './dto/create-exercise.input';
-import { UpdateExerciseInput } from './dto/update-exercise.input';
-import { Exercise } from 'src/entities';
+import { Exercise } from '@/entities';
+import { ExerciseUpsertDto } from './dto/exerciseUpsert';
 
 @Resolver(() => ExerciseType)
 export class ExercisesResolver {
@@ -13,8 +12,7 @@ export class ExercisesResolver {
     return {
       id: entity.id,
       name: entity.name,
-      muscleGroup: entity.muscle_group,
-      videoLink: entity.video_link,
+      videoLink: entity.videoLink,
     };
   };
 
@@ -26,45 +24,41 @@ export class ExercisesResolver {
 
   @Query(() => ExerciseType, { nullable: true })
   async exercise(
-    @Args('id', { type: () => ID }) id: number,
+    @Args('id', { type: () => ID }) id: string,
   ): Promise<ExerciseType | null> {
     const entity = await this.exerciseService.findById(id);
     return entity ? this.toExerciseType(entity) : null;
   }
 
   @Mutation(() => ExerciseType)
-  async createExercise(
-    @Args('createExerciseInput') createExerciseInput: CreateExerciseInput,
+  async upsertExercise(
+    @Args('input') input: ExerciseUpsertDto,
   ): Promise<ExerciseType> {
-    const entity = await this.exerciseService.create({
-      name: createExerciseInput.name,
-      muscle_group: createExerciseInput.muscleGroup,
-      video_link: createExerciseInput.videoLink,
-    });
-    return this.toExerciseType(entity);
-  }
+    let entity: Exercise | null = null;
 
-  @Mutation(() => ExerciseType, { nullable: true })
-  async updateExercise(
-    @Args('updateExerciseInput') updateExerciseInput: UpdateExerciseInput,
-  ): Promise<ExerciseType | null> {
-    const updateData: Partial<Exercise> = {};
-    if (updateExerciseInput.name !== undefined)
-      updateData.name = updateExerciseInput.name;
-    if (updateExerciseInput.muscleGroup !== undefined)
-      updateData.muscle_group = updateExerciseInput.muscleGroup;
-    if (updateExerciseInput.videoLink !== undefined)
-      updateData.video_link = updateExerciseInput.videoLink;
-    const entity = await this.exerciseService.update(
-      Number(updateExerciseInput.id),
-      updateData,
-    );
-    return entity ? this.toExerciseType(entity) : null;
+    if (input.id) {
+      entity = await this.exerciseService.findById(input.id);
+      if (entity) {
+        entity.name = input.name;
+        entity.videoLink = input?.videoLink || entity.videoLink;
+
+        await this.exerciseService.update(input.id, entity);
+      }
+    }
+
+    if (!entity) {
+      entity = await this.exerciseService.create({
+        name: input.name,
+        videoLink: input.videoLink,
+      });
+    }
+
+    return this.toExerciseType(entity);
   }
 
   @Mutation(() => Boolean)
   async deleteExercise(
-    @Args('id', { type: () => ID }) id: number,
+    @Args('id', { type: () => ID }) id: string,
   ): Promise<boolean> {
     await this.exerciseService.delete(id);
     return true;

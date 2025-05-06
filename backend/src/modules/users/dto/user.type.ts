@@ -32,10 +32,4 @@ export class UserType {
 
   @Field(() => UserType, { nullable: true })
   nutritionist: UserType;
-
-  @Field(() => [UserType], { nullable: true })
-  clients_as_trainer: UserType[];
-
-  @Field(() => [UserType], { nullable: true })
-  clients_as_nutritionist: UserType[];
 }

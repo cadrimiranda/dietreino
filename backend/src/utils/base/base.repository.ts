@@ -72,4 +72,8 @@ export abstract class BaseRepository<T extends BaseEntity> {
     await this.repository.remove(entity);
     return true;
   }
+
+  getRepository() {
+    return this.repository;
+  }
 }
