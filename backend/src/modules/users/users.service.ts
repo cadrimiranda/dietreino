@@ -261,7 +261,7 @@ export class UsersService {
    * @param plainPassword The plain text password to encode
    * @returns A Promise that resolves to the hashed password string
    */
-  private async encodePassword(plainPassword: string): Promise<string> {
+  async encodePassword(plainPassword: string): Promise<string> {
     try {
       // Generate a random salt
       const salt = await randomBytes(16);

@@ -15,6 +15,10 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type EncodePassword {
+  password: String!
+}
+
 type ExerciseInfo {
   name: String!
   rawReps: String!
@@ -58,9 +62,11 @@ type Mutation {
   addWorkoutToUser(clientId: ID!, workoutInput: CreateWorkoutInput!): WorkoutType!
   assignNutritionist(clientId: ID!, nutritionistId: ID!): UserType!
   assignTrainer(clientId: ID!, trainerId: ID!): UserType!
+  decodePassword: EncodePassword!
   deleteExercise(id: ID!): Boolean!
   deleteUser(id: ID!): Boolean!
   deleteWorkout(id: ID!): Boolean!
+  encodePassword: EncodePassword!
   extractWorkoutSheet(file: Upload!): [SheetExercises!]!
   importXlsxAndCreateWorkout(input: ImportXlsxUserWorkoutInput!): WorkoutType!
   login(loginInput: LoginInput!): LoginResponse!

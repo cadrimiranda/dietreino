@@ -33,3 +33,9 @@ export class UserType {
   @Field(() => UserType, { nullable: true })
   nutritionist: UserType;
 }
+
+@ObjectType()
+export class EncodePassword {
+  @Field(() => String)
+  password: string;
+}
