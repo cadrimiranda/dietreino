@@ -146,18 +146,4 @@ export class WorkoutService {
 
     return this.toWorkoutType(createdWorkout);
   }
-
-  private formatRepetitions(
-    repSchemes: { sets: number; minReps: number; maxReps: number }[],
-  ): string {
-    return repSchemes
-      .map((scheme) => {
-        if (scheme.minReps === scheme.maxReps) {
-          return `${scheme.sets}x${scheme.minReps}`;
-        } else {
-          return `${scheme.sets}x${scheme.minReps}-${scheme.maxReps}`;
-        }
-      })
-      .join(' / ');
-  }
 }

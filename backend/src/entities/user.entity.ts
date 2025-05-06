@@ -7,6 +7,7 @@ import {
   OneToMany,
   ManyToOne,
   JoinColumn,
+  RelationId,
 } from 'typeorm';
 import { Workout } from './workout.entity';
 import { UserRole } from '../utils/roles.enum';
@@ -59,19 +60,19 @@ export class User {
   })
   role: UserRole;
 
-  @Column({ name: 'trainer_id', nullable: true })
-  trainerId: string;
-
-  @Column({ name: 'nutritionist_id', nullable: true })
-  nutritionistId: string;
-
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'trainer_id' })
   trainer: User;
 
+  @RelationId((user: User) => user.trainer)
+  trainerId: string;
+
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'nutritionist_id' })
   nutritionist: User;
+
+  @RelationId((user: User) => user.nutritionist)
+  nutritionistId: string;
 
   @OneToMany(() => User, (user) => user.trainer)
   clients_as_trainer: User[];

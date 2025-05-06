@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { WorkoutExercise } from './workout-exercise.entity';
+import { TrainingDayExercise } from './training-day-exercise.entity';
 
 @Entity('exercises')
 export class Exercise {
@@ -15,6 +15,9 @@ export class Exercise {
   @Column({ type: 'text', nullable: true })
   video_link: string;
 
-  @OneToMany(() => WorkoutExercise, (we: WorkoutExercise) => we.exercise)
-  workoutExercises: WorkoutExercise[];
+  @OneToMany(
+    () => TrainingDayExercise,
+    (tde: TrainingDayExercise) => tde.exercise,
+  )
+  trainingDayExercises: TrainingDayExercise[];
 }

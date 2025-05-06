@@ -4,22 +4,27 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  RelationId,
 } from 'typeorm';
-import { WorkoutExercise } from './workout-exercise.entity';
+import { TrainingDayExercise } from './training-day-exercise.entity';
 
 @Entity('rep_schemes')
 export class RepScheme {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  workout_exercise_id: number;
+  @ManyToOne(
+    () => TrainingDayExercise,
+    (tde: TrainingDayExercise) => tde.repSchemes,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
+  @JoinColumn({ name: 'training_day_exercise_id' })
+  trainingDayExercise: TrainingDayExercise;
 
-  @ManyToOne(() => WorkoutExercise, (we: WorkoutExercise) => we.repSchemes, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'workout_exercise_id' })
-  workoutExercise: WorkoutExercise;
+  @RelationId((repScheme: RepScheme) => repScheme.trainingDayExercise)
+  trainingDayExerciseId: number;
 
   @Column({ type: 'int' })
   sets: number;
