@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { TrainingDayExercise } from './training-day-exercise.entity';
-import { BaseEntity } from '@/utils/base/base.entity';
+import { BaseEntity } from '../utils/base/base.entity';
 
 @Entity('rest_intervals')
 export class RestInterval extends BaseEntity {

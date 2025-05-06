@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { TrainingDayExercise } from './training-day-exercise.entity';
-import { BaseEntity } from '@/utils/base/base.entity';
+import { BaseEntity } from '../utils/base/base.entity';
 
 @Entity('weekly_loads')
 export class WeeklyLoad extends BaseEntity {

@@ -2,7 +2,7 @@ import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { Workout } from './workout.entity';
 import { UserRole } from '../utils/roles.enum';
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { BaseEntity } from '@/utils/base/base.entity';
+import { BaseEntity } from '../utils/base/base.entity';
 
 @ObjectType()
 @Entity('users')
@@ -15,7 +15,7 @@ export class User extends BaseEntity {
   @Column({ unique: true })
   email: string;
 
-  @Column({ select: false })
+  @Column()
   password: string;
 
   @Field({ nullable: true })
