@@ -1,3 +1,4 @@
+import { TrainingDay } from '@/entities';
 import { ObjectType, Field, Int, ID } from '@nestjs/graphql';
 
 @ObjectType()
@@ -22,4 +23,10 @@ export class WorkoutType {
 
   @Field(() => Date)
   createdAt: Date;
+
+  @Field(() => Int, { nullable: true })
+  trainingDaysBitfield: number;
+
+  @Field(() => [TrainingDay], { nullable: true })
+  trainingDays: TrainingDay[];
 }

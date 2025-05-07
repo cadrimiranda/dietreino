@@ -1,11 +1,4 @@
-import {
-  Resolver,
-  Query,
-  Mutation,
-  Args,
-  ID,
-  ResolveField,
-} from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { WorkoutService } from './workout.service';
 import { WorkoutType } from './workout.type';
 import { UpdateWorkoutInput } from './dto/update-workout.input';

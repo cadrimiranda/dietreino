@@ -90,23 +90,27 @@ export function useUsers({ userId }: { userId?: string }) {
           weekStart
           weekEnd
           isActive
-          workoutExercises {
+          trainingDays {
             id
-            exercise {
+            name
+            trainingDayExercises {
               id
-              name
-              videoLink
-            }
-            repSchemes {
-              id
-              sets
-              min_reps
-              max_reps
-            }
-            restIntervals {
-              id
-              interval_time
-              order
+              exercise {
+                id
+                name
+                videoLink
+              }
+              repSchemes {
+                id
+                sets
+                minReps
+                maxReps
+              }
+              restIntervals {
+                id
+                intervalTime
+                order
+              }
             }
           }
         }

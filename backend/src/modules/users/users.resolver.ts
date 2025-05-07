@@ -131,7 +131,7 @@ export class UsersResolver {
     await this.usersService.getClientForProfessional(clientId, currentUser.id);
 
     const workout = await this.workoutService.create({
-      user_id: clientId,
+      user: { id: clientId } as any,
       name: input.name,
       week_start: input.weekStart,
       week_end: input.weekEnd,

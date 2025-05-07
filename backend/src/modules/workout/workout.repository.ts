@@ -34,8 +34,8 @@ export class WorkoutRepository {
 
   async findByUserId(userId: string): Promise<Workout[]> {
     return this.repository.find({
-      where: { user_id: userId },
-      order: { created_at: 'DESC' },
+      where: { user: { id: userId } },
+      order: { createdAt: 'DESC' },
     });
   }
 }

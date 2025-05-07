@@ -288,7 +288,6 @@ export function useAuth() {
       const result = data?.login;
 
       if (!result || (!result.accessToken && !result.refreshToken)) {
-        console.log(result);
         throw new Error("Login falhou");
       }
 

@@ -183,7 +183,7 @@ export default defineComponent({
             workout.isActive = foundWorkout.isActive || true;
             const exercisesMap = new Map();
 
-            foundWorkout.workoutExercises?.forEach((workoutExercise) => {
+            foundWorkout.trainingDay?.forEach((workoutExercise) => {
               const exercise = workoutExercise.exercise;
               const repSchemes = workoutExercise.repSchemes || [];
               const restIntervals = workoutExercise.restIntervals || [];
