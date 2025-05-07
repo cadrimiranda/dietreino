@@ -27,12 +27,14 @@ export class WorkoutService {
   toWorkoutType(workout: Workout): Partial<WorkoutType> {
     return {
       id: workout.id,
-      userId: workout.user_id,
+      userId: workout.user.id,
       name: workout.name,
       weekStart: workout.week_start,
       weekEnd: workout.week_end,
       isActive: workout.is_active,
-      createdAt: workout.created_at,
+      createdAt: workout.createdAt,
+      trainingDaysBitfield: workout.trainingDaysBitfield,
+      trainingDays: workout.trainingDays,
     };
   }
 
@@ -97,7 +99,7 @@ export class WorkoutService {
       })) as Workout;
     } else {
       workout = await this.create({
-        user_id: input.userId,
+        user: { id: input.userId } as any,
         name: input.workoutName,
         is_active: input.isActive,
         week_end,
@@ -116,6 +118,7 @@ export class WorkoutService {
         focus: sheetData.sheetName,
         name: sheetData.sheetName,
         order: day,
+        workout,
       });
 
       for (let i = 0; i < sheetData.exercises.length; i++) {

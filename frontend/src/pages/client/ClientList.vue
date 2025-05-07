@@ -338,7 +338,6 @@ export default defineComponent({
       }
     }
 
-    // Call once when component is mounted
     loadSavedPreferences();
 
     return {

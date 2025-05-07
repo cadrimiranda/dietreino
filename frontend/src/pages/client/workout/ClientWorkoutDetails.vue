@@ -183,37 +183,50 @@ export default defineComponent({
             workout.isActive = foundWorkout.isActive || true;
             const exercisesMap = new Map();
 
-            foundWorkout.workoutExercises?.forEach((workoutExercise) => {
-              const exercise = workoutExercise.exercise;
-              const repSchemes = workoutExercise.repSchemes || [];
-              const restIntervals = workoutExercise.restIntervals || [];
+            foundWorkout.trainingDays?.forEach((trainingDay) => {
+              trainingDay.trainingDayExercises.forEach(
+                (trainingDayExercise) => {
+                  const exercise = trainingDayExercise.exercise;
+                  const repSchemes = trainingDayExercise.repSchemes || [];
+                  const restIntervals = trainingDayExercise.restIntervals || [];
 
-              // Formatar as repetições
-              let repsFormatted = "";
-              if (repSchemes.length > 0) {
-                repsFormatted = repSchemes
-                  .map((scheme) => `${scheme.min_reps}-${scheme.max_reps}`)
-                  .join(", ");
-              }
+                  // Formatar as repetições
+                  let repsFormatted = "";
+                  if (repSchemes.length > 0) {
+                    repsFormatted =
+                      repSchemes.length > 1
+                        ? repSchemes
+                            .map(
+                              (scheme) =>
+                                `${scheme.sets}x ${scheme.minReps}-${scheme.maxReps}`
+                            )
+                            .join(", ")
+                        : `${repSchemes[0].minReps}-${repSchemes[0].maxReps}`;
+                  }
 
-              const restFormatted = restIntervals.reduce((acc, interval) => {
-                if (acc) {
-                  return `${acc} - ${interval.interval_time}s`;
+                  const restFormatted = restIntervals.reduce(
+                    (acc, interval) => {
+                      if (acc) {
+                        return `${acc} - ${interval.intervalTime}s`;
+                      }
+                      return `${interval.intervalTime}s`;
+                    },
+                    ""
+                  );
+                  const sheetTitle = trainingDay.name;
+
+                  if (!exercisesMap.has(sheetTitle)) {
+                    exercisesMap.set(sheetTitle, []);
+                  }
+
+                  exercisesMap.get(sheetTitle).push({
+                    name: exercise?.name,
+                    sets: repSchemes.reduce((acc, next) => acc + next.sets, 0),
+                    reps: repsFormatted || "-",
+                    rest: restFormatted || "-",
+                  });
                 }
-                return `${interval.interval_time}s`;
-              }, "");
-              const sheetTitle = "Treino Completo";
-
-              if (!exercisesMap.has(sheetTitle)) {
-                exercisesMap.set(sheetTitle, []);
-              }
-
-              exercisesMap.get(sheetTitle).push({
-                name: exercise?.name,
-                sets: repSchemes.length > 0 ? repSchemes[0].sets : "-",
-                reps: repsFormatted || "-",
-                rest: restFormatted || "-",
-              });
+              );
             });
 
             workoutSheets.value = Array.from(exercisesMap.entries()).map(

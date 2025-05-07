@@ -15,8 +15,12 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type EncodePassword {
-  password: String!
+type Exercise {
+  createdAt: DateTime!
+  id: ID!
+  name: String!
+  updatedAt: DateTime!
+  videoLink: String
 }
 
 type ExerciseInfo {
@@ -62,11 +66,9 @@ type Mutation {
   addWorkoutToUser(clientId: ID!, workoutInput: CreateWorkoutInput!): WorkoutType!
   assignNutritionist(clientId: ID!, nutritionistId: ID!): UserType!
   assignTrainer(clientId: ID!, trainerId: ID!): UserType!
-  decodePassword: EncodePassword!
   deleteExercise(id: ID!): Boolean!
   deleteUser(id: ID!): Boolean!
   deleteWorkout(id: ID!): Boolean!
-  encodePassword: EncodePassword!
   extractWorkoutSheet(file: Upload!): [SheetExercises!]!
   importXlsxAndCreateWorkout(input: ImportXlsxUserWorkoutInput!): WorkoutType!
   login(loginInput: LoginInput!): LoginResponse!
@@ -99,6 +101,23 @@ type RepRange {
   sets: Int!
 }
 
+type RepScheme {
+  createdAt: DateTime!
+  id: ID!
+  maxReps: Float!
+  minReps: Float!
+  sets: Float!
+  updatedAt: DateTime!
+}
+
+type RestInterval {
+  createdAt: DateTime!
+  id: ID!
+  intervalTime: String!
+  order: Float!
+  updatedAt: DateTime!
+}
+
 type SheetData {
   data: [[String!]!]!
   name: String!
@@ -107,6 +126,26 @@ type SheetData {
 type SheetExercises {
   exercises: [ExerciseInfo!]!
   sheetName: String!
+}
+
+type TrainingDay {
+  createdAt: DateTime!
+  dayOfWeek: Float!
+  id: ID!
+  name: String!
+  order: Float!
+  trainingDayExercises: [TrainingDayExercise!]!
+  updatedAt: DateTime!
+}
+
+type TrainingDayExercise {
+  createdAt: DateTime!
+  exercise: Exercise!
+  id: ID!
+  order: Float!
+  repSchemes: [RepScheme!]!
+  restIntervals: [RestInterval!]!
+  updatedAt: DateTime!
 }
 
 input UpdateWorkoutInput {
@@ -158,6 +197,8 @@ type WorkoutType {
   id: ID!
   isActive: Boolean!
   name: String!
+  trainingDays: [TrainingDay!]
+  trainingDaysBitfield: Int
   userId: String!
   weekEnd: DateTime!
   weekStart: DateTime!

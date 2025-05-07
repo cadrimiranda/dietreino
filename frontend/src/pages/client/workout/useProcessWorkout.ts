@@ -15,24 +15,8 @@ export function useProcessWorkout() {
         userId
         weekEnd
         weekStart
-        workoutExercises {
+        trainingDays {
           id
-          notes
-          exercise {
-            id
-            name
-          }
-          repSchemes {
-            id
-            max_reps
-            min_reps
-            sets
-          }
-          restIntervals {
-            id
-            interval_time
-            order
-          }
         }
       }
     }
