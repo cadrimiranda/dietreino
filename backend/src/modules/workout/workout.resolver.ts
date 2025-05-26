@@ -9,6 +9,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ImportXlsxUserWorkoutInput } from './dto/import-xlsx-user-workout-input';
+import { ToggleWorkoutActiveInput } from './dto/toggle-workout-active.input';
 
 @Resolver(() => WorkoutType)
 export class WorkoutResolver {
@@ -64,5 +65,38 @@ export class WorkoutResolver {
     @Args('input') input: ImportXlsxUserWorkoutInput,
   ) {
     return this.workoutService.importXlsxUserWorkout(input);
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER)
+  @Mutation(() => WorkoutType)
+  async toggleWorkoutActive(
+    @Args('input') input: ToggleWorkoutActiveInput,
+  ): Promise<Partial<WorkoutType>> {
+    const workout = await this.workoutService.toggleWorkoutActive(
+      input.id, 
+      input.active
+    );
+    return this.workoutService.toWorkoutType(workout);
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER)
+  @Mutation(() => WorkoutType)
+  async activateWorkout(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<Partial<WorkoutType>> {
+    const workout = await this.workoutService.toggleWorkoutActive(id, true);
+    return this.workoutService.toWorkoutType(workout);
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER)
+  @Mutation(() => WorkoutType)
+  async deactivateWorkout(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<Partial<WorkoutType>> {
+    const workout = await this.workoutService.toggleWorkoutActive(id, false);
+    return this.workoutService.toWorkoutType(workout);
   }
 }

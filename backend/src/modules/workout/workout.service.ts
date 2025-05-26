@@ -38,7 +38,11 @@ export class WorkoutService {
     };
   }
 
-  create(data: Partial<Workout>) {
+  async create(data: Partial<Workout>) {
+    // If creating an active workout, deactivate all other workouts for this user
+    if (data.is_active && data.user?.id) {
+      await this.deactivateAllUserWorkouts(data.user.id);
+    }
     return this.repository.create(data);
   }
 
@@ -50,7 +54,14 @@ export class WorkoutService {
     return this.repository.findAll();
   }
 
-  update(id: string, data: Partial<Workout>) {
+  async update(id: string, data: Partial<Workout>) {
+    // If activating a workout, deactivate all other workouts for this user
+    if (data.is_active) {
+      const workout = await this.findById(id);
+      if (workout && workout.user?.id) {
+        await this.deactivateAllUserWorkouts(workout.user.id, id);
+      }
+    }
     return this.repository.update(id, data);
   }
 
@@ -62,6 +73,45 @@ export class WorkoutService {
     return this.repository
       .findByUserId(userId)
       .then((workouts) => workouts.map(this.toWorkoutType));
+  }
+
+  /**
+   * Deactivates all workouts for a specific user
+   * @param userId The user ID
+   * @param excludeWorkoutId Optional workout ID to exclude from deactivation
+   */
+  async deactivateAllUserWorkouts(userId: string, excludeWorkoutId?: string) {
+    const workouts = await this.repository.findByUserId(userId);
+    
+    for (const workout of workouts) {
+      if (excludeWorkoutId && workout.id === excludeWorkoutId) {
+        continue;
+      }
+      
+      if (workout.is_active) {
+        await this.repository.update(workout.id, { is_active: false });
+      }
+    }
+  }
+
+  /**
+   * Toggles a workout's active status and ensures only one workout is active per user
+   * @param workoutId The workout ID to toggle
+   * @param active The new active status
+   */
+  async toggleWorkoutActive(workoutId: string, active: boolean): Promise<Workout> {
+    const workout = await this.findById(workoutId);
+    if (!workout) {
+      throw new NotFoundException(`Workout with ID ${workoutId} not found`);
+    }
+
+    // If activating, deactivate all other workouts for this user
+    if (active && workout.user?.id) {
+      await this.deactivateAllUserWorkouts(workout.user.id, workoutId);
+    }
+
+    // Update the workout's active status
+    return this.repository.update(workoutId, { is_active: active }) as Promise<Workout>;
   }
 
   async importXlsxUserWorkout(
@@ -89,6 +139,11 @@ export class WorkoutService {
 
     const week_start = new Date(input.weekStart);
     const week_end = new Date(input.weekEnd);
+
+    // If this workout will be active, deactivate all other workouts for this user
+    if (input.isActive) {
+      await this.deactivateAllUserWorkouts(input.userId, workoutId);
+    }
 
     if (existingWorkout) {
       workout = (await this.update(existingWorkout.id, {
