@@ -63,9 +63,11 @@ type LoginResponse {
 }
 
 type Mutation {
+  activateWorkout(id: ID!): WorkoutType!
   addWorkoutToUser(clientId: ID!, workoutInput: CreateWorkoutInput!): WorkoutType!
   assignNutritionist(clientId: ID!, nutritionistId: ID!): UserType!
   assignTrainer(clientId: ID!, trainerId: ID!): UserType!
+  deactivateWorkout(id: ID!): WorkoutType!
   deleteExercise(id: ID!): Boolean!
   deleteUser(id: ID!): Boolean!
   deleteWorkout(id: ID!): Boolean!
@@ -74,7 +76,9 @@ type Mutation {
   login(loginInput: LoginInput!): LoginResponse!
   me: UserType!
   refreshToken(refreshTokenInput: RefreshTokenInput!): LoginResponse!
+  toggleWorkoutActive(input: ToggleWorkoutActiveInput!): WorkoutType!
   updateWorkout(updateWorkoutInput: UpdateWorkoutInput!): WorkoutType
+  updateWorkoutExercises(input: UpdateWorkoutExercisesInput!): WorkoutType!
   upsertExercise(input: ExerciseUpsertDto!): ExerciseType!
   upsertUser(userInput: UserInput!): UserType!
 }
@@ -128,6 +132,11 @@ type SheetExercises {
   sheetName: String!
 }
 
+input ToggleWorkoutActiveInput {
+  active: Boolean!
+  id: ID!
+}
+
 type TrainingDay {
   createdAt: DateTime!
   dayOfWeek: Float!
@@ -146,6 +155,40 @@ type TrainingDayExercise {
   repSchemes: [RepScheme!]!
   restIntervals: [RestInterval!]!
   updatedAt: DateTime!
+}
+
+input UpdateRepSchemeInput {
+  id: ID
+  maxReps: Int!
+  minReps: Int!
+  sets: Int!
+}
+
+input UpdateRestIntervalInput {
+  id: ID
+  intervalTime: String!
+  order: Int!
+}
+
+input UpdateTrainingDayExerciseInput {
+  exerciseId: ID!
+  id: ID
+  order: Int!
+  repSchemes: [UpdateRepSchemeInput!]!
+  restIntervals: [UpdateRestIntervalInput!]!
+}
+
+input UpdateTrainingDayInput {
+  dayOfWeek: Int!
+  exercises: [UpdateTrainingDayExerciseInput!]!
+  id: ID
+  name: String!
+  order: Int!
+}
+
+input UpdateWorkoutExercisesInput {
+  trainingDays: [UpdateTrainingDayInput!]!
+  workoutId: ID!
 }
 
 input UpdateWorkoutInput {
@@ -197,6 +240,7 @@ type WorkoutType {
   id: ID!
   isActive: Boolean!
   name: String!
+  startedAt: DateTime
   trainingDays: [TrainingDay!]
   trainingDaysBitfield: Int
   userId: String!

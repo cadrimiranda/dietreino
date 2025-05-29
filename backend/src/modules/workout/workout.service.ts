@@ -4,6 +4,7 @@ import { Workout } from '../../entities/workout.entity';
 import { WorkoutType } from './workout.type';
 import { ImportSheetWorkoutInput } from './dto/import-sheet-workout.input';
 import { ImportXlsxUserWorkoutInput } from './dto/import-xlsx-user-workout-input';
+import { UpdateWorkoutExercisesInput } from './dto/update-workout-exercises.input';
 import { XlsxService } from '../xlsx/xlsx.service';
 import { DataSource } from 'typeorm';
 import { TrainingDayService } from '../training-day/training-day.service';
@@ -11,8 +12,14 @@ import {
   TrainingDayExerciseService,
   WorkoutExerciseCreateData,
 } from '../training-day-exercise/training-day-exercise.service';
-import { TrainingDay } from '@/entities';
+import {
+  TrainingDay,
+  TrainingDayExercise,
+  RepScheme,
+  RestInterval,
+} from '@/entities';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { ExerciseService } from '../exercise/exercise.service';
 
 @Injectable()
 export class WorkoutService {
@@ -21,10 +28,11 @@ export class WorkoutService {
     private readonly trainingDayService: TrainingDayService,
     private readonly trainingDayExerciseService: TrainingDayExerciseService,
     private readonly xlsxService: XlsxService,
+    private readonly exerciseService: ExerciseService,
     @InjectDataSource() private dataSource: DataSource,
   ) {}
 
-  toWorkoutType(workout: Workout): Partial<WorkoutType> {
+  toWorkoutType(workout: Workout): WorkoutType {
     return {
       id: workout.id,
       userId: workout.user.id,
@@ -35,6 +43,7 @@ export class WorkoutService {
       createdAt: workout.createdAt,
       trainingDaysBitfield: workout.trainingDaysBitfield,
       trainingDays: workout.trainingDays,
+      startedAt: workout.startedAt,
     };
   }
 
@@ -82,12 +91,12 @@ export class WorkoutService {
    */
   async deactivateAllUserWorkouts(userId: string, excludeWorkoutId?: string) {
     const workouts = await this.repository.findByUserId(userId);
-    
+
     for (const workout of workouts) {
       if (excludeWorkoutId && workout.id === excludeWorkoutId) {
         continue;
       }
-      
+
       if (workout.is_active) {
         await this.repository.update(workout.id, { is_active: false });
       }
@@ -99,7 +108,10 @@ export class WorkoutService {
    * @param workoutId The workout ID to toggle
    * @param active The new active status
    */
-  async toggleWorkoutActive(workoutId: string, active: boolean): Promise<Workout> {
+  async toggleWorkoutActive(
+    workoutId: string,
+    active: boolean,
+  ): Promise<Workout> {
     const workout = await this.findById(workoutId);
     if (!workout) {
       throw new NotFoundException(`Workout with ID ${workoutId} not found`);
@@ -111,7 +123,9 @@ export class WorkoutService {
     }
 
     // Update the workout's active status
-    return this.repository.update(workoutId, { is_active: active }) as Promise<Workout>;
+    return this.repository.update(workoutId, {
+      is_active: active,
+    }) as Promise<Workout>;
   }
 
   async importXlsxUserWorkout(
@@ -208,5 +222,95 @@ export class WorkoutService {
     }
 
     return this.toWorkoutType(createdWorkout);
+  }
+
+  async updateWorkoutExercises(
+    input: UpdateWorkoutExercisesInput,
+  ): Promise<Workout> {
+    const workout = await this.findById(input.workoutId);
+    if (!workout) {
+      throw new NotFoundException(
+        `Workout with ID ${input.workoutId} not found`,
+      );
+    }
+
+    // Check if workout has already been started
+    if (workout.startedAt) {
+      throw new Error('Não é possível editar um treino que já foi iniciado.');
+    }
+
+    // Use a transaction to ensure data consistency
+    const result = await this.dataSource.transaction(async (manager) => {
+      // Delete existing training days and their exercises
+      const existingTrainingDays = workout.trainingDays || [];
+      for (const td of existingTrainingDays) {
+        await manager.delete(TrainingDay, { id: td.id });
+      }
+
+      // Create new training days with exercises
+      for (const tdInput of input.trainingDays) {
+        const trainingDay = await manager.save(TrainingDay, {
+          name: tdInput.name,
+          order: tdInput.order,
+          dayOfWeek: tdInput.dayOfWeek,
+          workout: { id: workout.id },
+        });
+
+        // Create exercises for this training day
+        for (const exInput of tdInput.exercises) {
+          const exercise = await this.exerciseService.findById(
+            exInput.exerciseId,
+          );
+          if (!exercise) {
+            throw new NotFoundException(
+              `Exercise with ID ${exInput.exerciseId} not found`,
+            );
+          }
+
+          // Calculate total sets from rep schemes
+          const totalSets = exInput.repSchemes.reduce(
+            (sum, rs) => sum + rs.sets,
+            0,
+          );
+
+          const trainingDayExercise = await manager.save(TrainingDayExercise, {
+            order: exInput.order,
+            sets: totalSets || 1, // default to 1 if no rep schemes
+            trainingDay: { id: trainingDay.id },
+            exercise: { id: exercise.id },
+          });
+
+          // Create rep schemes
+          for (const rsInput of exInput.repSchemes) {
+            await manager.save(RepScheme, {
+              sets: rsInput.sets,
+              minReps: rsInput.minReps,
+              maxReps: rsInput.maxReps,
+              trainingDayExercise: { id: trainingDayExercise.id },
+            });
+          }
+
+          // Create rest intervals
+          for (const riInput of exInput.restIntervals) {
+            await manager.save(RestInterval, {
+              intervalTime: riInput.intervalTime,
+              order: riInput.order,
+              trainingDayExercise: { id: trainingDayExercise.id },
+            });
+          }
+        }
+      }
+
+      // Return the updated workout
+      return await this.findById(workout.id);
+    });
+
+    if (!result) {
+      throw new NotFoundException(
+        `Failed to update workout with ID ${input.workoutId}`,
+      );
+    }
+
+    return result;
   }
 }

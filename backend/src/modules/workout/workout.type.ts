@@ -29,4 +29,7 @@ export class WorkoutType {
 
   @Field(() => [TrainingDay], { nullable: true })
   trainingDays: TrainingDay[];
+
+  @Field(() => Date, { nullable: true })
+  startedAt: Date;
 }

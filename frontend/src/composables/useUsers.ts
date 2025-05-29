@@ -90,11 +90,15 @@ export function useUsers({ userId }: { userId?: string }) {
           weekStart
           weekEnd
           isActive
+          startedAt
           trainingDays {
             id
             name
+            order
+            dayOfWeek
             trainingDayExercises {
               id
+              order
               exercise {
                 id
                 name
@@ -190,7 +194,7 @@ export function useUsers({ userId }: { userId?: string }) {
     state.error = newError;
   });
 
-  const { loading: userLoading, result: user } = useQuery<
+  const { loading: userLoading, result: user, refetch: refetchUser } = useQuery<
     {
       user: UserType;
     },
@@ -262,12 +266,12 @@ export function useUsers({ userId }: { userId?: string }) {
   const resetState = () => {
     state.loading = true;
     state.error = null;
-    refetch?.();
+    (userId ? refetchUser : refetch)?.();
   };
 
   return {
     ...toRefs(state),
-    refetch,
+    refetch: userId ? refetchUser : refetch,
     upsertUser,
     deleteUser,
     importSheetWorkout,

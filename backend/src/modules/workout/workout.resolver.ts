@@ -2,6 +2,7 @@ import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { WorkoutService } from './workout.service';
 import { WorkoutType } from './workout.type';
 import { UpdateWorkoutInput } from './dto/update-workout.input';
+import { UpdateWorkoutExercisesInput } from './dto/update-workout-exercises.input';
 import { Workout } from '../../entities/workout.entity';
 import { UseGuards } from '@nestjs/common';
 import { UserRole } from '../../utils/roles.enum';
@@ -97,6 +98,16 @@ export class WorkoutResolver {
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Partial<WorkoutType>> {
     const workout = await this.workoutService.toggleWorkoutActive(id, false);
+    return this.workoutService.toWorkoutType(workout);
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER)
+  @Mutation(() => WorkoutType)
+  async updateWorkoutExercises(
+    @Args('input') input: UpdateWorkoutExercisesInput,
+  ): Promise<Partial<WorkoutType>> {
+    const workout = await this.workoutService.updateWorkoutExercises(input);
     return this.workoutService.toWorkoutType(workout);
   }
 }

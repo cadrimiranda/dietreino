@@ -13,6 +13,9 @@
         <a-button @click="$router.push('/clients')">
           Voltar para Clientes
         </a-button>
+        <a-button @click="editWorkout" v-if="hasWorkout && !workout.startedAt">
+          <edit-outlined /> Editar Treino
+        </a-button>
         <a-button type="primary" @click="printWorkout" v-if="hasWorkout">
           <printer-outlined /> Imprimir
         </a-button>
@@ -88,16 +91,28 @@
     <div v-else class="flex justify-center py-12">
       <a-spin size="large" />
     </div>
+
+    <!-- Edit Workout Dialog -->
+    <WorkoutEditDialog
+      v-model="showEditDialog"
+      :workout="workoutData"
+      @saved="handleWorkoutSaved"
+    />
   </div>
 </template>
 
 <script lang="ts">
 import { ref, reactive, defineComponent, watch, computed } from "vue";
-import { UserOutlined, PrinterOutlined } from "@ant-design/icons-vue";
+import {
+  UserOutlined,
+  PrinterOutlined,
+  EditOutlined,
+} from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
 import { IUserEntity, useUsers } from "@/composables/useUsers";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import EmptyWorkoutState from "./ClientEmptyWorkout.vue";
+import WorkoutEditDialog from "@/components/WorkoutEditDialog.vue";
 import { useProcessWorkout } from "./useProcessWorkout";
 
 export default defineComponent({
@@ -105,14 +120,21 @@ export default defineComponent({
   components: {
     UserOutlined,
     PrinterOutlined,
+    EditOutlined,
     EmptyWorkoutState,
+    WorkoutEditDialog,
   },
   setup() {
     const { processWorkout, loading } = useProcessWorkout();
     const route = useRoute();
+    const router = useRouter();
     const userId = route.params.clientId as string;
     const workoutId = route.params.workoutId as string | undefined;
-    const { user, userLoading: isLoading } = useUsers({ userId });
+    const {
+      user,
+      userLoading: isLoading,
+      refetch: refetchUser,
+    } = useUsers({ userId });
 
     function handleFileChange(event: Event) {
       const target = event.target as HTMLInputElement;
@@ -147,6 +169,7 @@ export default defineComponent({
       weekStart: 1,
       weekEnd: 5,
       isActive: true,
+      startedAt: null as Date | null,
     });
 
     interface WorkoutSheet {
@@ -160,6 +183,8 @@ export default defineComponent({
     }
     const workoutSheets = ref<WorkoutSheet[]>([]);
     const hasWorkout = ref(false);
+    const showEditDialog = ref(false);
+    const workoutData = ref<any>({});
 
     // Observe as mudanças em user e atualize client e workouts quando os dados chegarem
     watch(
@@ -181,6 +206,9 @@ export default defineComponent({
             workout.weekStart = foundWorkout.weekStart;
             workout.weekEnd = foundWorkout.weekEnd;
             workout.isActive = foundWorkout.isActive || true;
+
+            // Store complete workout data for editing
+            workoutData.value = foundWorkout;
             const exercisesMap = new Map();
 
             foundWorkout.trainingDays?.forEach((trainingDay) => {
@@ -261,6 +289,15 @@ export default defineComponent({
       message.loading({ content: "Gerando PDF...", key: "pdf" });
     };
 
+    const editWorkout = () => {
+      showEditDialog.value = true;
+    };
+
+    const handleWorkoutSaved = async () => {
+      // Refresh user data to get updated workout
+      await refetchUser();
+    };
+
     return {
       client,
       workout,
@@ -271,6 +308,10 @@ export default defineComponent({
       isLoading,
       userId,
       handleFileChange,
+      showEditDialog,
+      workoutData,
+      editWorkout,
+      handleWorkoutSaved,
     };
   },
 });

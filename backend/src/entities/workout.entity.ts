@@ -24,6 +24,9 @@ export class Workout extends BaseEntity {
   @Column({ type: 'int', default: 0, name: 'training_days_bitfield' })
   trainingDaysBitfield: number;
 
+  @Column({ type: 'timestamp with time zone', nullable: true, name: 'started_at' })
+  startedAt: Date;
+
   @OneToMany(() => TrainingDay, (td: TrainingDay) => td.workout, {
     eager: true,
   })

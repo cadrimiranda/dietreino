@@ -80,9 +80,11 @@ export type LoginResponse = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  activateWorkout: WorkoutType;
   addWorkoutToUser: WorkoutType;
   assignNutritionist: UserType;
   assignTrainer: UserType;
+  deactivateWorkout: WorkoutType;
   deleteExercise: Scalars['Boolean']['output'];
   deleteUser: Scalars['Boolean']['output'];
   deleteWorkout: Scalars['Boolean']['output'];
@@ -91,9 +93,16 @@ export type Mutation = {
   login: LoginResponse;
   me: UserType;
   refreshToken: LoginResponse;
+  toggleWorkoutActive: WorkoutType;
   updateWorkout?: Maybe<WorkoutType>;
+  updateWorkoutExercises: WorkoutType;
   upsertExercise: ExerciseType;
   upsertUser: UserType;
+};
+
+
+export type MutationActivateWorkoutArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -112,6 +121,11 @@ export type MutationAssignNutritionistArgs = {
 export type MutationAssignTrainerArgs = {
   clientId: Scalars['ID']['input'];
   trainerId: Scalars['ID']['input'];
+};
+
+
+export type MutationDeactivateWorkoutArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -150,8 +164,18 @@ export type MutationRefreshTokenArgs = {
 };
 
 
+export type MutationToggleWorkoutActiveArgs = {
+  input: ToggleWorkoutActiveInput;
+};
+
+
 export type MutationUpdateWorkoutArgs = {
   updateWorkoutInput: UpdateWorkoutInput;
+};
+
+
+export type MutationUpdateWorkoutExercisesArgs = {
+  input: UpdateWorkoutExercisesInput;
 };
 
 
@@ -250,6 +274,11 @@ export type SheetExercises = {
   sheetName: Scalars['String']['output'];
 };
 
+export type ToggleWorkoutActiveInput = {
+  active: Scalars['Boolean']['input'];
+  id: Scalars['ID']['input'];
+};
+
 export type TrainingDay = {
   __typename?: 'TrainingDay';
   createdAt: Scalars['DateTime']['output'];
@@ -270,6 +299,40 @@ export type TrainingDayExercise = {
   repSchemes: Array<RepScheme>;
   restIntervals: Array<RestInterval>;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type UpdateRepSchemeInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  maxReps: Scalars['Int']['input'];
+  minReps: Scalars['Int']['input'];
+  sets: Scalars['Int']['input'];
+};
+
+export type UpdateRestIntervalInput = {
+  id?: InputMaybe<Scalars['ID']['input']>;
+  intervalTime: Scalars['String']['input'];
+  order: Scalars['Int']['input'];
+};
+
+export type UpdateTrainingDayExerciseInput = {
+  exerciseId: Scalars['ID']['input'];
+  id?: InputMaybe<Scalars['ID']['input']>;
+  order: Scalars['Int']['input'];
+  repSchemes: Array<UpdateRepSchemeInput>;
+  restIntervals: Array<UpdateRestIntervalInput>;
+};
+
+export type UpdateTrainingDayInput = {
+  dayOfWeek: Scalars['Int']['input'];
+  exercises: Array<UpdateTrainingDayExerciseInput>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  name: Scalars['String']['input'];
+  order: Scalars['Int']['input'];
+};
+
+export type UpdateWorkoutExercisesInput = {
+  trainingDays: Array<UpdateTrainingDayInput>;
+  workoutId: Scalars['ID']['input'];
 };
 
 export type UpdateWorkoutInput = {
@@ -320,6 +383,7 @@ export type WorkoutType = {
   id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  startedAt: Scalars['DateTime']['output'];
   trainingDays?: Maybe<Array<TrainingDay>>;
   trainingDaysBitfield?: Maybe<Scalars['Int']['output']>;
   userId: Scalars['String']['output'];
