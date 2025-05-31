@@ -16,7 +16,32 @@
         class="mb-4"
       />
 
-      <a-tabs v-else v-model:activeKey="activeTab">
+      <div v-if="!workout.startedAt">
+        <!-- Training Days Drag and Drop -->
+        <div class="training-days-container mb-4">
+          <div class="text-sm font-medium text-gray-700 mb-2">Dias de Treino (arraste para reordenar):</div>
+          <div 
+            class="training-days-list"
+            @dragover.prevent
+            @drop="onDropTrainingDay"
+          >
+            <div
+              v-for="(day, index) in editableTrainingDays"
+              :key="day.id || index"
+              class="training-day-tab"
+              :class="{ 'active': activeTab === index.toString() }"
+              draggable="true"
+              @dragstart="onDragStartTrainingDay($event, index)"
+              @click="activeTab = index.toString()"
+            >
+              <div class="drag-handle">⋮⋮</div>
+              <span class="day-name">{{ day.name }}</span>
+              <span class="day-order">({{ index + 1 }})</span>
+            </div>
+          </div>
+        </div>
+
+        <a-tabs v-model:activeKey="activeTab">
         <a-tab-pane
           v-for="(day, index) in editableTrainingDays"
           :key="index.toString()"
@@ -75,7 +100,8 @@
                     v-model:value="record.totalSets"
                     :min="1"
                     :max="10"
-                    @pressEnter="saveCell(record)"
+                    @change="() => updateSetsField(record)"
+                    @blur="() => saveCell(record)"
                   />
                 </div>
                 <div
@@ -98,7 +124,8 @@
                   <a-input
                     v-model:value="record.repsString"
                     placeholder="Ex: 8-10"
-                    @pressEnter="saveCell(record)"
+                    @input="() => updateRepsField(record)"
+                    @blur="() => saveCell(record)"
                   />
                 </div>
                 <div
@@ -121,7 +148,8 @@
                   <a-input
                     v-model:value="record.restString"
                     placeholder="Ex: 60s"
-                    @pressEnter="saveCell(record)"
+                    @input="() => updateRestField(record)"
+                    @blur="() => saveCell(record)"
                   />
                 </div>
                 <div
@@ -171,11 +199,12 @@
         </a-tab-pane>
       </a-tabs>
 
-      <div class="flex justify-end gap-2 mt-6" v-if="!workout.startedAt">
-        <a-button @click="cancel">Cancelar</a-button>
-        <a-button type="primary" @click="confirmSave" :loading="saving">
-          Salvar Alterações
-        </a-button>
+        <div class="flex justify-end gap-2 mt-6">
+          <a-button @click="cancel">Cancelar</a-button>
+          <a-button type="primary" @click="confirmSave" :loading="saving">
+            Salvar Alterações
+          </a-button>
+        </div>
       </div>
     </div>
   </a-modal>
@@ -250,6 +279,7 @@ export default defineComponent({
     const editableTrainingDays = ref<EditableTrainingDay[]>([]);
     const editingCell = ref<{ tempId: string; field: string } | null>(null);
     const saving = ref(false);
+    const draggedDayIndex = ref<number | null>(null);
 
     const { exercises, loading: loadingExercises } = useExercises();
     const { mutate: updateWorkoutExercises } = useMutation(
@@ -304,9 +334,9 @@ export default defineComponent({
             (td: any, tdIndex: number) => ({
               id: td.id,
               name: td.name,
-              order: typeof td.order === "number" ? td.order : tdIndex,
+              order: td.order !== null && td.order !== undefined && typeof td.order === "number" ? td.order : tdIndex,
               dayOfWeek:
-                typeof td.dayOfWeek === "number" ? td.dayOfWeek : tdIndex,
+                td.dayOfWeek !== null && td.dayOfWeek !== undefined && typeof td.dayOfWeek === "number" ? td.dayOfWeek : tdIndex,
               exercises: td.trainingDayExercises.map(
                 (tde: any, index: number) => ({
                   tempId: `${td.id}-${index}`,
@@ -362,45 +392,42 @@ export default defineComponent({
       editingCell.value = { tempId: record.tempId, field };
     }
 
-    function saveCell(record: EditableExercise) {
-      // Update rep schemes if sets changed
-      if (editingCell.value?.field === "sets") {
-        const oldTotalSets = record.repSchemes.reduce(
-          (sum, rs) => sum + rs.sets,
-          0
-        );
-        if (record.totalSets !== oldTotalSets) {
-          // If we have a simple rep scheme (one entry), just update its sets
-          if (record.repSchemes.length === 1) {
-            record.repSchemes[0].sets = record.totalSets;
-          } else {
-            // For complex rep schemes, recalculate proportionally or reset to simple
-            record.repSchemes = [
-              {
-                sets: record.totalSets,
-                minReps: record.repSchemes[0]?.minReps || 8,
-                maxReps: record.repSchemes[0]?.maxReps || 10,
-              },
-            ];
-            // Update the reps string to reflect the change
-            record.repsString = formatRepsString(record.repSchemes);
-          }
+    function updateSetsField(record: EditableExercise) {
+      const oldTotalSets = record.repSchemes.reduce(
+        (sum, rs) => sum + rs.sets,
+        0
+      );
+      if (record.totalSets !== oldTotalSets) {
+        // If we have a simple rep scheme (one entry), just update its sets
+        if (record.repSchemes.length === 1) {
+          record.repSchemes[0].sets = record.totalSets;
+        } else {
+          // For complex rep schemes, recalculate proportionally or reset to simple
+          record.repSchemes = [
+            {
+              sets: record.totalSets,
+              minReps: record.repSchemes[0]?.minReps || 8,
+              maxReps: record.repSchemes[0]?.maxReps || 10,
+            },
+          ];
+          // Update the reps string to reflect the change
+          record.repsString = formatRepsString(record.repSchemes);
         }
       }
+    }
 
-      // Parse reps string if edited
-      if (editingCell.value?.field === "reps") {
-        record.repSchemes = parseRepsString(
-          record.repsString,
-          record.totalSets
-        );
-      }
+    function updateRepsField(record: EditableExercise) {
+      record.repSchemes = parseRepsString(
+        record.repsString,
+        record.totalSets
+      );
+    }
 
-      // Parse rest string if edited
-      if (editingCell.value?.field === "rest") {
-        record.restIntervals = parseRestString(record.restString);
-      }
+    function updateRestField(record: EditableExercise) {
+      record.restIntervals = parseRestString(record.restString);
+    }
 
+    function saveCell(record: EditableExercise) {
       editingCell.value = null;
     }
 
@@ -483,6 +510,40 @@ export default defineComponent({
       }
     }
 
+    function onDragStartTrainingDay(event: DragEvent, index: number) {
+      draggedDayIndex.value = index;
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/html', '');
+      }
+    }
+
+    function onDropTrainingDay(event: DragEvent) {
+      event.preventDefault();
+      const target = event.target as HTMLElement;
+      const dropTarget = target.closest('.training-day-tab');
+      
+      if (dropTarget && draggedDayIndex.value !== null) {
+        const dropIndex = Array.from(dropTarget.parentNode?.children || []).indexOf(dropTarget);
+        
+        if (dropIndex !== -1 && dropIndex !== draggedDayIndex.value) {
+          // Remove the dragged item and insert it at the new position
+          const draggedDay = editableTrainingDays.value.splice(draggedDayIndex.value, 1)[0];
+          editableTrainingDays.value.splice(dropIndex, 0, draggedDay);
+          
+          // Update all order properties to match new array positions
+          editableTrainingDays.value.forEach((day, index) => {
+            day.order = index;
+          });
+          
+          // Update active tab to follow the moved day
+          activeTab.value = dropIndex.toString();
+        }
+      }
+      
+      draggedDayIndex.value = null;
+    }
+
     function cancel() {
       visible.value = false;
     }
@@ -515,20 +576,24 @@ export default defineComponent({
           return obj;
         };
 
+        // Create diff between original and current data
+        const originalData = removeTypename(props.workout.trainingDays);
+        const currentData = editableTrainingDays.value.map((day) => ({
+          ...(day.id && { id: day.id }),
+          name: day.name,
+          order: day.order,
+          dayOfWeek: day.dayOfWeek,
+          exercises: day.exercises.map((ex) => ({
+            exerciseId: ex.exerciseId,
+            order: ex.order,
+            repSchemes: removeTypename(ex.repSchemes),
+            restIntervals: removeTypename(ex.restIntervals),
+          })),
+        }));
+
         const input: UpdateWorkoutExercisesInput = {
           workoutId: props.workout.id,
-          trainingDays: editableTrainingDays.value.map((day) => ({
-            ...(day.id && { id: day.id }),
-            name: day.name,
-            order: day.order,
-            dayOfWeek: day.dayOfWeek,
-            exercises: day.exercises.map((ex) => ({
-              exerciseId: ex.exerciseId,
-              order: ex.order,
-              repSchemes: removeTypename(ex.repSchemes),
-              restIntervals: removeTypename(ex.restIntervals),
-            })),
-          })),
+          trainingDays: currentData,
         };
 
         await updateWorkoutExercises({ input });
@@ -554,9 +619,14 @@ export default defineComponent({
       getExerciseName,
       editCell,
       saveCell,
+      updateSetsField,
+      updateRepsField,
+      updateRestField,
       addExercise,
       removeExercise,
       moveExercise,
+      onDragStartTrainingDay,
+      onDropTrainingDay,
       cancel,
       confirmSave,
     };
@@ -585,5 +655,68 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.training-days-container {
+  margin-bottom: 1rem;
+}
+
+.training-days-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  min-height: 60px;
+}
+
+.training-day-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  cursor: move;
+  user-select: none;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.training-day-tab:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+.training-day-tab.active {
+  background-color: #1890ff;
+  color: white;
+  border-color: #1890ff;
+}
+
+.training-day-tab:active {
+  transform: scale(0.98);
+}
+
+.drag-handle {
+  color: #999;
+  font-size: 14px;
+  cursor: grab;
+}
+
+.training-day-tab:active .drag-handle {
+  cursor: grabbing;
+}
+
+.day-name {
+  font-weight: 500;
+  flex: 1;
+}
+
+.day-order {
+  font-size: 12px;
+  opacity: 0.7;
 }
 </style>

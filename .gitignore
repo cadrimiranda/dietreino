@@ -2,4 +2,4 @@
 # OS
 .DS_Store
 
-client
+/client/

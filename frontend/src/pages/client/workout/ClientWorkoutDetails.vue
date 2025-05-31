@@ -4,8 +4,8 @@
       <div>
         <h1 class="text-2xl font-bold">Treino do Cliente</h1>
         <p class="text-gray-600" v-if="hasWorkout">
-          {{ workout.name }} - {{ new Date(workout.weekStart) }}-{{
-            new Date(workout.weekEnd)
+          {{ workout.name }} - {{ formatDate(workout.weekStart) }} - {{
+            formatDate(workout.weekEnd)
           }}
         </p>
       </div>
@@ -179,6 +179,7 @@ export default defineComponent({
         sets: string | number;
         reps: string;
         rest: string;
+        order: number;
       }>;
     }
     const workoutSheets = ref<WorkoutSheet[]>([]);
@@ -209,54 +210,65 @@ export default defineComponent({
 
             // Store complete workout data for editing
             workoutData.value = foundWorkout;
+            
+            // Sort training days by order first
+            const sortedTrainingDays = [...(foundWorkout.trainingDays || [])].sort(
+              (a, b) => (a.order || 0) - (b.order || 0)
+            );
+
             const exercisesMap = new Map();
 
-            foundWorkout.trainingDays?.forEach((trainingDay) => {
-              trainingDay.trainingDayExercises.forEach(
-                (trainingDayExercise) => {
-                  const exercise = trainingDayExercise.exercise;
-                  const repSchemes = trainingDayExercise.repSchemes || [];
-                  const restIntervals = trainingDayExercise.restIntervals || [];
-
-                  // Formatar as repetições
-                  let repsFormatted = "";
-                  if (repSchemes.length > 0) {
-                    repsFormatted =
-                      repSchemes.length > 1
-                        ? repSchemes
-                            .map(
-                              (scheme) =>
-                                `${scheme.sets}x ${scheme.minReps}-${scheme.maxReps}`
-                            )
-                            .join(", ")
-                        : `${repSchemes[0].minReps}-${repSchemes[0].maxReps}`;
-                  }
-
-                  const restFormatted = restIntervals.reduce(
-                    (acc, interval) => {
-                      if (acc) {
-                        return `${acc} - ${interval.intervalTime}s`;
-                      }
-                      return `${interval.intervalTime}s`;
-                    },
-                    ""
-                  );
-                  const sheetTitle = trainingDay.name;
-
-                  if (!exercisesMap.has(sheetTitle)) {
-                    exercisesMap.set(sheetTitle, []);
-                  }
-
-                  exercisesMap.get(sheetTitle).push({
-                    name: exercise?.name,
-                    sets: repSchemes.reduce((acc, next) => acc + next.sets, 0),
-                    reps: repsFormatted || "-",
-                    rest: restFormatted || "-",
-                  });
-                }
+            sortedTrainingDays.forEach((trainingDay) => {
+              // Sort exercises within each training day by order
+              const sortedExercises = [...(trainingDay.trainingDayExercises || [])].sort(
+                (a, b) => (a.order || 0) - (b.order || 0)
               );
+
+              sortedExercises.forEach((trainingDayExercise) => {
+                const exercise = trainingDayExercise.exercise;
+                const repSchemes = trainingDayExercise.repSchemes || [];
+                const restIntervals = trainingDayExercise.restIntervals || [];
+
+                // Formatar as repetições
+                let repsFormatted = "";
+                if (repSchemes.length > 0) {
+                  repsFormatted =
+                    repSchemes.length > 1
+                      ? repSchemes
+                          .map(
+                            (scheme) =>
+                              `${scheme.sets}x ${scheme.minReps}-${scheme.maxReps}`
+                          )
+                          .join(", ")
+                      : `${repSchemes[0].minReps}-${repSchemes[0].maxReps}`;
+                }
+
+                const restFormatted = restIntervals.reduce(
+                  (acc, interval) => {
+                    if (acc) {
+                      return `${acc} - ${interval.intervalTime}s`;
+                    }
+                    return `${interval.intervalTime}s`;
+                  },
+                  ""
+                );
+                const sheetTitle = trainingDay.name;
+
+                if (!exercisesMap.has(sheetTitle)) {
+                  exercisesMap.set(sheetTitle, []);
+                }
+
+                exercisesMap.get(sheetTitle).push({
+                  name: exercise?.name,
+                  sets: repSchemes.reduce((acc, next) => acc + next.sets, 0),
+                  reps: repsFormatted || "-",
+                  rest: restFormatted || "-",
+                  order: trainingDayExercise.order || 0,
+                });
+              });
             });
 
+            // Convert to array and maintain the order from sorted training days
             workoutSheets.value = Array.from(exercisesMap.entries()).map(
               ([title, exercises]) => ({
                 title,
@@ -298,6 +310,12 @@ export default defineComponent({
       await refetchUser();
     };
 
+    const formatDate = (dateValue: any) => {
+      if (!dateValue) return '';
+      const date = new Date(dateValue);
+      return date.toLocaleDateString('pt-BR');
+    };
+
     return {
       client,
       workout,
@@ -312,6 +330,7 @@ export default defineComponent({
       workoutData,
       editWorkout,
       handleWorkoutSaved,
+      formatDate,
     };
   },
 });

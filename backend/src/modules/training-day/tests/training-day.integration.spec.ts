@@ -15,7 +15,7 @@ import { TrainingDayResolver } from '@/modules/training-day/training-day.resolve
 import { TrainingDayService } from '@/modules/training-day/training-day.service';
 import { WorkoutModule } from '@/modules/workout/workout.module';
 
-describe.skip('TrainingDay Integration Tests', () => {
+describe('TrainingDay Integration Tests', () => {
   let app: INestApplication;
   let service: TrainingDayService;
   let resolver: TrainingDayResolver;
