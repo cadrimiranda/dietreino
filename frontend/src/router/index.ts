@@ -17,6 +17,7 @@ import {
   LocalStorageTokenService,
   TokenValidator,
 } from "../security/authStorage";
+import { useSessionControl } from "../composables/useSessionControl";
 import ClientWorkoutDetails from "@/pages/client/workout/ClientWorkoutDetails.vue";
 
 interface TemplateComponent {
@@ -38,13 +39,9 @@ const Settings: TemplateComponent = { template: "<div>Settings</div>" };
 const tokenService = new LocalStorageTokenService();
 const tokenValidator = new TokenValidator();
 
-function isAuthenticated(): boolean {
-  const token = tokenService.getAccessToken();
-  if (!tokenValidator.isTokenValid(token)) {
-    const refreshTokenValue = tokenService.getRefreshToken();
-    return !!refreshTokenValue;
-  }
-  return true;
+async function checkAuthentication(): Promise<boolean> {
+  const sessionControl = useSessionControl();
+  return await sessionControl.checkSession();
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -134,38 +131,65 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(
-  (
-    to: RouteLocationNormalized,
-    from: RouteLocationNormalized,
-    next: NavigationGuardNext
-  ) => {
-    const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+router.beforeEach(async (
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized,
+  next: NavigationGuardNext
+) => {
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-    const authenticated = isAuthenticated();
+  if (to.name === "Login") {
+    const hasSession = tokenValidator.isTokenValid(tokenService.getAccessToken()) ||
+                      tokenValidator.isRefreshTokenValid(tokenService.getRefreshToken());
+    
+    if (hasSession) {
+      const sessionControl = useSessionControl();
+      const isValid = await sessionControl.checkSession();
+      if (isValid) {
+        next({ name: "Dashboard" });
+        return;
+      }
+    }
+    next();
+    return;
+  }
 
-    if (requiresAuth && !authenticated) {
+  if (requiresAuth) {
+    const hasAnyToken = tokenService.getAccessToken() || tokenService.getRefreshToken();
+    
+    if (!hasAnyToken) {
       message.warning("Você precisa fazer login para acessar esta página");
       next({
         name: "Login",
         query: { redirect: to.fullPath },
       });
-    } else if (to.name === "Login" && authenticated) {
-      next({ name: "Dashboard" });
-    } else if (to.name === "NotFound") {
-      if (to.path.startsWith("/dashboard") || to.path.startsWith("/admin")) {
-        if (!authenticated) {
-          message.warning("Você precisa fazer login para acessar esta área");
-          next({ name: "Login" });
-          return;
-        }
-      }
+      return;
+    }
 
-      next();
-    } else {
-      next();
+    const isAuthenticated = await checkAuthentication();
+    
+    if (!isAuthenticated) {
+      message.warning("Sua sessão expirou. Por favor, faça login novamente.");
+      next({
+        name: "Login",
+        query: { redirect: to.fullPath },
+      });
+      return;
     }
   }
-);
+
+  if (to.name === "NotFound") {
+    if (to.path.startsWith("/dashboard") || to.path.startsWith("/admin")) {
+      const isAuthenticated = await checkAuthentication();
+      if (!isAuthenticated) {
+        message.warning("Você precisa fazer login para acessar esta área");
+        next({ name: "Login" });
+        return;
+      }
+    }
+  }
+
+  next();
+});
 
 export default router;

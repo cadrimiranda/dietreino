@@ -9,6 +9,7 @@ import "./assets/tailwind.css";
 import "./assets/custom-styles.css";
 import router from "./router";
 import { setupApollo } from "./apollo";
+import { useSessionControl } from "./composables/useSessionControl";
 
 // Create the Vue app instance
 const app = createApp(App);
@@ -27,6 +28,18 @@ app.config.errorHandler = (err, vm, info) => {
   console.error("Vue Error:", err);
   console.error("Error Info:", info);
 };
+
+app.config.globalProperties.$sessionControl = useSessionControl();
+
+app.mixin({
+  mounted() {
+    if (this.$root === this) {
+      const sessionControl = this.$sessionControl;
+      sessionControl.initializeSession();
+      sessionControl.startSessionMonitoring();
+    }
+  },
+});
 
 // Mount the app
 app.mount("#app");

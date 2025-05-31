@@ -6,7 +6,8 @@
         "useDefineForClassFields": true,
         "types": [
             "webpack-env",
-            "node"
+            "node",
+            "vitest/globals"
         ],
         "target": "ESNext",
         "module": "ESNext",

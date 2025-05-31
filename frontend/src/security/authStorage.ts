@@ -101,4 +101,29 @@ export class TokenValidator {
       return false;
     }
   }
+
+  isRefreshTokenValid(refreshToken: string | null): boolean {
+    if (!refreshToken) return false;
+
+    try {
+      const decoded = jwtDecode<JwtPayload>(refreshToken);
+      const now = Date.now();
+      const oneWeekInMs = 7 * 24 * 60 * 60 * 1000;
+      return decoded.exp * 1000 > now && (decoded.exp * 1000 - now) <= oneWeekInMs;
+    } catch {
+      return false;
+    }
+  }
+
+  shouldRefreshToken(token: string | null): boolean {
+    if (!token) return false;
+
+    try {
+      const decoded = jwtDecode<JwtPayload>(token);
+      const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000);
+      return decoded.exp * 1000 <= fiveMinutesFromNow;
+    } catch {
+      return true;
+    }
+  }
 }

@@ -383,7 +383,7 @@ export type WorkoutType = {
   id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
-  startedAt: Scalars['DateTime']['output'];
+  startedAt?: Maybe<Scalars['DateTime']['output']>;
   trainingDays?: Maybe<Array<TrainingDay>>;
   trainingDaysBitfield?: Maybe<Scalars['Int']['output']>;
   userId: Scalars['String']['output'];

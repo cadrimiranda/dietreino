@@ -153,7 +153,6 @@ async function refreshAccessToken(
 // Create auth link factory function instead of exporting the link directly
 export function createAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
   return new ApolloLink((operation, forward) => {
-    // Pule autenticação se indicado no contexto
     if (operation.getContext().skipAuth) {
       return forward(operation);
     }
@@ -164,26 +163,23 @@ export function createAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
 
       Promise.resolve().then(async () => {
         try {
-          if (!tokenValidator.isTokenValid(accessToken.value)) {
-            if (refreshToken.value) {
+          const currentToken = accessToken.value;
+          const currentRefreshToken = refreshToken.value;
+          
+          if (!tokenValidator.isTokenValid(currentToken)) {
+            if (tokenValidator.isRefreshTokenValid(currentRefreshToken)) {
               isRefreshing = true;
               const success = await refreshAccessToken(apolloClient);
               isRefreshing = false;
 
               if (!success) {
-                handle = forward(operation).subscribe({
-                  next: observer.next.bind(observer),
-                  error: observer.error.bind(observer),
-                  complete: observer.complete.bind(observer),
-                });
+                window.dispatchEvent(new CustomEvent("auth:session-expired"));
+                observer.error(new Error("Session expired"));
                 return;
               }
             } else {
-              handle = forward(operation).subscribe({
-                next: observer.next.bind(observer),
-                error: observer.error.bind(observer),
-                complete: observer.complete.bind(observer),
-              });
+              window.dispatchEvent(new CustomEvent("auth:session-expired"));
+              observer.error(new Error("No valid authentication"));
               return;
             }
           }
@@ -202,14 +198,13 @@ export function createAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
             error: (error) => {
               if (
                 error.networkError?.statusCode === 401 &&
-                refreshToken.value &&
+                tokenValidator.isRefreshTokenValid(refreshToken.value) &&
                 !isRefreshing
               ) {
                 isRefreshing = true;
                 refreshAccessToken(apolloClient).then((success) => {
                   isRefreshing = false;
                   if (success) {
-                    // Tente a operação novamente com o novo token
                     operation.setContext(({ headers = {} }) => ({
                       headers: {
                         ...headers,
@@ -223,12 +218,11 @@ export function createAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
                       complete: observer.complete.bind(observer),
                     });
                   } else {
-                    // Propague o erro original
+                    window.dispatchEvent(new CustomEvent("auth:session-expired"));
                     observer.error(error);
                   }
                 });
               } else {
-                // Propague outros erros
                 observer.error(error);
               }
             },
@@ -236,11 +230,7 @@ export function createAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
           });
         } catch (error) {
           console.error("Auth middleware error:", error);
-          handle = forward(operation).subscribe({
-            next: observer.next.bind(observer),
-            error: observer.error.bind(observer),
-            complete: observer.complete.bind(observer),
-          });
+          observer.error(error);
         }
       });
 
@@ -283,6 +273,7 @@ export function useAuth() {
       >({
         mutation: LOGIN_MUTATION,
         variables: { loginInput: { email, password } },
+        context: { skipAuth: true },
       });
 
       const result = data?.login;
