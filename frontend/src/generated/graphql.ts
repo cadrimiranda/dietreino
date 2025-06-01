@@ -19,12 +19,37 @@ export type Scalars = {
   Upload: { input: any; output: any; }
 };
 
-export type CreateWorkoutInput = {
-  isActive?: Scalars['Boolean']['input'];
+export type CreateRepSchemeInput = {
+  maxReps: Scalars['Float']['input'];
+  minReps: Scalars['Float']['input'];
+  sets: Scalars['Float']['input'];
+};
+
+export type CreateRestIntervalInput = {
+  intervalTime: Scalars['String']['input'];
+  order: Scalars['Float']['input'];
+};
+
+export type CreateTrainingDayExerciseInput = {
+  exerciseId: Scalars['ID']['input'];
+  order: Scalars['Float']['input'];
+  repSchemes: Array<CreateRepSchemeInput>;
+  restIntervals: Array<CreateRestIntervalInput>;
+};
+
+export type CreateTrainingDayInput = {
+  dayOfWeek: Scalars['Float']['input'];
+  exercises: Array<CreateTrainingDayExerciseInput>;
   name: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
-  weekEnd: Scalars['DateTime']['input'];
-  weekStart: Scalars['DateTime']['input'];
+  order: Scalars['Float']['input'];
+};
+
+export type CreateWorkoutInput = {
+  name: Scalars['String']['input'];
+  trainingDays: Array<CreateTrainingDayInput>;
+  userId: Scalars['ID']['input'];
+  weekEnd: Scalars['String']['input'];
+  weekStart: Scalars['String']['input'];
 };
 
 export type Exercise = {
@@ -84,6 +109,7 @@ export type Mutation = {
   addWorkoutToUser: WorkoutType;
   assignNutritionist: UserType;
   assignTrainer: UserType;
+  createWorkout: WorkoutType;
   deactivateWorkout: WorkoutType;
   deleteExercise: Scalars['Boolean']['output'];
   deleteUser: Scalars['Boolean']['output'];
@@ -121,6 +147,11 @@ export type MutationAssignNutritionistArgs = {
 export type MutationAssignTrainerArgs = {
   clientId: Scalars['ID']['input'];
   trainerId: Scalars['ID']['input'];
+};
+
+
+export type MutationCreateWorkoutArgs = {
+  input: CreateWorkoutInput;
 };
 
 

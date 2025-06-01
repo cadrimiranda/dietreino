@@ -11,6 +11,7 @@ import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ImportXlsxUserWorkoutInput } from './dto/import-xlsx-user-workout-input';
 import { ToggleWorkoutActiveInput } from './dto/toggle-workout-active.input';
+import { CreateWorkoutInput } from './dto/create-workout.input';
 
 @Resolver(() => WorkoutType)
 export class WorkoutResolver {
@@ -108,6 +109,16 @@ export class WorkoutResolver {
     @Args('input') input: UpdateWorkoutExercisesInput,
   ): Promise<Partial<WorkoutType>> {
     const workout = await this.workoutService.updateWorkoutExercises(input);
+    return this.workoutService.toWorkoutType(workout);
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(UserRole.TRAINER)
+  @Mutation(() => WorkoutType)
+  async createWorkout(
+    @Args('input') input: CreateWorkoutInput,
+  ): Promise<Partial<WorkoutType>> {
+    const workout = await this.workoutService.createWorkout(input);
     return this.workoutService.toWorkoutType(workout);
   }
 }

@@ -19,6 +19,9 @@
         <a-button type="primary" @click="printWorkout" v-if="hasWorkout">
           <printer-outlined /> Imprimir
         </a-button>
+        <a-button type="primary" @click="createNewWorkout">
+          <plus-outlined /> Novo Treino
+        </a-button>
       </div>
     </div>
 
@@ -98,6 +101,54 @@
       :workout="workoutData"
       @saved="handleWorkoutSaved"
     />
+
+    <!-- New Workout Confirmation Dialog -->
+    <a-modal
+      v-model:visible="showNewWorkoutDialog"
+      title="Criar Novo Treino"
+      :footer="null"
+    >
+      <div class="text-center">
+        <p class="mb-6">Você já possui um treino ativo. Como deseja criar o novo treino?</p>
+        <div class="flex gap-4 justify-center">
+          <a-button 
+            type="default" 
+            @click="() => { 
+              console.log('Iniciar do Zero - navigating to NewWorkout');
+              showNewWorkoutDialog = false; 
+              router.push({ 
+                name: 'NewWorkout', 
+                params: { clientId: userId } 
+              }).then(() => {
+                console.log('Navigation successful from dialog');
+              }).catch((error) => {
+                console.error('Navigation failed from dialog:', error);
+              });
+            }"
+          >
+            Iniciar do Zero
+          </a-button>
+          <a-button 
+            type="primary" 
+            @click="() => { 
+              console.log('Copiar Treino - navigating to NewWorkout with copy');
+              showNewWorkoutDialog = false; 
+              router.push({ 
+                name: 'NewWorkout', 
+                params: { clientId: userId },
+                query: { copy: 'true' }
+              }).then(() => {
+                console.log('Copy navigation successful from dialog');
+              }).catch((error) => {
+                console.error('Copy navigation failed from dialog:', error);
+              });
+            }"
+          >
+            Copiar Treino Atual
+          </a-button>
+        </div>
+      </div>
+    </a-modal>
   </div>
 </template>
 
@@ -107,6 +158,7 @@ import {
   UserOutlined,
   PrinterOutlined,
   EditOutlined,
+  PlusOutlined,
 } from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
 import { IUserEntity, useUsers } from "@/composables/useUsers";
@@ -121,6 +173,7 @@ export default defineComponent({
     UserOutlined,
     PrinterOutlined,
     EditOutlined,
+    PlusOutlined,
     EmptyWorkoutState,
     WorkoutEditDialog,
   },
@@ -185,6 +238,7 @@ export default defineComponent({
     const workoutSheets = ref<WorkoutSheet[]>([]);
     const hasWorkout = ref(false);
     const showEditDialog = ref(false);
+    const showNewWorkoutDialog = ref(false);
     const workoutData = ref<any>({});
 
     // Observe as mudanças em user e atualize client e workouts quando os dados chegarem
@@ -316,6 +370,29 @@ export default defineComponent({
       return date.toLocaleDateString('pt-BR');
     };
 
+    const createNewWorkout = () => {
+      console.log('createNewWorkout called');
+      console.log('userId:', userId);
+      console.log('hasWorkout:', hasWorkout.value);
+      console.log('workout.isActive:', workout.isActive);
+      console.log('Current route:', route.fullPath);
+      
+      if (hasWorkout.value && workout.isActive) {
+        console.log('Opening dialog');
+        showNewWorkoutDialog.value = true;
+      } else {
+        console.log('Navigating to NewWorkout with userId:', userId);
+        router.push({ 
+          name: 'NewWorkout', 
+          params: { clientId: userId } 
+        }).then(() => {
+          console.log('Navigation successful');
+        }).catch((error) => {
+          console.error('Navigation failed:', error);
+        });
+      }
+    };
+
     return {
       client,
       workout,
@@ -327,10 +404,13 @@ export default defineComponent({
       userId,
       handleFileChange,
       showEditDialog,
+      showNewWorkoutDialog,
       workoutData,
       editWorkout,
       handleWorkoutSaved,
       formatDate,
+      createNewWorkout,
+      router,
     };
   },
 });

@@ -315,6 +315,30 @@ export function useAuth() {
   };
 
   /**
+   * Set authentication data
+   */
+  const setAuthData = (token: string, refresh: string, user: User): void => {
+    accessToken.value = token;
+    refreshToken.value = refresh;
+    currentUser.value = user;
+
+    tokenStorage.setAccessToken(token);
+    tokenStorage.setRefreshToken(refresh);
+    tokenStorage.setUser(user);
+  };
+
+  /**
+   * Refresh token
+   */
+  const refreshTokenMethod = async (): Promise<boolean> => {
+    if (!apolloClient) {
+      console.warn("Apollo client not available for token refresh during initialization");
+      return false;
+    }
+    return await refreshAccessToken(apolloClient);
+  };
+
+  /**
    * Logout
    */
   const logout = (): Promise<boolean> => {
@@ -351,6 +375,8 @@ export function useAuth() {
     isAuthenticated,
     login,
     logout,
+    setAuthData,
+    refreshToken: refreshTokenMethod,
   };
 }
 

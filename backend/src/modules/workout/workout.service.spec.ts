@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WorkoutService } from './workout.service';
 import { NotFoundException } from '@nestjs/common';
 import { UpdateWorkoutExercisesInput } from './dto/update-workout-exercises.input';
+import { CreateWorkoutInput } from './dto/create-workout.input';
+import { ImportSheetWorkoutInput } from './dto/import-sheet-workout.input';
 
 describe('WorkoutService - updateWorkoutExercises', () => {
   let service: WorkoutService;
@@ -452,6 +454,569 @@ describe('WorkoutService - updateWorkoutExercises', () => {
           expect(exercise.order).not.toBeUndefined();
         });
       });
+    });
+  });
+});
+
+describe('WorkoutService - createWorkout', () => {
+  let service: WorkoutService;
+  let mockRepository: any;
+  let mockTrainingDayService: any;
+  let mockTrainingDayExerciseService: any;
+  let mockXlsxService: any;
+  let mockExerciseService: any;
+  let mockDataSource: any;
+  let mockQueryRunner: any;
+  let mockEntityManager: any;
+
+  beforeEach(async () => {
+    mockRepository = {
+      findById: jest.fn(),
+      create: jest.fn(),
+    };
+
+    mockTrainingDayService = {
+      create: jest.fn(),
+    };
+
+    mockTrainingDayExerciseService = {
+      create: jest.fn(),
+    };
+
+    mockXlsxService = {};
+
+    mockExerciseService = {
+      findById: jest.fn(),
+    };
+
+    mockEntityManager = {
+      save: jest.fn(),
+      findOne: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnValue({
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 1 }),
+      }),
+    };
+
+    mockQueryRunner = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      startTransaction: jest.fn().mockResolvedValue(undefined),
+      commitTransaction: jest.fn().mockResolvedValue(undefined),
+      rollbackTransaction: jest.fn().mockResolvedValue(undefined),
+      release: jest.fn().mockResolvedValue(undefined),
+      manager: mockEntityManager,
+    };
+
+    mockDataSource = {
+      createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+      transaction: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        {
+          provide: WorkoutService,
+          useFactory: () => {
+            const service = new WorkoutService(
+              mockRepository,
+              mockTrainingDayService,
+              mockTrainingDayExerciseService,
+              mockXlsxService,
+              mockExerciseService,
+              mockDataSource,
+            );
+            return service;
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<WorkoutService>(WorkoutService);
+  });
+
+  describe('transaction management', () => {
+    it('should create workout successfully with transaction', async () => {
+      const input: CreateWorkoutInput = {
+        userId: 'user-123',
+        name: 'Test Workout',
+        weekStart: '2025-01-01',
+        weekEnd: '2025-01-07',
+        trainingDays: [
+          {
+            name: 'Day 1',
+            order: 0,
+            dayOfWeek: 0,
+            exercises: [
+              {
+                exerciseId: 'ex-123',
+                order: 0,
+                repSchemes: [{ sets: 3, minReps: 8, maxReps: 10 }],
+                restIntervals: [{ intervalTime: '60s', order: 0 }],
+              },
+            ],
+          },
+        ],
+      };
+
+      const mockWorkout = { id: 'workout-123' };
+      const mockTrainingDay = { id: 'td-123' };
+      const mockExercise = { id: 'ex-123', name: 'Bench Press' };
+      const mockTrainingDayExercise = { id: 'tde-123' };
+      const mockCreatedWorkout = {
+        id: 'workout-123',
+        name: 'Test Workout',
+        user: { id: 'user-123' },
+      };
+
+      // Mock entity saves
+      mockEntityManager.save
+        .mockResolvedValueOnce(mockWorkout) // workout save
+        .mockResolvedValueOnce(mockTrainingDay) // training day save
+        .mockResolvedValueOnce(mockTrainingDayExercise) // training day exercise save
+        .mockResolvedValueOnce({}) // rep scheme save
+        .mockResolvedValueOnce({}); // rest interval save
+
+      mockEntityManager.findOne.mockResolvedValue(mockExercise);
+      mockRepository.findById.mockResolvedValue(mockCreatedWorkout);
+
+      const result = await service.createWorkout(input);
+
+      // Verify transaction lifecycle
+      expect(mockQueryRunner.connect).toHaveBeenCalled();
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).not.toHaveBeenCalled();
+
+      // Verify deactivation of existing workouts
+      expect(mockEntityManager.createQueryBuilder).toHaveBeenCalled();
+
+      // Verify workout creation
+      expect(mockEntityManager.save).toHaveBeenCalledWith('workouts', expect.objectContaining({
+        user_id: 'user-123',
+        name: 'Test Workout',
+        is_active: true,
+      }));
+
+      expect(result).toEqual(mockCreatedWorkout);
+    });
+
+    it('should rollback transaction on error', async () => {
+      const input: CreateWorkoutInput = {
+        userId: 'user-123',
+        name: 'Test Workout',
+        weekStart: '2025-01-01',
+        weekEnd: '2025-01-07',
+        trainingDays: [
+          {
+            name: 'Day 1',
+            order: 0,
+            dayOfWeek: 0,
+            exercises: [
+              {
+                exerciseId: 'non-existent-exercise',
+                order: 0,
+                repSchemes: [],
+                restIntervals: [],
+              },
+            ],
+          },
+        ],
+      };
+
+      const mockWorkout = { id: 'workout-123' };
+      const mockTrainingDay = { id: 'td-123' };
+
+      mockEntityManager.save
+        .mockResolvedValueOnce(mockWorkout) // workout save
+        .mockResolvedValueOnce(mockTrainingDay); // training day save
+
+      // Mock exercise not found
+      mockEntityManager.findOne.mockResolvedValue(null);
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      await expect(service.createWorkout(input)).rejects.toThrow(NotFoundException);
+
+      // Verify transaction rollback
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+
+      // Verify error logging
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[TRANSACTION ERROR] createWorkout:'),
+        expect.any(Object)
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle database connection error', async () => {
+      const input: CreateWorkoutInput = {
+        userId: 'user-123',
+        name: 'Test Workout',
+        weekStart: '2025-01-01',
+        weekEnd: '2025-01-07',
+        trainingDays: [],
+      };
+
+      // Mock the connect to fail, but we need to make sure release still gets called in finally
+      mockQueryRunner.connect.mockRejectedValueOnce(new Error('Database connection failed'));
+
+      await expect(service.createWorkout(input)).rejects.toThrow('Database connection failed');
+
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+    });
+
+    it('should calculate total sets correctly', async () => {
+      const input: CreateWorkoutInput = {
+        userId: 'user-123',
+        name: 'Test Workout',
+        weekStart: '2025-01-01',
+        weekEnd: '2025-01-07',
+        trainingDays: [
+          {
+            name: 'Day 1',
+            order: 0,
+            dayOfWeek: 0,
+            exercises: [
+              {
+                exerciseId: 'ex-123',
+                order: 0,
+                repSchemes: [
+                  { sets: 3, minReps: 8, maxReps: 10 },
+                  { sets: 2, minReps: 6, maxReps: 8 },
+                ],
+                restIntervals: [],
+              },
+            ],
+          },
+        ],
+      };
+
+      const mockWorkout = { id: 'workout-123' };
+      const mockTrainingDay = { id: 'td-123' };
+      const mockExercise = { id: 'ex-123', name: 'Bench Press' };
+      const mockCreatedWorkout = { id: 'workout-123' };
+
+      mockEntityManager.save.mockResolvedValue({});
+      mockEntityManager.findOne.mockResolvedValue(mockExercise);
+      mockRepository.findById.mockResolvedValue(mockCreatedWorkout);
+
+      await service.createWorkout(input);
+
+      // Verify total sets calculation (3 + 2 = 5)
+      expect(mockEntityManager.save).toHaveBeenCalledWith('training_day_exercises', expect.objectContaining({
+        sets: 5,
+      }));
+    });
+
+    it('should use default sets when no rep schemes provided', async () => {
+      const input: CreateWorkoutInput = {
+        userId: 'user-123',
+        name: 'Test Workout',
+        weekStart: '2025-01-01',
+        weekEnd: '2025-01-07',
+        trainingDays: [
+          {
+            name: 'Day 1',
+            order: 0,
+            dayOfWeek: 0,
+            exercises: [
+              {
+                exerciseId: 'ex-123',
+                order: 0,
+                repSchemes: [],
+                restIntervals: [],
+              },
+            ],
+          },
+        ],
+      };
+
+      const mockExercise = { id: 'ex-123', name: 'Bench Press' };
+      const mockCreatedWorkout = { id: 'workout-123' };
+
+      mockEntityManager.save.mockResolvedValue({});
+      mockEntityManager.findOne.mockResolvedValue(mockExercise);
+      mockRepository.findById.mockResolvedValue(mockCreatedWorkout);
+
+      await service.createWorkout(input);
+
+      // Verify default sets value
+      expect(mockEntityManager.save).toHaveBeenCalledWith('training_day_exercises', expect.objectContaining({
+        sets: 1,
+      }));
+    });
+  });
+});
+
+describe('WorkoutService - importSheetWorkout', () => {
+  let service: WorkoutService;
+  let mockRepository: any;
+  let mockTrainingDayService: any;
+  let mockTrainingDayExerciseService: any;
+  let mockXlsxService: any;
+  let mockExerciseService: any;
+  let mockDataSource: any;
+  let mockQueryRunner: any;
+  let mockEntityManager: any;
+
+  beforeEach(async () => {
+    mockRepository = {
+      findById: jest.fn(),
+    };
+
+    mockTrainingDayService = {};
+    mockTrainingDayExerciseService = {};
+    mockXlsxService = {};
+    mockExerciseService = {};
+
+    mockEntityManager = {
+      save: jest.fn(),
+      findOne: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnValue({
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 1 }),
+      }),
+    };
+
+    mockQueryRunner = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      startTransaction: jest.fn().mockResolvedValue(undefined),
+      commitTransaction: jest.fn().mockResolvedValue(undefined),
+      rollbackTransaction: jest.fn().mockResolvedValue(undefined),
+      release: jest.fn().mockResolvedValue(undefined),
+      manager: mockEntityManager,
+    };
+
+    mockDataSource = {
+      createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        {
+          provide: WorkoutService,
+          useFactory: () => {
+            const service = new WorkoutService(
+              mockRepository,
+              mockTrainingDayService,
+              mockTrainingDayExerciseService,
+              mockXlsxService,
+              mockExerciseService,
+              mockDataSource,
+            );
+            return service;
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<WorkoutService>(WorkoutService);
+  });
+
+  describe('sheet import with transactions', () => {
+    it('should import sheet successfully with transaction', async () => {
+      const input: ImportSheetWorkoutInput = {
+        userId: 'user-123',
+        workoutName: 'Imported Workout',
+        weekStart: '2025-01-01',
+        weekEnd: '2025-01-07',
+        isActive: true,
+        sheets: [
+          {
+            sheetName: 'Chest Day',
+            exercises: [
+              {
+                name: 'Bench Press',
+                rawReps: '3x8-10',
+                repSchemes: [{ sets: 3, minReps: 8, maxReps: 10 }],
+                restIntervals: ['60s'],
+              },
+            ],
+          },
+        ],
+      };
+
+      const mockWorkout = { id: 'workout-123' };
+      const mockTrainingDay = { id: 'td-123' };
+      const mockExercise = { id: 'ex-123', name: 'Bench Press' };
+      const mockTrainingDayExercise = { id: 'tde-123' };
+      const mockCreatedWorkout = {
+        id: 'workout-123',
+        name: 'Imported Workout',
+        user: { id: 'user-123' },
+        week_start: new Date('2025-01-01'),
+        week_end: new Date('2025-01-07'),
+        is_active: true,
+      };
+
+      mockEntityManager.save
+        .mockResolvedValueOnce(mockWorkout) // workout save
+        .mockResolvedValueOnce(mockTrainingDay) // training day save
+        .mockResolvedValueOnce(mockTrainingDayExercise) // training day exercise save
+        .mockResolvedValueOnce({}) // rep scheme save
+        .mockResolvedValueOnce({}); // rest interval save
+
+      mockEntityManager.findOne
+        .mockResolvedValueOnce(mockExercise); // find existing exercise
+
+      mockRepository.findById.mockResolvedValue(mockCreatedWorkout);
+
+      const result = await service.importSheetWorkout(input);
+
+      // Verify transaction lifecycle
+      expect(mockQueryRunner.connect).toHaveBeenCalled();
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).not.toHaveBeenCalled();
+
+      // Verify workout creation
+      expect(mockEntityManager.save).toHaveBeenCalledWith('workouts', expect.objectContaining({
+        user_id: 'user-123',
+        name: 'Imported Workout',
+        is_active: true,
+      }));
+
+      expect(result).toHaveProperty('id', 'workout-123');
+    });
+
+    it('should create new exercise if not found', async () => {
+      const input: ImportSheetWorkoutInput = {
+        userId: 'user-123',
+        workoutName: 'Imported Workout',
+        weekStart: '2025-01-01',
+        weekEnd: '2025-01-07',
+        isActive: true,
+        sheets: [
+          {
+            sheetName: 'Leg Day',
+            exercises: [
+              {
+                name: 'New Exercise',
+                rawReps: '4x6-8',
+                repSchemes: [{ sets: 4, minReps: 6, maxReps: 8 }],
+                restIntervals: ['90s'],
+              },
+            ],
+          },
+        ],
+      };
+
+      const mockWorkout = { id: 'workout-123' };
+      const mockTrainingDay = { id: 'td-123' };
+      const mockNewExercise = { id: 'ex-new', name: 'New Exercise' };
+      const mockCreatedWorkout = {
+        id: 'workout-123',
+        user: { id: 'user-123' },
+        week_start: new Date('2025-01-01'),
+        week_end: new Date('2025-01-07'),
+        is_active: true,
+        name: 'Imported Workout',
+      };
+
+      mockEntityManager.save.mockResolvedValue({});
+      mockEntityManager.findOne
+        .mockResolvedValueOnce(null) // exercise not found first
+        .mockResolvedValueOnce(mockNewExercise); // return created exercise
+
+      mockRepository.findById.mockResolvedValue(mockCreatedWorkout);
+
+      await service.importSheetWorkout(input);
+
+      // Verify new exercise creation
+      expect(mockEntityManager.save).toHaveBeenCalledWith('exercises', expect.objectContaining({
+        name: 'New Exercise',
+      }));
+    });
+
+    it('should rollback transaction on import error', async () => {
+      const input: ImportSheetWorkoutInput = {
+        userId: 'user-123',
+        workoutName: 'Failed Import',
+        weekStart: '2025-01-01',
+        weekEnd: '2025-01-07',
+        isActive: true,
+        sheets: [
+          {
+            sheetName: 'Bad Sheet',
+            exercises: [
+              {
+                name: 'Test Exercise',
+                rawReps: '3x8',
+                repSchemes: [{ sets: 3, minReps: 8, maxReps: 10 }],
+                restIntervals: ['60s'],
+              },
+            ],
+          },
+        ],
+      };
+
+      mockEntityManager.save.mockRejectedValue(new Error('Database save failed'));
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      await expect(service.importSheetWorkout(input)).rejects.toThrow('Database save failed');
+
+      // Verify transaction rollback
+      expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
+      expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
+      expect(mockQueryRunner.release).toHaveBeenCalled();
+
+      // Verify error logging
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[TRANSACTION ERROR] importSheetWorkout:'),
+        expect.any(Object)
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should handle existing workout update', async () => {
+      const existingWorkout = {
+        id: 'existing-workout-123',
+        name: 'Existing Workout',
+        user: { id: 'user-123' },
+        week_start: new Date('2025-01-01'),
+        week_end: new Date('2025-01-07'),
+        is_active: true,
+      };
+
+      const input: ImportSheetWorkoutInput = {
+        userId: 'user-123',
+        workoutId: 'existing-workout-123',
+        workoutName: 'Updated Workout Name',
+        weekStart: '2025-01-01',
+        weekEnd: '2025-01-07',
+        isActive: true,
+        sheets: [],
+      };
+
+      mockRepository.findById
+        .mockResolvedValueOnce(existingWorkout) // findById call in method
+        .mockResolvedValueOnce(existingWorkout); // findById call at end
+
+      mockEntityManager.save.mockResolvedValue(existingWorkout);
+
+      const result = await service.importSheetWorkout(input);
+
+      // Verify workout update instead of creation
+      expect(mockEntityManager.save).toHaveBeenCalledWith('workouts', expect.objectContaining({
+        id: 'existing-workout-123',
+        name: 'Updated Workout Name',
+      }));
+
+      expect(result).toHaveProperty('name', 'Existing Workout');
     });
   });
 });

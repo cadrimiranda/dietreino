@@ -7,15 +7,19 @@ import DialogService from "primevue/dialogservice";
 
 import "./assets/tailwind.css";
 import "./assets/custom-styles.css";
-import router from "./router";
+import router, { setAuthProvider } from "./router";
 import { setupApollo } from "./apollo";
-import { useSessionControl } from "./composables/useSessionControl";
+import { provideAuth } from "./composables/useAuthProvider";
 
 // Create the Vue app instance
 const app = createApp(App);
 
 // Setup Apollo client
 setupApollo(app);
+
+// Setup authentication provider
+const authProvider = provideAuth();
+setAuthProvider(authProvider);
 
 // Use necessary plugins
 app.use(ToastService);
@@ -28,18 +32,6 @@ app.config.errorHandler = (err, vm, info) => {
   console.error("Vue Error:", err);
   console.error("Error Info:", info);
 };
-
-app.config.globalProperties.$sessionControl = useSessionControl();
-
-app.mixin({
-  mounted() {
-    if (this.$root === this) {
-      const sessionControl = this.$sessionControl;
-      sessionControl.initializeSession();
-      sessionControl.startSessionMonitoring();
-    }
-  },
-});
 
 // Mount the app
 app.mount("#app");

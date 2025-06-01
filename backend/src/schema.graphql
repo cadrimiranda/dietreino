@@ -2,12 +2,37 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-input CreateWorkoutInput {
-  isActive: Boolean! = false
+input CreateRepSchemeInput {
+  maxReps: Float!
+  minReps: Float!
+  sets: Float!
+}
+
+input CreateRestIntervalInput {
+  intervalTime: String!
+  order: Float!
+}
+
+input CreateTrainingDayExerciseInput {
+  exerciseId: ID!
+  order: Float!
+  repSchemes: [CreateRepSchemeInput!]!
+  restIntervals: [CreateRestIntervalInput!]!
+}
+
+input CreateTrainingDayInput {
+  dayOfWeek: Float!
+  exercises: [CreateTrainingDayExerciseInput!]!
   name: String!
-  userId: String!
-  weekEnd: DateTime!
-  weekStart: DateTime!
+  order: Float!
+}
+
+input CreateWorkoutInput {
+  name: String!
+  trainingDays: [CreateTrainingDayInput!]!
+  userId: ID!
+  weekEnd: String!
+  weekStart: String!
 }
 
 """
@@ -67,6 +92,7 @@ type Mutation {
   addWorkoutToUser(clientId: ID!, workoutInput: CreateWorkoutInput!): WorkoutType!
   assignNutritionist(clientId: ID!, nutritionistId: ID!): UserType!
   assignTrainer(clientId: ID!, trainerId: ID!): UserType!
+  createWorkout(input: CreateWorkoutInput!): WorkoutType!
   deactivateWorkout(id: ID!): WorkoutType!
   deleteExercise(id: ID!): Boolean!
   deleteUser(id: ID!): Boolean!

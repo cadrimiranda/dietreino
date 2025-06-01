@@ -64,3 +64,41 @@ export const DEACTIVATE_WORKOUT = gql`
     }
   }
 `;
+
+export const CREATE_WORKOUT = gql`
+  mutation CreateWorkout($input: CreateWorkoutInput!) {
+    createWorkout(input: $input) {
+      id
+      name
+      weekStart
+      weekEnd
+      isActive
+      trainingDays {
+        id
+        name
+        order
+        dayOfWeek
+        trainingDayExercises {
+          id
+          order
+          exercise {
+            id
+            name
+            videoLink
+          }
+          repSchemes {
+            id
+            sets
+            minReps
+            maxReps
+          }
+          restIntervals {
+            id
+            intervalTime
+            order
+          }
+        }
+      }
+    }
+  }
+`;

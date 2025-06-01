@@ -13,12 +13,8 @@ import ClientList from "../pages/client/ClientList.vue";
 import TrainingUpload from "../components/TrainingUpload.vue";
 import DietUpload from "../components/DietUpload.vue";
 import NotFound from "../components/NotFound.vue";
-import {
-  LocalStorageTokenService,
-  TokenValidator,
-} from "../security/authStorage";
-import { useSessionControl } from "../composables/useSessionControl";
 import ClientWorkoutDetails from "@/pages/client/workout/ClientWorkoutDetails.vue";
+import NewWorkout from "@/pages/client/workout/NewWorkout.vue";
 
 interface TemplateComponent {
   template: string;
@@ -36,12 +32,10 @@ const ProgressView: TemplateComponent = {
 };
 const Settings: TemplateComponent = { template: "<div>Settings</div>" };
 
-const tokenService = new LocalStorageTokenService();
-const tokenValidator = new TokenValidator();
+let authProvider: any = null;
 
-async function checkAuthentication(): Promise<boolean> {
-  const sessionControl = useSessionControl();
-  return await sessionControl.checkSession();
+export function setAuthProvider(provider: any) {
+  authProvider = provider;
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -83,13 +77,15 @@ const routes: Array<RouteRecordRaw> = [
             path: ":clientId",
             name: "ClientView",
             component: ClientWorkoutDetails,
+            props: true,
           },
         ],
       },
       {
-        path: "clients/:id",
-        name: "ClientDetail",
-        component: ClientDetail,
+        path: "/clients/:clientId/workout/new",
+        name: "NewWorkout",
+        component: NewWorkout,
+        meta: { requiresAuth: true },
         props: true,
       },
       {
@@ -136,57 +132,36 @@ router.beforeEach(async (
   from: RouteLocationNormalized,
   next: NavigationGuardNext
 ) => {
+  if (!authProvider) {
+    console.warn("Auth provider not set, allowing navigation");
+    next();
+    return;
+  }
+
+  if (!authProvider.isInitialized.value) {
+    console.warn("Auth provider not initialized, allowing navigation");
+    next();
+    return;
+  }
+
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
   if (to.name === "Login") {
-    const hasSession = tokenValidator.isTokenValid(tokenService.getAccessToken()) ||
-                      tokenValidator.isRefreshTokenValid(tokenService.getRefreshToken());
-    
-    if (hasSession) {
-      const sessionControl = useSessionControl();
-      const isValid = await sessionControl.checkSession();
-      if (isValid) {
-        next({ name: "Dashboard" });
-        return;
-      }
+    if (authProvider.isAuthenticated.value) {
+      next({ name: "Dashboard" });
+      return;
     }
     next();
     return;
   }
 
-  if (requiresAuth) {
-    const hasAnyToken = tokenService.getAccessToken() || tokenService.getRefreshToken();
-    
-    if (!hasAnyToken) {
-      message.warning("Você precisa fazer login para acessar esta página");
-      next({
-        name: "Login",
-        query: { redirect: to.fullPath },
-      });
-      return;
-    }
-
-    const isAuthenticated = await checkAuthentication();
-    
-    if (!isAuthenticated) {
-      message.warning("Sua sessão expirou. Por favor, faça login novamente.");
-      next({
-        name: "Login",
-        query: { redirect: to.fullPath },
-      });
-      return;
-    }
-  }
-
-  if (to.name === "NotFound") {
-    if (to.path.startsWith("/dashboard") || to.path.startsWith("/admin")) {
-      const isAuthenticated = await checkAuthentication();
-      if (!isAuthenticated) {
-        message.warning("Você precisa fazer login para acessar esta área");
-        next({ name: "Login" });
-        return;
-      }
-    }
+  if (requiresAuth && !authProvider.isAuthenticated.value) {
+    message.warning("Você precisa fazer login para acessar esta página");
+    next({
+      name: "Login",
+      query: { redirect: to.fullPath },
+    });
+    return;
   }
 
   next();

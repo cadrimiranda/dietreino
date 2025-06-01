@@ -133,9 +133,9 @@ export class UsersResolver {
     const workout = await this.workoutService.create({
       user: { id: clientId } as any,
       name: input.name,
-      week_start: input.weekStart,
-      week_end: input.weekEnd,
-      is_active: input.isActive ?? false,
+      week_start: new Date(input.weekStart),
+      week_end: new Date(input.weekEnd),
+      is_active: false,
     });
 
     return this.workoutService.toWorkoutType(workout);
