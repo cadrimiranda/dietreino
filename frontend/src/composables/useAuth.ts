@@ -82,7 +82,9 @@ const currentUser = ref<User | null>(tokenStorage.getUser());
 const loading = ref<boolean>(false);
 const error = ref<string>("");
 const isAuthenticated = computed(() => {
-  return tokenValidator.isTokenValid(accessToken.value);
+  const hasValidAccessToken = tokenValidator.isTokenValid(accessToken.value);
+  const hasValidRefreshToken = tokenValidator.isRefreshTokenValid(refreshToken.value);
+  return hasValidAccessToken || hasValidRefreshToken;
 });
 
 const refreshState = reactive<RefreshState>({
