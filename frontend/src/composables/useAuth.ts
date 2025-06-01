@@ -92,6 +92,9 @@ const refreshState = reactive<RefreshState>({
   queue: [],
 });
 
+let sessionExpiredHandled = false;
+let globalListenerAdded = false;
+
 async function refreshAccessToken(
   apolloClient: ApolloClient<any>
 ): Promise<boolean> {
@@ -129,6 +132,7 @@ async function refreshAccessToken(
         tokenStorage.setUser(result.user);
       }
 
+      sessionExpiredHandled = false;
       refreshState.queue.forEach((callback) => callback(accessToken.value));
       refreshState.queue = [];
       refreshState.inProgress = false;
@@ -147,7 +151,10 @@ async function refreshAccessToken(
     refreshState.queue = [];
     refreshState.inProgress = false;
 
-    window.dispatchEvent(new CustomEvent("auth:session-expired"));
+    if (!sessionExpiredHandled) {
+      sessionExpiredHandled = true;
+      window.dispatchEvent(new CustomEvent("auth:session-expired"));
+    }
     return false;
   }
 }
@@ -175,12 +182,18 @@ export function createAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
               isRefreshing = false;
 
               if (!success) {
-                window.dispatchEvent(new CustomEvent("auth:session-expired"));
+                if (!sessionExpiredHandled) {
+                  sessionExpiredHandled = true;
+                  window.dispatchEvent(new CustomEvent("auth:session-expired"));
+                }
                 observer.error(new Error("Session expired"));
                 return;
               }
             } else {
-              window.dispatchEvent(new CustomEvent("auth:session-expired"));
+              if (!sessionExpiredHandled) {
+                sessionExpiredHandled = true;
+                window.dispatchEvent(new CustomEvent("auth:session-expired"));
+              }
               observer.error(new Error("No valid authentication"));
               return;
             }
@@ -220,7 +233,10 @@ export function createAuthLink(apolloClient: ApolloClient<any>): ApolloLink {
                       complete: observer.complete.bind(observer),
                     });
                   } else {
-                    window.dispatchEvent(new CustomEvent("auth:session-expired"));
+                    if (!sessionExpiredHandled) {
+                      sessionExpiredHandled = true;
+                      window.dispatchEvent(new CustomEvent("auth:session-expired"));
+                    }
                     observer.error(error);
                   }
                 });
@@ -292,6 +308,7 @@ export function useAuth() {
       tokenStorage.setRefreshToken(result.refreshToken);
       tokenStorage.setUser(result.user);
 
+      sessionExpiredHandled = false;
       message.success(`Bem-vindo, ${result.user.name}!`);
 
       return result;
@@ -363,10 +380,15 @@ export function useAuth() {
       });
   };
 
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && !globalListenerAdded) {
+    globalListenerAdded = true;
     window.addEventListener("auth:session-expired", () => {
       message.warning("Sua sessão expirou. Por favor, faça login novamente.");
-      router.push("/login");
+      try {
+        router.push("/login");
+      } catch (error) {
+        window.location.href = "/login";
+      }
     });
   }
 

@@ -1,4 +1,4 @@
-import { provide, inject, ref, readonly } from 'vue'
+import { provide, inject, ref, readonly, onMounted } from 'vue'
 import { useAuth } from './useAuth'
 import { LocalStorageTokenService, TokenValidator } from '@/security/authStorage'
 
@@ -10,6 +10,9 @@ export function createAuthProvider() {
   const auth = useAuth()
   const tokenStorage = new LocalStorageTokenService()
   const tokenValidator = new TokenValidator()
+  
+  const SESSION_CHECK_INTERVAL = 2 * 60 * 1000 // 2 minutes
+  let sessionMonitorInterval: NodeJS.Timeout | null = null
 
   async function initialize(): Promise<boolean> {
     if (isInitialized.value) {
@@ -53,6 +56,51 @@ export function createAuthProvider() {
       isLoading.value = false
       isInitialized.value = true
     }
+    
+    // Start session monitoring after initialization
+    startSessionMonitoring()
+  }
+
+  function startSessionMonitoring() {
+    if (sessionMonitorInterval) {
+      clearInterval(sessionMonitorInterval)
+    }
+    
+    sessionMonitorInterval = setInterval(async () => {
+      if (!auth.isAuthenticated.value) return
+      
+      const accessToken = tokenStorage.getAccessToken()
+      const refreshToken = tokenStorage.getRefreshToken()
+      
+      // Check if access token needs refresh
+      if (tokenValidator.shouldRefreshToken(accessToken) && tokenValidator.isRefreshTokenValid(refreshToken)) {
+        try {
+          await auth.refreshToken()
+        } catch (error) {
+          console.error('Failed to refresh token:', error)
+          auth.logout()
+        }
+      }
+    }, SESSION_CHECK_INTERVAL)
+    
+    // Also check when window regains focus
+    window.addEventListener('focus', async () => {
+      if (!auth.isAuthenticated.value) return
+      
+      const accessToken = tokenStorage.getAccessToken()
+      const refreshToken = tokenStorage.getRefreshToken()
+      
+      if (!tokenValidator.isTokenValid(accessToken) && !tokenValidator.isRefreshTokenValid(refreshToken)) {
+        auth.logout()
+      } else if (tokenValidator.shouldRefreshToken(accessToken) && tokenValidator.isRefreshTokenValid(refreshToken)) {
+        try {
+          await auth.refreshToken()
+        } catch (error) {
+          console.error('Failed to refresh token on focus:', error)
+          auth.logout()
+        }
+      }
+    })
   }
 
   return {

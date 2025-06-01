@@ -96,7 +96,7 @@ export class TokenValidator {
 
     try {
       const decoded = jwtDecode<JwtPayload>(token);
-      return decoded.exp * 1000 > Date.now() + 120000;
+      return decoded.exp * 1000 > Date.now();
     } catch {
       return false;
     }
@@ -107,9 +107,7 @@ export class TokenValidator {
 
     try {
       const decoded = jwtDecode<JwtPayload>(refreshToken);
-      const now = Date.now();
-      const oneWeekInMs = 7 * 24 * 60 * 60 * 1000;
-      return decoded.exp * 1000 > now && (decoded.exp * 1000 - now) <= oneWeekInMs;
+      return decoded.exp * 1000 > Date.now();
     } catch {
       return false;
     }
@@ -120,8 +118,8 @@ export class TokenValidator {
 
     try {
       const decoded = jwtDecode<JwtPayload>(token);
-      const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000);
-      return decoded.exp * 1000 <= fiveMinutesFromNow;
+      const tenMinutesFromNow = Date.now() + (10 * 60 * 1000);
+      return decoded.exp * 1000 <= tenMinutesFromNow;
     } catch {
       return true;
     }

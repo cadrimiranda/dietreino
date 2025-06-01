@@ -123,4 +123,27 @@ describe('useAuth', () => {
       expect(isAuthenticated.value).toBe(false)
     })
   })
+
+  describe('session expired handling', () => {
+    it('deve evitar múltiplos listeners quando criadas múltiplas instâncias', async () => {
+      const addEventListenerSpy = vi.spyOn(window, 'addEventListener')
+      const initialCallCount = addEventListenerSpy.mock.calls.length
+
+      // Criar múltiplas instâncias do useAuth no mesmo módulo
+      const { useAuth } = await import('../useAuth')
+      useAuth()
+      useAuth()
+      useAuth()
+
+      // Contar quantos listeners 'auth:session-expired' foram adicionados
+      const sessionExpiredCalls = addEventListenerSpy.mock.calls
+        .slice(initialCallCount)
+        .filter(call => call[0] === 'auth:session-expired')
+      
+      // Deve ter adicionado apenas um listener, mesmo com múltiplas instâncias
+      expect(sessionExpiredCalls).toHaveLength(1)
+
+      addEventListenerSpy.mockRestore()
+    })
+  })
 })

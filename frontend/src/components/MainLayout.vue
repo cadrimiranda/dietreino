@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen bg-gray-50 overflow-hidden">
+  <div class="flex h-screen bg-gray-50 overflow-hidden">
     <!-- Sidebar -->
     <aside
       class="flex flex-col bg-gray-900 text-white transition-all duration-300 overflow-hidden"
@@ -52,7 +52,7 @@
     <div class="flex flex-1 flex-col overflow-hidden">
       <!-- Topbar -->
       <header
-        class="flex items-center justify-between bg-white px-4 h-16 shadow-sm"
+        class="flex items-center justify-between bg-white px-4 h-16 shadow-sm flex-shrink-0"
       >
         <div class="flex items-center gap-4">
           <button @click="toggleSidebar" class="p-2 rounded hover:bg-gray-100">
@@ -144,11 +144,13 @@
 
       <!-- Page Content -->
       <main
-        class="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-50"
+        class="flex-1 overflow-y-auto bg-gray-50"
         @click="closeMenus"
       >
-        <div class="max-w-7xl mx-auto">
-          <router-view />
+        <div class="p-4 md:p-8">
+          <div class="max-w-7xl mx-auto">
+            <router-view />
+          </div>
         </div>
       </main>
     </div>

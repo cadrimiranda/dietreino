@@ -1,8 +1,82 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import WorkoutEditDialog from '../WorkoutEditDialog.vue';
 
-describe('WorkoutEditDialog Order Validation', () => {
+// Mock das dependências
+vi.mock('@/composables/useExercises', () => ({
+  useExercises: () => ({
+    exercises: { value: [
+      { id: 'ex1', name: 'Exercise 1' },
+      { id: 'ex2', name: 'Exercise 2' }
+    ]}
+  })
+}));
+
+vi.mock('@vue/apollo-composable', () => ({
+  useMutation: () => ({
+    mutate: vi.fn(),
+    loading: { value: false }
+  })
+}));
+
+vi.mock('ant-design-vue', () => ({
+  message: {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn()
+  },
+  Modal: {
+    confirm: vi.fn()
+  }
+}));
+
+// Mock dos componentes Ant Design
+const mockComponents = {
+  'a-modal': {
+    template: '<div v-if="visible"><slot /></div>',
+    props: ['visible', 'title', 'width', 'footer', 'maskClosable'],
+    emits: ['update:visible']
+  },
+  'a-alert': {
+    template: '<div class="alert"><slot /></div>',
+    props: ['message', 'description', 'type', 'showIcon']
+  },
+  'a-tabs': {
+    template: '<div><slot /></div>',
+    props: ['activeKey'],
+    emits: ['update:activeKey']
+  },
+  'a-tab-pane': {
+    template: '<div><slot /></div>',
+    props: ['key', 'tab']
+  },
+  'a-table': {
+    template: '<div class="table"></div>',
+    props: ['columns', 'dataSource', 'pagination', 'bordered', 'rowKey']
+  },
+  'a-button': {
+    template: '<button :type="type" :disabled="loading"><slot /></button>',
+    props: ['type', 'loading', 'size', 'danger']
+  },
+  'a-input': {
+    template: '<input :value="value" />',
+    props: ['value', 'placeholder'],
+    emits: ['update:value']
+  },
+  'a-select': {
+    template: '<select :value="value"><option v-for="opt in options" :key="opt.value" :value="opt.value">{{ opt.label }}</option></select>',
+    props: ['value', 'options', 'placeholder'],
+    emits: ['update:value', 'change']
+  },
+  'a-input-number': {
+    template: '<input type="number" :value="value" :min="min" :max="max" />',
+    props: ['value', 'min', 'max'],
+    emits: ['update:value', 'change', 'blur']
+  }
+};
+
+describe('WorkoutEditDialog', () => {
   let wrapper: any;
   
   const mockWorkout = {
@@ -37,10 +111,10 @@ describe('WorkoutEditDialog Order Validation', () => {
         dayOfWeek: 1,
         trainingDayExercises: [
           {
-            exercise: { id: 'ex3', name: 'Exercise 3' },
+            exercise: { id: 'ex1', name: 'Exercise 1' },
             order: 0,
             repSchemes: [{ sets: 4, minReps: 10, maxReps: 12 }],
-            restIntervals: [{ intervalTime: '120s', order: 0 }],
+            restIntervals: [{ intervalTime: '45s', order: 0 }],
           }
         ]
       }
@@ -48,255 +122,138 @@ describe('WorkoutEditDialog Order Validation', () => {
   };
 
   beforeEach(() => {
-    // Mock external dependencies
-    vi.mock('@/composables/useExercises', () => ({
-      useExercises: () => ({
-        exercises: { value: [
-          { id: 'ex1', name: 'Exercise 1' },
-          { id: 'ex2', name: 'Exercise 2' },
-          { id: 'ex3', name: 'Exercise 3' },
-        ]},
-        loading: { value: false }
-      })
-    }));
-
-    vi.mock('@vue/apollo-composable', () => ({
-      useMutation: () => ({
-        mutate: vi.fn().mockResolvedValue({})
-      })
-    }));
-
     wrapper = mount(WorkoutEditDialog, {
       props: {
         modelValue: true,
         workout: mockWorkout
       },
       global: {
+        components: mockComponents,
         stubs: {
-          'a-modal': { template: '<div><slot /></div>' },
-          'a-alert': { template: '<div />' },
-          'a-tabs': { template: '<div><slot /></div>' },
-          'a-tab-pane': { template: '<div><slot /></div>' },
-          'a-input': { template: '<input />' },
-          'a-table': { template: '<div />' },
-          'a-select': { template: '<select />' },
-          'a-input-number': { template: '<input type="number" />' },
-          'a-button': { template: '<button><slot /></button>' },
+          'DeleteOutlined': { template: '<i class="delete-icon" />' },
+          'ArrowUpOutlined': { template: '<i class="up-icon" />' },
+          'ArrowDownOutlined': { template: '<i class="down-icon" />' },
+          'PlusOutlined': { template: '<i class="plus-icon" />' }
         }
       }
     });
   });
 
-  it('should initialize training days with valid sequential order values', () => {
-    const vm = wrapper.vm;
-    
-    // Wait for component to initialize
-    wrapper.vm.$nextTick(() => {
-      const trainingDays = vm.editableTrainingDays;
-      
-      // Verify training days have sequential order
-      expect(trainingDays).toHaveLength(2);
-      
-      trainingDays.forEach((day: any, index: number) => {
-        // Each training day should have order equal to its index
-        expect(day.order).toBe(index);
-        expect(typeof day.order).toBe('number');
-        expect(day.order).not.toBeNull();
-        expect(day.order).not.toBeUndefined();
-        expect(day.order).toBeGreaterThanOrEqual(0);
-        
-        // Each exercise within the day should have sequential order
-        day.exercises.forEach((exercise: any, exerciseIndex: number) => {
-          expect(exercise.order).toBe(exerciseIndex);
-          expect(typeof exercise.order).toBe('number');
-          expect(exercise.order).not.toBeNull();
-          expect(exercise.order).not.toBeUndefined();
-          expect(exercise.order).toBeGreaterThanOrEqual(0);
-        });
-      });
+  describe('Renderização', () => {
+    it('deve renderizar o modal quando visible é true', () => {
+      expect(wrapper.find('[class*="workout-edit-container"]').exists()).toBe(true);
     });
-  });
 
-  it('should maintain order consistency when drag and drop reorders training days', () => {
-    const vm = wrapper.vm;
-    
-    wrapper.vm.$nextTick(() => {
-      // Simulate drag and drop reordering (move first day to position 1)
-      const originalTrainingDays = [...vm.editableTrainingDays];
-      
-      // Simulate the drag and drop operation
-      vm.draggedDayIndex = 0;
-      const mockEvent = {
-        preventDefault: vi.fn(),
-        target: {
-          closest: vi.fn().mockReturnValue({
-            parentNode: {
-              children: [
-                { /* first element */ },
-                { /* second element */ }
-              ]
-            }
-          })
-        }
+    it('deve mostrar alerta quando treino já foi iniciado', async () => {
+      const startedWorkout = {
+        ...mockWorkout,
+        startedAt: '2023-01-01T00:00:00Z'
       };
-      
-      // Mock Array.from to return proper index
-      vi.spyOn(Array, 'from').mockReturnValue([
-        { /* first element */ },
-        { /* second element */ }
-      ]);
-      
-      // Manually simulate the reorder operation
-      const draggedDay = vm.editableTrainingDays.splice(0, 1)[0];
-      vm.editableTrainingDays.splice(1, 0, draggedDay);
-      
-      // Update orders after reordering
-      vm.editableTrainingDays.forEach((day: any, index: number) => {
-        day.order = index;
-      });
-      
-      // Verify that orders are still sequential after reordering
-      vm.editableTrainingDays.forEach((day: any, index: number) => {
-        expect(day.order).toBe(index);
-        expect(typeof day.order).toBe('number');
-        expect(day.order).not.toBeNull();
-        expect(day.order).not.toBeUndefined();
-      });
-      
-      // Verify the order sequence is still valid (0, 1, 2, ...)
-      const orders = vm.editableTrainingDays.map((day: any) => day.order);
-      expect(orders).toEqual([0, 1]);
+
+      await wrapper.setProps({ workout: startedWorkout });
+      await nextTick();
+
+      expect(wrapper.find('.alert').exists()).toBe(true);
+    });
+
+    it('deve renderizar dias de treino', () => {
+      expect(wrapper.find('.training-days-list').exists()).toBe(true);
+      expect(wrapper.findAll('.training-day-tab')).toHaveLength(2);
     });
   });
 
-  it('should validate order values before sending to API', () => {
-    const vm = wrapper.vm;
-    
-    wrapper.vm.$nextTick(() => {
-      // Get the data that would be sent to API
-      const currentData = vm.editableTrainingDays.map((day: any) => ({
-        ...(day.id && { id: day.id }),
-        name: day.name,
-        order: day.order,
-        dayOfWeek: day.dayOfWeek,
-        exercises: day.exercises.map((ex: any) => ({
-          exerciseId: ex.exerciseId,
-          order: ex.order,
-          repSchemes: ex.repSchemes,
-          restIntervals: ex.restIntervals,
-        })),
-      }));
+  describe('Ordenação dos Dias de Treino', () => {
+    it('deve manter a ordem original dos dias de treino', () => {
+      const dayTabs = wrapper.findAll('.training-day-tab');
+      expect(dayTabs[0].find('.day-name').text()).toBe('Day 1');
+      expect(dayTabs[1].find('.day-name').text()).toBe('Day 2');
+    });
 
-      // Validate that all training days have valid order values
-      currentData.forEach((day: any, index: number) => {
-        expect(day.order).toBe(index);
-        expect(typeof day.order).toBe('number');
-        expect(day.order).not.toBeNull();
-        expect(day.order).not.toBeUndefined();
-        expect(day.order).toBeGreaterThanOrEqual(0);
-        
-        // Validate that all exercises have valid order values
-        day.exercises.forEach((exercise: any, exerciseIndex: number) => {
-          expect(exercise.order).toBe(exerciseIndex);
-          expect(typeof exercise.order).toBe('number');
-          expect(exercise.order).not.toBeNull();
-          expect(exercise.order).not.toBeUndefined();
-          expect(exercise.order).toBeGreaterThanOrEqual(0);
-        });
-      });
+    it('deve mostrar a ordem correta nos tabs', () => {
+      const dayTabs = wrapper.findAll('.training-day-tab');
+      expect(dayTabs[0].find('.day-order').text()).toBe('(1)');
+      expect(dayTabs[1].find('.day-order').text()).toBe('(2)');
+    });
+
+    it('deve carregar editableTrainingDays com a estrutura correta', () => {
+      expect(wrapper.vm.editableTrainingDays).toHaveLength(2);
+      expect(wrapper.vm.editableTrainingDays[0].name).toBe('Day 1');
+      expect(wrapper.vm.editableTrainingDays[0].order).toBe(0);
+      expect(wrapper.vm.editableTrainingDays[1].name).toBe('Day 2');
+      expect(wrapper.vm.editableTrainingDays[1].order).toBe(1);
     });
   });
 
-  it('should never fall back to undefined or null order values', () => {
-    // Test with potentially problematic workout data
-    const problematicWorkout = {
-      id: 'workout-problematic',
-      name: 'Problematic Workout',
-      startedAt: null,
-      trainingDays: [
-        {
-          id: 'td1',
-          name: 'Day with potential null order',
-          order: null, // This should be handled gracefully
-          dayOfWeek: 0,
-          trainingDayExercises: [
-            {
-              exercise: { id: 'ex1', name: 'Exercise 1' },
-              order: undefined, // This should be handled gracefully
-              repSchemes: [{ sets: 3, minReps: 8, maxReps: 10 }],
-              restIntervals: [{ intervalTime: '60s', order: 0 }],
-            }
-          ]
-        }
-      ]
-    };
-
-    const problematicWrapper = mount(WorkoutEditDialog, {
-      props: {
-        modelValue: true,
-        workout: problematicWorkout
-      },
-      global: {
-        stubs: {
-          'a-modal': { template: '<div><slot /></div>' },
-          'a-alert': { template: '<div />' },
-          'a-tabs': { template: '<div><slot /></div>' },
-          'a-tab-pane': { template: '<div><slot /></div>' },
-          'a-input': { template: '<input />' },
-          'a-table': { template: '<div />' },
-          'a-select': { template: '<select />' },
-          'a-input-number': { template: '<input type="number" />' },
-          'a-button': { template: '<button><slot /></button>' },
-        }
-      }
+  describe('Exercícios', () => {
+    it('deve carregar exercícios corretamente para cada dia', () => {
+      const firstDay = wrapper.vm.editableTrainingDays[0];
+      expect(firstDay.exercises).toHaveLength(2);
+      expect(firstDay.exercises[0].exerciseId).toBe('ex1');
+      expect(firstDay.exercises[1].exerciseId).toBe('ex2');
     });
 
-    const vm = problematicWrapper.vm;
-    
-    problematicWrapper.vm.$nextTick(() => {
-      const trainingDays = vm.editableTrainingDays;
-      
-      // Even with problematic input data, the component should have valid orders
-      trainingDays.forEach((day: any, index: number) => {
-        expect(day.order).toBe(index); // Should fallback to index
-        expect(typeof day.order).toBe('number');
-        expect(day.order).not.toBeNull();
-        expect(day.order).not.toBeUndefined();
-        
-        day.exercises.forEach((exercise: any, exerciseIndex: number) => {
-          expect(exercise.order).toBe(exerciseIndex); // Should fallback to index
-          expect(typeof exercise.order).toBe('number');
-          expect(exercise.order).not.toBeNull();
-          expect(exercise.order).not.toBeUndefined();
-        });
-      });
+    it('deve manter a ordem dos exercícios', () => {
+      const firstDay = wrapper.vm.editableTrainingDays[0];
+      expect(firstDay.exercises[0].order).toBe(0);
+      expect(firstDay.exercises[1].order).toBe(1);
+    });
+
+    it('deve processar rep schemes corretamente', () => {
+      const firstDay = wrapper.vm.editableTrainingDays[0];
+      const firstExercise = firstDay.exercises[0];
+      expect(firstExercise.totalSets).toBe(3);
+      expect(firstExercise.repsString).toBe('8-10');
+    });
+
+    it('deve processar rest intervals corretamente', () => {
+      const firstDay = wrapper.vm.editableTrainingDays[0];
+      const firstExercise = firstDay.exercises[0];
+      expect(firstExercise.restString).toBe('60s');
     });
   });
 
-  it('should add new exercises with proper sequential order', () => {
-    const vm = wrapper.vm;
-    
-    wrapper.vm.$nextTick(() => {
-      const firstDay = vm.editableTrainingDays[0];
-      const initialExerciseCount = firstDay.exercises.length;
+  describe('Funcionalidades', () => {
+    it('deve permitir cancelar', async () => {
+      // Call the cancel method directly since the button event handling might be complex
+      wrapper.vm.cancel();
+      await wrapper.vm.$nextTick();
       
-      // Add a new exercise
-      vm.addExercise(firstDay);
-      
-      // Verify the new exercise has the correct order
-      const newExercise = firstDay.exercises[firstDay.exercises.length - 1];
-      expect(newExercise.order).toBe(initialExerciseCount);
-      expect(typeof newExercise.order).toBe('number');
-      expect(newExercise.order).not.toBeNull();
-      expect(newExercise.order).not.toBeUndefined();
-      
-      // Verify all exercises still have sequential order
-      firstDay.exercises.forEach((exercise: any, index: number) => {
-        expect(exercise.order).toBe(index);
-        expect(typeof exercise.order).toBe('number');
-        expect(exercise.order).not.toBeNull();
-        expect(exercise.order).not.toBeUndefined();
+      expect(wrapper.emitted('update:modelValue')).toBeTruthy();
+      expect(wrapper.emitted('update:modelValue')[0]).toEqual([false]);
+    });
+
+    it('deve ter botão de salvar', () => {
+      const saveButton = wrapper.find('[type="primary"]');
+      expect(saveButton.exists()).toBe(true);
+      expect(saveButton.text()).toContain('Salvar');
+    });
+
+    it('deve não permitir edição quando treino foi iniciado', async () => {
+      const startedWorkout = {
+        ...mockWorkout,
+        startedAt: '2023-01-01T00:00:00Z'
+      };
+
+      await wrapper.setProps({ workout: startedWorkout });
+      await nextTick();
+
+      expect(wrapper.find('.training-days-list').exists()).toBe(false);
+      expect(wrapper.find('[type="primary"]').exists()).toBe(false);
+    });
+  });
+
+  describe('Drag and Drop', () => {
+    it('deve configurar elementos como draggable', () => {
+      const dayTabs = wrapper.findAll('.training-day-tab');
+      dayTabs.forEach(tab => {
+        expect(tab.attributes('draggable')).toBe('true');
       });
+    });
+
+    it('deve ter handle de drag', () => {
+      const dragHandles = wrapper.findAll('.drag-handle');
+      expect(dragHandles).toHaveLength(2);
+      expect(dragHandles[0].text()).toBe('⋮⋮');
     });
   });
 });

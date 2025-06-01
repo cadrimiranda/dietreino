@@ -42,7 +42,7 @@
       <div class="mb-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">Dias de Treino</h3>
-          <a-button type="dashed" @click="addTrainingDay">
+          <a-button type="dashed" @click="addTrainingDay" :disabled="workoutForm.trainingDays.length >= 7">
             <plus-outlined /> Adicionar Dia
           </a-button>
         </div>
@@ -66,7 +66,6 @@
             >
               <div class="drag-handle">⋮⋮</div>
               <span class="day-name">{{ day.name || `Dia ${index + 1}` }}</span>
-              <span class="day-order">({{ index + 1 }})</span>
               <a-button
                 type="text"
                 size="small"
@@ -478,29 +477,39 @@ export default defineComponent({
       workoutForm.weekEnd = dayjs().add(12, "week");
       
       if (workout.trainingDays && workout.trainingDays.length > 0) {
+        // Ordenar por order e limitar a no máximo 7 dias de treino
+        const sortedTrainingDays = [...workout.trainingDays]
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+          .slice(0, 7);
         
-        workoutForm.trainingDays = workout.trainingDays.map((td: TrainingDay, tdIndex: number) => ({
-          tempId: `day-${Date.now()}-${tdIndex}`,
-          name: td.name,
-          order: td.order ?? tdIndex,
-          dayOfWeek: td.dayOfWeek ?? tdIndex,
-          exercises: td.trainingDayExercises?.map((tde: TrainingDayExercise, index: number) => ({
-            tempId: `${td.id}-${index}-${Date.now()}`,
-            exerciseId: tde.exercise.id,
-            order: index,
-            totalSets: tde.repSchemes?.reduce((sum: number, rs: RepScheme) => sum + rs.sets, 0) || 3,
-            repsString: formatRepsString(tde.repSchemes || []),
-            restString: formatRestString(tde.restIntervals || []),
-            repSchemes: tde.repSchemes?.map((rs: RepScheme) => ({
-              sets: rs.sets,
-              minReps: rs.minReps,
-              maxReps: rs.maxReps,
-            })) || [{ sets: 3, minReps: 8, maxReps: 10 }],
-            restIntervals: tde.restIntervals?.map((ri: RestInterval) => ({
-              intervalTime: ri.intervalTime,
-              order: ri.order,
-            })) || [{ intervalTime: "60s", order: 0 }],
-          })) || [],
+        workoutForm.trainingDays = sortedTrainingDays.map((td: TrainingDay, tdIndex: number) => ({
+            tempId: `day-${Date.now()}-${tdIndex}`,
+            name: td.name,
+            order: td.order ?? tdIndex,
+            dayOfWeek: td.dayOfWeek ?? tdIndex,
+            exercises: [...(td.trainingDayExercises || [])]
+              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+              .map((tde: TrainingDayExercise, index: number) => ({
+                tempId: `${td.id}-${index}-${Date.now()}`,
+                exerciseId: tde.exercise.id,
+                order: tde.order ?? index,
+                totalSets: tde.repSchemes?.reduce((sum: number, rs: RepScheme) => sum + rs.sets, 0) || 3,
+                repsString: formatRepsString(tde.repSchemes || []),
+                restString: formatRestString(tde.restIntervals || []),
+                repSchemes: tde.repSchemes?.map((rs: RepScheme) => ({
+                  sets: rs.sets,
+                  minReps: rs.minReps,
+                  maxReps: rs.maxReps,
+                })) || [{ sets: 3, minReps: 8, maxReps: 10 }],
+                restIntervals: tde.restIntervals && tde.restIntervals.length > 0 
+                  ? [...tde.restIntervals]
+                      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                      .map((ri: RestInterval) => ({
+                        intervalTime: ri.intervalTime,
+                        order: ri.order,
+                      }))
+                  : [{ intervalTime: "60s", order: 0 }],
+              }))
         }));
         
         // Set the active tab to the first day
@@ -526,6 +535,11 @@ export default defineComponent({
     }
 
     function addTrainingDay() {
+      if (workoutForm.trainingDays.length >= 7) {
+        message.warning("Não é possível adicionar mais de 7 dias de treino");
+        return;
+      }
+      
       const newDay: EditableTrainingDay = {
         tempId: `day-${Date.now()}`,
         name: `Dia ${workoutForm.trainingDays.length + 1}`,
