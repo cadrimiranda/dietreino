@@ -16,9 +16,6 @@
         <a-button @click="editWorkout" v-if="hasWorkout && !workout.startedAt">
           <edit-outlined /> Editar Treino
         </a-button>
-        <a-button type="primary" @click="printWorkout" v-if="hasWorkout">
-          <printer-outlined /> Imprimir
-        </a-button>
         <a-button type="primary" @click="createNewWorkout">
           <plus-outlined /> Novo Treino
         </a-button>
@@ -26,7 +23,7 @@
     </div>
 
     <div v-if="!isLoading">
-      <div class="bg-white rounded-lg shadow mb-6" ref="printArea">
+      <div class="bg-white rounded-lg shadow mb-6">
         <div class="p-6">
           <div class="flex items-center mb-6">
             <div class="bg-blue-100 p-3 rounded-full mr-4">
@@ -156,7 +153,6 @@
 import { ref, reactive, defineComponent, watch, computed } from "vue";
 import {
   UserOutlined,
-  PrinterOutlined,
   EditOutlined,
   PlusOutlined,
 } from "@ant-design/icons-vue";
@@ -171,7 +167,6 @@ export default defineComponent({
   name: "ClientWorkoutDetails",
   components: {
     UserOutlined,
-    PrinterOutlined,
     EditOutlined,
     PlusOutlined,
     EmptyWorkoutState,
@@ -337,23 +332,6 @@ export default defineComponent({
       { immediate: true }
     );
 
-    const printArea = ref(null);
-
-    // Função para imprimir o treino em PDF
-    const printWorkout = () => {
-      const element = printArea.value;
-      const opt = {
-        margin: 10,
-        filename: `treino-${client.name
-          ?.toLowerCase()
-          .replace(/\s+/g, "-")}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      };
-
-      message.loading({ content: "Gerando PDF...", key: "pdf" });
-    };
 
     const editWorkout = () => {
       showEditDialog.value = true;
@@ -397,8 +375,6 @@ export default defineComponent({
       client,
       workout,
       workoutSheets,
-      printArea,
-      printWorkout,
       hasWorkout,
       isLoading,
       userId,
