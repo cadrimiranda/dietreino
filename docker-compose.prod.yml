@@ -1,9 +1,10 @@
 version: '3.8'
 
 services:
+  # Database PostgreSQL
   postgres:
     image: postgres:16-alpine
-    container_name: dietreino-postgres
+    container_name: dietreino-postgres-prod
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -11,28 +12,30 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_prod_data:/var/lib/postgresql/data
     restart: unless-stopped
     networks:
       - dietreino-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
 
-  api:
+  # Backend API (NestJS + GraphQL) - Production
+  backend:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: dietreino-api
+      dockerfile: backend.Dockerfile
+      target: production
+    container_name: dietreino-backend-prod
     ports:
       - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       DB_HOST: postgres
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
@@ -44,24 +47,40 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
       PORT: 3000
-    volumes:
-      - .:/app
-      - /app/node_modules
     networks:
       - dietreino-network
-    command: npm run dev
     restart: unless-stopped
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: dietreino-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+  # Frontend (Vue.js) - Production
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: dietreino-frontend-prod
     ports:
-      - "5050:80"
+      - "3001:3000"
     depends_on:
-      - postgres
+      - backend
+    environment:
+      NODE_ENV: production
+    networks:
+      - dietreino-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: dietreino-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - frontend
     networks:
       - dietreino-network
     restart: unless-stopped
@@ -71,4 +90,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  postgres_prod_data:

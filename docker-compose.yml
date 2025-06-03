@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # Database PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: dietreino-postgres
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-dietreino}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - dietreino-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (NestJS + GraphQL)
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+      target: development
+    container_name: dietreino-backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_NAME: ${DB_NAME:-dietreino}
+      JWT_SECRET: ${JWT_SECRET:-seu_segredo_super_secreto}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-seu_refresh_secreto}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      PORT: 3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - dietreino-network
+    command: npm run dev
+    restart: unless-stopped
+
+  # Frontend (Vue.js)
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+      target: development
+    container_name: dietreino-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://localhost:3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - dietreino-network
+    restart: unless-stopped
+
+  # Mobile (React Native/Expo) - Modo Web
+  mobile-web:
+    build:
+      context: .
+      dockerfile: mobile.Dockerfile
+      target: web
+    container_name: dietreino-mobile-web
+    ports:
+      - "19006:19006"
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: development
+      EXPO_API_URL: http://localhost:3000
+    volumes:
+      - ./mobile:/app
+      - /app/node_modules
+    networks:
+      - dietreino-network
+    restart: unless-stopped
+
+  # Mobile (React Native/Expo) - Modo Desenvolvimento
+  mobile-dev:
+    build:
+      context: .
+      dockerfile: mobile.Dockerfile
+      target: development
+    container_name: dietreino-mobile-dev
+    ports:
+      - "8081:8081"
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: development
+      EXPO_API_URL: http://localhost:3000
+    volumes:
+      - ./mobile:/app
+      - /app/node_modules
+    networks:
+      - dietreino-network
+    restart: unless-stopped
+    profiles:
+      - mobile-dev
+
+  # PgAdmin para gerenciar PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: dietreino-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - dietreino-network
+    restart: unless-stopped
+    profiles:
+      - tools
+
+networks:
+  dietreino-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

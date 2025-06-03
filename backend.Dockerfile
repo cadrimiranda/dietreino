@@ -1,17 +1,18 @@
+# Backend NestJS Dockerfile
 FROM node:18-alpine AS development
 
 # Create app directory
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install dependencies and NestJS CLI globally
 RUN npm install
 RUN npm install -g @nestjs/cli
 
 # Copy source code
-COPY . .
+COPY backend/ .
 
 # Generate GraphQL schema
 RUN npm run build
@@ -27,7 +28,7 @@ ENV NODE_ENV=${NODE_ENV}
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install only production dependencies
 RUN npm install --only=production
