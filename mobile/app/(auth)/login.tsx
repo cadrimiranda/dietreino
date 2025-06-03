@@ -54,6 +54,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [rememberEmail, setRememberEmail] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -95,17 +96,18 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setLoginError('Please fill in all fields');
       return;
     }
 
     if (!isValidEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      setLoginError('Please enter a valid email address');
       return;
     }
 
     try {
       setIsLoading(true);
+      setLoginError('');
       // Save email to AsyncStorage if remember is checked
       if (rememberEmail) {
         await saveEmailPreference(true, email);
@@ -115,7 +117,7 @@ export default function Login() {
       await login(email, password);
     } catch (error) {
       console.error('Login error:', error);
-      Alert.alert('Error', 'Failed to login. Please try again.');
+      setLoginError('Failed to login. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -149,6 +151,7 @@ export default function Login() {
             secureTextEntry
             autoCapitalize="none"
           />
+          {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
 
           <View style={styles.checkboxContainer}>
             <TouchableOpacity

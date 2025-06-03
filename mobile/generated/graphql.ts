@@ -87,7 +87,7 @@ export type ImportXlsxUserWorkoutInput = {
   userId: Scalars['String']['input'];
   weekEnd: Scalars['String']['input'];
   weekStart: Scalars['String']['input'];
-  workoutId?: InputMaybe<Scalars['Float']['input']>;
+  workoutId?: InputMaybe<Scalars['String']['input']>;
   workoutName: Scalars['String']['input'];
 };
 

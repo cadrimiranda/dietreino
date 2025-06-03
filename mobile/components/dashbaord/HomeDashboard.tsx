@@ -10,32 +10,49 @@ import {
   ScrollView,
 } from "react-native";
 import { useGlobalStore } from "@/store/store";
-import { container } from "@/services/container";
 import { WorkoutType } from "@/types/workout";
 import { useRouter } from "expo-router";
 import WorkoutSchedule from "./WorkoutSchedule";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function HomeDashboard() {
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const { workoutScheduleList, setWorkoutScheduleList, setSelectedWorkout } =
     useGlobalStore();
   const router = useRouter();
+  const { user, loading: isLoading, error, activeWorkout } = useCurrentUser();
 
   useEffect(() => {
-    async function loadWorkoutSchedule() {
-      try {
-        const scheduleList = await container.api.getWorkoutScheduleList();
-        setWorkoutScheduleList(scheduleList);
-      } catch (error) {
-        console.error("Erro ao carregar cronograma:", error);
-      } finally {
-        setIsLoading(false);
-      }
+    if (activeWorkout?.trainingDays) {
+      // Convert training days to workout schedule format
+      const schedule = Array(7).fill(null).map((_, index) => {
+        const trainingDay = activeWorkout.trainingDays?.find(
+          (day) => day.dayOfWeek === index
+        );
+        
+        if (trainingDay) {
+          return {
+            day: index,
+            workout: trainingDay.name as WorkoutType,
+            exercises: trainingDay.trainingDayExercises?.map((tde) => ({
+              name: tde.exercise?.name || '',
+              sets: tde.repSchemes?.reduce((acc, rep) => acc + rep.sets, 0) || 0,
+              reps: tde.repSchemes?.map(rep => `${rep.minReps}-${rep.maxReps}`).join(', ') || '',
+              rest: tde.restIntervals?.map(rest => `${rest.intervalTime}s`).join(', ') || ''
+            })) || []
+          };
+        }
+        
+        return {
+          day: index,
+          workout: WorkoutType.REST,
+          exercises: []
+        };
+      });
+      
+      setWorkoutScheduleList(schedule);
     }
-
-    loadWorkoutSchedule();
-  }, [setWorkoutScheduleList]);
+  }, [activeWorkout, setWorkoutScheduleList]);
 
   const handleStartWorkout = (workoutType: WorkoutType) => {
     setSelectedWorkout(workoutType);
@@ -51,11 +68,19 @@ export default function HomeDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <Text style={styles.errorText}>Erro ao carregar dados do usuário</Text>
+      </SafeAreaView>
+    );
+  }
+
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Domingo, 1 = Segunda, ...
   const todayWorkout = workoutScheduleList?.[dayOfWeek];
 
-  const userName = "Camila";
+  const userName = user?.name || "Usuario";
   const weeklyProgress = "3/5 treinos concluídos";
   const lastNote = "Foquei mais em resistência no último treino de pernas.";
   const dailyTip = "Hidrate-se antes, durante e depois do treino! 💧";
@@ -343,5 +368,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: "#666",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#ff3b30",
+    textAlign: "center",
   },
 });

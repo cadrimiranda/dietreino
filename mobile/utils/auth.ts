@@ -11,16 +11,24 @@ export type UserData = UserType;
 
 /**
  * JWT token payload structure
- * The expirationDate field is expected to be a Unix timestamp in seconds
+ * The exp field is the standard JWT expiration time in seconds
  * Example token payload:
  * {
- *   "expirationDate": 1680609600,  // April 4, 2023, 12:00:00 UTC
- *   "userId": "123",
- *   "email": "user@example.com"
+ *   "sub": "user-uuid",           // User ID
+ *   "email": "user@example.com",  // User email
+ *   "role": "CLIENT",             // User role
+ *   "type": "access",             // Token type
+ *   "iat": 1680609600,            // Issued at
+ *   "exp": 1680610500             // Expiration time
  * }
  */
 interface JWTPayload {
-  expirationDate?: number;
+  sub?: string;        // User ID
+  email?: string;      // User email
+  role?: string;       // User role
+  type?: string;       // Token type ('access' | 'refresh')
+  iat?: number;        // Issued at
+  exp?: number;        // Expiration time
   [key: string]: any;
 }
 
@@ -48,11 +56,11 @@ const isTokenExpired = (token: string | null): boolean => {
   if (!token) return true;
 
   const payload = decodeJWT(token);
-  if (!payload || !payload.expirationDate) return true;
+  if (!payload || !payload.exp) return true;
 
-  // expirationDate is in seconds, Date.now() is in milliseconds
+  // exp is in seconds, Date.now() is in milliseconds
   const currentTime = Date.now() / 1000;
-  return payload.expirationDate < currentTime;
+  return payload.exp < currentTime;
 };
 
 export const AuthStorage = {
@@ -72,9 +80,9 @@ export const AuthStorage = {
       if (!token) return null;
 
       const payload = decodeJWT(token);
-      if (!payload || !payload.expirationDate) return null;
+      if (!payload || !payload.exp) return null;
 
-      return new Date(payload.expirationDate * 1000); // Convert seconds to milliseconds
+      return new Date(payload.exp * 1000); // Convert seconds to milliseconds
     } catch (error) {
       console.error("Error getting token expiration:", error);
       return null;

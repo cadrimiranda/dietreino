@@ -5,8 +5,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: 'ReactNativeMobileApp',
   slug: 'ReactNativeMobileApp',
   extra: {
-    apiUrl: process.env.API_URL || 'https://api.example.com',
-    useMock: process.env.USE_MOCK === 'true' || true,
+    apiUrl: process.env.API_URL || 'http://localhost:3000',
+    useMock: process.env.USE_MOCK === 'true' || false,
     eas: {
       projectId: "your-project-id"
     },

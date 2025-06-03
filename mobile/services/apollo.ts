@@ -12,7 +12,7 @@ import { env } from '../config/env';
 
 // Create HTTP link
 const httpLink = createHttpLink({
-  uri: `${env.apiUrl}/graphql`,
+  uri: 'http://localhost:3000/graphql',
 });
 
 // Auth link to add authorization header

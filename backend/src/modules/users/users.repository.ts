@@ -39,14 +39,14 @@ export class UsersRepository {
   async findClientsForTrainer(trainerId: string): Promise<User[]> {
     return this.repository.find({
       where: { trainer: { id: trainerId } },
-      relations: ['workouts'],
+      relations: ['workout'],
     });
   }
 
   async findClientsForNutritionist(nutritionistId: string): Promise<User[]> {
     return this.repository.find({
       where: { nutritionist: { id: nutritionistId } },
-      relations: ['workouts'],
+      relations: ['workout'],
     });
   }
 
