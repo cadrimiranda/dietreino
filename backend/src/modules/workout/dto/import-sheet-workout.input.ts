@@ -41,7 +41,7 @@ export class ImportSheetWorkoutInput {
   @Field(() => ID)
   userId: string;
 
-  @Field(() => Number)
+  @Field(() => String, { nullable: true })
   workoutId?: string;
 
   @Field()

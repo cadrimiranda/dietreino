@@ -72,7 +72,7 @@ input ImportXlsxUserWorkoutInput {
   userId: String!
   weekEnd: String!
   weekStart: String!
-  workoutId: Float
+  workoutId: String
   workoutName: String!
 }
 

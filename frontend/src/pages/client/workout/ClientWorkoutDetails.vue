@@ -197,7 +197,7 @@ export default defineComponent({
           weekStart: new Date().toISOString(),
           weekEnd: endDate.toISOString(),
           workoutName: "Treino de Força",
-          workoutId: workoutId ? Number(workoutId) : undefined,
+          workoutId: workoutId || undefined,
         },
       });
     }

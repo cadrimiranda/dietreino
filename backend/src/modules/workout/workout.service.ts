@@ -18,6 +18,8 @@ import {
   TrainingDayExercise,
   RepScheme,
   RestInterval,
+  User,
+  Exercise,
 } from '@/entities';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { ExerciseService } from '../exercise/exercise.service';
@@ -141,12 +143,15 @@ export class WorkoutService {
   async importXlsxUserWorkout(
     input: ImportXlsxUserWorkoutInput,
   ): Promise<Partial<WorkoutType>> {
-    const { file, ...rest } = input;
-    const upload = await file;
+    const upload = await input.file;
     const xlsxData = await this.xlsxService.extractWorkoutSheet(upload);
 
     const importInput: ImportSheetWorkoutInput = {
-      ...rest,
+      userId: input.userId,
+      workoutId: input.workoutId,
+      workoutName: input.workoutName,
+      weekStart: input.weekStart,
+      weekEnd: input.weekEnd,
       isActive: true,
       sheets: xlsxData,
     };
@@ -162,7 +167,7 @@ export class WorkoutService {
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      
+
       const { workoutId } = input;
       const existingWorkout = workoutId ? await this.findById(workoutId) : null;
       let workout: Workout;
@@ -174,16 +179,18 @@ export class WorkoutService {
       if (input.isActive) {
         await queryRunner.manager
           .createQueryBuilder()
-          .update('workouts')
+          .update('workout')
           .set({ is_active: false })
-          .where('user_id = :userId AND is_active = true', { userId: input.userId })
+          .where('user_id = :userId AND is_active = true', {
+            userId: input.userId,
+          })
           .andWhere(workoutId ? 'id != :workoutId' : '1=1', { workoutId })
           .execute();
       }
 
       if (existingWorkout) {
         // Update existing workout within transaction
-        const updatedWorkout = await queryRunner.manager.save('workouts', {
+        const updatedWorkout = await queryRunner.manager.save('workout', {
           id: existingWorkout.id,
           name: input.workoutName,
           week_end,
@@ -194,30 +201,25 @@ export class WorkoutService {
         workout = { ...existingWorkout, ...updatedWorkout } as Workout;
       } else {
         // Create new workout within transaction
-        const savedWorkout = await queryRunner.manager.save('workouts', {
-          user_id: input.userId,
+        const savedWorkout = await queryRunner.manager.save(Workout, {
+          user: { id: input.userId } as User,
           name: input.workoutName,
           is_active: input.isActive,
           week_end,
           week_start,
-          created_at: new Date(),
-          updated_at: new Date(),
         });
-        workout = savedWorkout as any as Workout;
+        workout = savedWorkout;
       }
 
       let day = 0;
       for (const sheetData of input.sheets) {
-
         // Create training day within transaction
-        const trainingDay = await queryRunner.manager.save('training_days', {
-          day_of_week: day,
+        const trainingDay = await queryRunner.manager.save(TrainingDay, {
+          dayOfWeek: day,
           focus: sheetData.sheetName,
           name: sheetData.sheetName,
           order: day,
-          workout_id: (workout as any).id,
-          created_at: new Date(),
-          updated_at: new Date(),
+          workout: { id: workout.id } as Workout,
         });
 
         // Process exercises for this training day
@@ -225,52 +227,47 @@ export class WorkoutService {
           const exerciseInfo = sheetData.exercises[i];
 
           // Find or create exercise
-          let exercise = await queryRunner.manager.findOne('exercises', {
-            where: { name: exerciseInfo.name }
+          let exercise = await queryRunner.manager.findOne(Exercise, {
+            where: { name: exerciseInfo.name },
           });
 
           if (!exercise) {
-            exercise = await queryRunner.manager.save('exercises', {
+            exercise = await queryRunner.manager.save(Exercise, {
               name: exerciseInfo.name,
-              created_at: new Date(),
-              updated_at: new Date(),
             });
           }
 
           // Calculate total sets
-          const totalSets = exerciseInfo.repSchemes.reduce((sum, rs) => sum + rs.sets, 0);
+          const totalSets = exerciseInfo.repSchemes.reduce(
+            (sum, rs) => sum + rs.sets,
+            0,
+          );
 
           // Create training day exercise
-          const trainingDayExercise = await queryRunner.manager.save('training_day_exercises', {
-            training_day_id: (trainingDay as any).id,
-            exercise_id: (exercise as any).id,
+          const trainingDayExercise = await queryRunner.manager.save(TrainingDayExercise, {
+            trainingDay: { id: trainingDay.id } as TrainingDay,
+            exercise: { id: exercise.id } as Exercise,
             order: i,
             sets: totalSets || 1,
-            created_at: new Date(),
-            updated_at: new Date(),
           });
 
           // Create rep schemes
           for (const rs of exerciseInfo.repSchemes) {
-            await queryRunner.manager.save('rep_schemes', {
-              training_day_exercise_id: (trainingDayExercise as any).id,
+            await queryRunner.manager.save(RepScheme, {
+              trainingDayExercise: { id: trainingDayExercise.id } as TrainingDayExercise,
               sets: rs.sets,
-              min_reps: rs.minReps,
-              max_reps: rs.maxReps,
-              created_at: new Date(),
-              updated_at: new Date(),
+              minReps: rs.minReps,
+              maxReps: rs.maxReps,
             });
           }
 
           // Create rest intervals
           for (let idx = 0; idx < exerciseInfo.restIntervals.length; idx++) {
             const interval = exerciseInfo.restIntervals[idx];
-            await queryRunner.manager.save('rest_intervals', {
-              training_day_exercise_id: (trainingDayExercise as any).id,
-              interval_time: interval,
+            await queryRunner.manager.save(RestInterval, {
+              trainingDayExercise: { id: trainingDayExercise.id } as TrainingDayExercise,
+              intervalTime: interval,
               order: idx,
-              created_at: new Date(),
-              updated_at: new Date(),
             });
           }
         }
@@ -284,22 +281,24 @@ export class WorkoutService {
       // Retrieve the created/updated workout with all relations
       const createdWorkout = await this.findById((workout as any).id);
       if (!createdWorkout) {
-        throw new NotFoundException(`Workout with ID ${workout.id} not found after transaction commit`);
+        throw new NotFoundException(
+          `Workout with ID ${workout.id} not found after transaction commit`,
+        );
       }
 
       return this.toWorkoutType(createdWorkout);
     } catch (error) {
       // Rollback transaction in case of any error
       await queryRunner.rollbackTransaction();
-      
+
       // Log the error for debugging
-      this.logTransactionError('importSheetWorkout', error, { 
-        userId: input.userId, 
+      this.logTransactionError('importSheetWorkout', error, {
+        userId: input.userId,
         workoutName: input.workoutName,
         workoutId: input.workoutId,
-        sheetsCount: Object.keys(input.sheets).length 
+        sheetsCount: Object.keys(input.sheets).length,
       });
-      
+
       // Re-throw the error to be handled by the caller
       throw error;
     } finally {
@@ -400,24 +399,26 @@ export class WorkoutService {
 
   async createWorkout(input: CreateWorkoutInput): Promise<Workout> {
     const queryRunner = this.dataSource.createQueryRunner();
-    
+
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      
+
       const week_start = new Date(input.weekStart);
       const week_end = new Date(input.weekEnd);
 
       // Deactivate all existing workouts for this user (within transaction)
       await queryRunner.manager
         .createQueryBuilder()
-        .update('workouts')
+        .update('workout')
         .set({ is_active: false })
-        .where('user_id = :userId AND is_active = true', { userId: input.userId })
+        .where('user_id = :userId AND is_active = true', {
+          userId: input.userId,
+        })
         .execute();
 
       // Create the workout using queryRunner manager
-      const workout = await queryRunner.manager.save('workouts', {
+      const workout = await queryRunner.manager.save('workout', {
         user_id: input.userId,
         name: input.name,
         is_active: true,
@@ -444,25 +445,33 @@ export class WorkoutService {
         for (const exerciseInput of trainingDayInput.exercises) {
           // Verify exercise exists before proceeding
           const exercise = await queryRunner.manager.findOne('exercises', {
-            where: { id: exerciseInput.exerciseId }
+            where: { id: exerciseInput.exerciseId },
           });
-          
+
           if (!exercise) {
-            throw new NotFoundException(`Exercise with ID ${exerciseInput.exerciseId} not found`);
+            throw new NotFoundException(
+              `Exercise with ID ${exerciseInput.exerciseId} not found`,
+            );
           }
 
           // Calculate total sets from rep schemes
-          const totalSets = exerciseInput.repSchemes.reduce((sum, rs) => sum + rs.sets, 0);
-          
+          const totalSets = exerciseInput.repSchemes.reduce(
+            (sum, rs) => sum + rs.sets,
+            0,
+          );
+
           // Create training day exercise
-          const trainingDayExercise = await queryRunner.manager.save('training_day_exercises', {
-            training_day_id: (trainingDay as any).id,
-            exercise_id: (exercise as any).id,
-            order: exerciseInput.order,
-            sets: totalSets || 1,
-            created_at: new Date(),
-            updated_at: new Date(),
-          });
+          const trainingDayExercise = await queryRunner.manager.save(
+            'training_day_exercises',
+            {
+              training_day_id: (trainingDay as any).id,
+              exercise_id: (exercise as any).id,
+              order: exerciseInput.order,
+              sets: totalSets || 1,
+              created_at: new Date(),
+              updated_at: new Date(),
+            },
+          );
 
           // Create rep schemes
           for (const repSchemeInput of exerciseInput.repSchemes) {
@@ -491,25 +500,27 @@ export class WorkoutService {
 
       // Commit the transaction
       await queryRunner.commitTransaction();
-      
+
       // Retrieve the created workout with all relations
       const createdWorkout = await this.findById((workout as any).id);
       if (!createdWorkout) {
-        throw new Error('Failed to retrieve created workout after transaction commit');
+        throw new Error(
+          'Failed to retrieve created workout after transaction commit',
+        );
       }
-      
+
       return createdWorkout;
     } catch (error) {
       // Rollback transaction in case of any error
       await queryRunner.rollbackTransaction();
-      
+
       // Log the error for debugging
-      this.logTransactionError('createWorkout', error, { 
-        userId: input.userId, 
+      this.logTransactionError('createWorkout', error, {
+        userId: input.userId,
         workoutName: input.name,
-        trainingDaysCount: input.trainingDays.length 
+        trainingDaysCount: input.trainingDays.length,
       });
-      
+
       // Re-throw the error to be handled by the caller
       throw error;
     } finally {
