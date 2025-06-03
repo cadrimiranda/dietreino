@@ -1,11 +1,19 @@
-import { ApiClient, LoginResponse, TokenPayload } from "./types";
+import { ApiClient } from "./types";
+import { LoginResponse, UserRole } from "../../generated/graphql";
 
 import { fromByteArray } from "base64-js";
 import { WorkoutScheduleList, WorkoutType } from "../../types/workout";
 import { WorkoutDetails } from "@/types/exercise";
 
+// Mock JWT payload interface (only used for testing)
+interface MockTokenPayload {
+  userId: string;
+  email: string;
+  expirationDate: number;
+}
+
 // Helper to create JWT (this is just for mock purposes)
-const createMockJWT = (payload: TokenPayload): string => {
+const createMockJWT = (payload: MockTokenPayload): string => {
   const str = JSON.stringify(payload);
   const bytes = new TextEncoder().encode(str);
   const base64Payload = fromByteArray(bytes);
@@ -220,7 +228,21 @@ export class MockApiClient implements ApiClient {
       expirationDate: expirationDate + 24 * 60 * 60, // Refresh token valid for 24 hours more
     });
 
-    return { accessToken, refreshToken };
+    return { 
+      accessToken, 
+      refreshToken,
+      user: {
+        id: "123",
+        name: "Test User",
+        email,
+        role: UserRole.Client,
+        phone: "+1234567890",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        clients_as_nutritionist: [],
+        clients_as_trainer: [],
+      }
+    };
   }
 
   async refreshAccessToken(refreshToken: string): Promise<string> {

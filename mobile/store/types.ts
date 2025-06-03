@@ -1,10 +1,8 @@
 import type { WorkoutType, WorkoutScheduleList } from "@/types/workout";
+import type { UserType } from "../generated/graphql";
 
-export interface UserData {
-  id: string;
-  name: string;
-  email: string;
-}
+// Use the generated UserType instead of custom UserData
+export type UserData = UserType;
 
 type TState = {
   workoutStartedType: WorkoutType | null;

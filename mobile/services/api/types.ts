@@ -1,14 +1,5 @@
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface TokenPayload {
-  userId: string;
-  email: string;
-  expirationDate: number;
-}
-
+// Import necessary types
+import { LoginResponse } from "../../generated/graphql";
 import { WorkoutDetails } from "@/types/exercise";
 import { WorkoutScheduleList } from "@/types/workout";
 import { WorkoutSchedule as WS } from "./mock";

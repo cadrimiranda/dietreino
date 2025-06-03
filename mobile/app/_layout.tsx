@@ -18,6 +18,8 @@ import * as eva from "@eva-design/eva";
 import { ApplicationProvider, IconRegistry } from "@ui-kitten/components";
 import { EvaIconsPack } from "@ui-kitten/eva-icons";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ApolloProvider } from "@apollo/client";
+import { apolloClient } from "../services/apollo";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -57,24 +59,26 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <SafeAreaProvider>
-      <GestureHandlerRootView>
-        <IconRegistry icons={EvaIconsPack} />
-        <ApplicationProvider {...eva} theme={eva.light}>
-          <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-          >
-            <AuthGuard>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(auth)" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-            </AuthGuard>
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </ApplicationProvider>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+    <ApolloProvider client={apolloClient}>
+      <SafeAreaProvider>
+        <GestureHandlerRootView>
+          <IconRegistry icons={EvaIconsPack} />
+          <ApplicationProvider {...eva} theme={eva.light}>
+            <ThemeProvider
+              value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+            >
+              <AuthGuard>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="+not-found" />
+                </Stack>
+              </AuthGuard>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </ApplicationProvider>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
+    </ApolloProvider>
   );
 }

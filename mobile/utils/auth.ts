@@ -1,15 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { toByteArray } from "base64-js";
+import { UserType } from "../generated/graphql";
 
 const AUTH_TOKEN_KEY = "@auth_token";
 const REFRESH_TOKEN_KEY = "@refresh_token";
 const USER_DATA_KEY = "@user_data";
 
-export interface UserData {
-  id: string;
-  name: string;
-  email: string;
-}
+// Use the generated UserType instead of custom UserData interface
+export type UserData = UserType;
 
 /**
  * JWT token payload structure
@@ -127,7 +125,7 @@ export const AuthStorage = {
 
   clearTokens: async () => {
     try {
-      await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY]);
+      await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_DATA_KEY]);
     } catch (error) {
       console.error("Error clearing auth tokens:", error);
       throw error;

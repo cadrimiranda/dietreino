@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { AuthStorage } from "../utils/auth";
-import { container } from "../services/container";
 import { useRouter } from "expo-router";
 import { useGlobalStore } from "@/store/store";
+import { authService } from "../services/auth";
+import { AuthStorage } from "../utils/auth";
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,18 +11,18 @@ export function useAuth() {
   const router = useRouter();
 
   const loadUserData = useCallback(async () => {
-    const data = await AuthStorage.getUserData();
+    const data = await authService.getCurrentUser();
     setUserData(data);
-  }, []);
+  }, [setUserData]);
 
   const checkAuth = useCallback(async () => {
-    const authenticated = await AuthStorage.isAuthenticated();
+    const authenticated = await authService.isAuthenticated();
     setIsAuthenticated(authenticated);
     if (authenticated) {
       await loadUserData();
     }
     setIsLoading(false);
-  }, []);
+  }, [loadUserData]);
 
   useEffect(() => {
     checkAuth();
@@ -30,24 +30,35 @@ export function useAuth() {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await container.api.login(email, password);
-      await AuthStorage.setTokens(response.accessToken, response.refreshToken);
+      setIsLoading(true);
+      const response = await authService.login(email, password);
+      
+      // Update local state
+      setUserData(response.user);
       setIsAuthenticated(true);
+      
+      // Navigate to main app
       router.replace("/(tabs)");
     } catch (error) {
       console.error("Login error:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = async () => {
     try {
-      await AuthStorage.clearTokens();
+      setIsLoading(true);
+      await authService.logout();
+      setUserData(null);
       setIsAuthenticated(false);
       router.replace("/login");
     } catch (error) {
       console.error("Logout error:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
