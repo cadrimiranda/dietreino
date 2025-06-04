@@ -254,7 +254,7 @@ type UserType {
   id: ID!
   name: String!
   nutritionist: UserType
-  phone: String!
+  phone: String
   role: UserRole!
   trainer: UserType
   updatedAt: DateTime!

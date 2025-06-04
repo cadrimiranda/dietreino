@@ -12,7 +12,7 @@ export class UserType {
   @Field()
   email: string;
 
-  @Field()
+  @Field({ nullable: true })
   phone: string;
 
   @Field({ nullable: true })
