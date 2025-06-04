@@ -1,0 +1,20 @@
+{
+  "trainer": {
+    "email": "trainer@dietreino.com",
+    "password": "password123",
+    "name": "Personal Trainer",
+    "role": "TRAINER"
+  },
+  "client": {
+    "email": "client@dietreino.com",
+    "password": "password123", 
+    "name": "Test Client",
+    "role": "CLIENT"
+  },
+  "nutritionist": {
+    "email": "nutritionist@dietreino.com",
+    "password": "password123",
+    "name": "Nutrition Expert", 
+    "role": "NUTRITIONIST"
+  }
+}
