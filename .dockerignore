@@ -1,0 +1,52 @@
+# Node modules
+node_modules
+*/node_modules
+
+# Build outputs
+*/dist
+*/build
+
+# Generated files
+frontend/src/generated/
+mobile/generated/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage and test reports
+coverage/
+.nyc_output/
+test-results/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Lock files (will be generated in container)
+package-lock.json
+yarn.lock

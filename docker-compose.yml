@@ -73,6 +73,7 @@ services:
       - /app/node_modules
     networks:
       - dietreino-network
+    command: sh -c "sleep 10 && npm run generate && npm run dev"
     restart: unless-stopped
 
   # Mobile (React Native/Expo) - Modo Web
