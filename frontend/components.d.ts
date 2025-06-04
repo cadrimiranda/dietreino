@@ -42,6 +42,7 @@ declare module 'vue' {
     ATag: typeof import('ant-design-vue/es')['Tag']
     ATooltip: typeof import('ant-design-vue/es')['Tooltip']
     Dashboard: typeof import('./src/components/Dashboard.vue')['default']
+    DaySelector: typeof import('./src/components/DaySelector.vue')['default']
     DietUpload: typeof import('./src/components/DietUpload.vue')['default']
     MainLayout: typeof import('./src/components/MainLayout.vue')['default']
     NotFound: typeof import('./src/components/NotFound.vue')['default']

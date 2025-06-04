@@ -86,11 +86,19 @@
             :tab="day.name || `Dia ${index + 1}`"
           >
             <div class="day-header mb-4">
-              <a-input
-                v-model:value="day.name"
-                :placeholder="`Nome do Dia ${index + 1}`"
-                class="max-w-xs"
-              />
+              <div class="flex flex-col gap-4">
+                <a-input
+                  v-model:value="day.name"
+                  :placeholder="`Nome do Dia ${index + 1}`"
+                  class="max-w-xs"
+                />
+                <DaySelector
+                  v-model="day.selectedDays"
+                  :label="`Dias da semana para ${day.name || `Dia ${index + 1}`}`"
+                  :max-days="1"
+                  @change="(selectedDays) => updateDayOfWeek(day, selectedDays)"
+                />
+              </div>
             </div>
 
             <a-table
@@ -332,6 +340,7 @@ import { useMutation } from "@vue/apollo-composable";
 import { Exercise, CreateWorkoutInput, WorkoutType, TrainingDay, TrainingDayExercise, RepScheme, RestInterval } from "@/generated/graphql";
 import { CREATE_WORKOUT } from "@/graphql/mutations/workout";
 import { useProcessWorkout } from "./useProcessWorkout";
+import DaySelector from "@/components/DaySelector.vue";
 
 interface EditableExercise {
   tempId: string;
@@ -357,6 +366,7 @@ interface EditableTrainingDay {
   name: string;
   order: number;
   dayOfWeek: number;
+  selectedDays: number[];
   exercises: EditableExercise[];
 }
 
@@ -375,6 +385,7 @@ export default defineComponent({
     ArrowUpOutlined,
     ArrowDownOutlined,
     UploadOutlined,
+    DaySelector,
   },
   setup() {
     const route = useRoute();
@@ -487,6 +498,7 @@ export default defineComponent({
             name: td.name,
             order: td.order ?? tdIndex,
             dayOfWeek: td.dayOfWeek ?? tdIndex,
+            selectedDays: [td.dayOfWeek ?? tdIndex],
             exercises: [...(td.trainingDayExercises || [])]
               .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
               .map((tde: TrainingDayExercise, index: number) => ({
@@ -540,11 +552,20 @@ export default defineComponent({
         return;
       }
       
+      // Encontra o próximo dia da semana disponível (começando da segunda-feira)
+      const usedDays = workoutForm.trainingDays.map(td => td.dayOfWeek);
+      let nextDay = 1; // Começa da segunda-feira
+      while (usedDays.includes(nextDay) && nextDay <= 6) {
+        nextDay++;
+      }
+      if (nextDay > 6) nextDay = 0; // Se chegou no sábado, vai para domingo
+      
       const newDay: EditableTrainingDay = {
         tempId: `day-${Date.now()}`,
         name: `Dia ${workoutForm.trainingDays.length + 1}`,
         order: workoutForm.trainingDays.length,
-        dayOfWeek: workoutForm.trainingDays.length,
+        dayOfWeek: nextDay,
+        selectedDays: [nextDay],
         exercises: [],
       };
       workoutForm.trainingDays.push(newDay);
@@ -716,6 +737,26 @@ export default defineComponent({
       draggedDayIndex.value = null;
     }
 
+    function updateDayOfWeek(day: EditableTrainingDay, selectedDays: number[]) {
+      if (selectedDays.length > 0) {
+        const newDayOfWeek = selectedDays[0];
+        
+        // Verifica se o dia já está sendo usado por outro training day
+        const conflictingDay = workoutForm.trainingDays.find(
+          td => td !== day && td.dayOfWeek === newDayOfWeek
+        );
+        
+        if (conflictingDay) {
+          message.warning("Este dia da semana já está sendo usado por outro treino");
+          // Reverte a seleção
+          day.selectedDays = [day.dayOfWeek];
+          return;
+        }
+        
+        day.dayOfWeek = newDayOfWeek;
+      }
+    }
+
     function handleUploadClick() {
       fileInput.value?.click();
     }
@@ -839,6 +880,7 @@ export default defineComponent({
       createNewExercise,
       onDragStartTrainingDay,
       onDropTrainingDay,
+      updateDayOfWeek,
       handleUploadClick,
       handleFileUpload,
       saveWorkout,

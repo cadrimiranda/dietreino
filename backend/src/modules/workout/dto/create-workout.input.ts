@@ -1,6 +1,23 @@
 import { InputType, Field, ID } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsArray, ValidateNested, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsArray, ValidateNested, IsNumber, Min, Max, Validate } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+
+@ValidatorConstraint({ name: 'uniqueDaysOfWeek', async: false })
+export class UniqueDaysOfWeekConstraint implements ValidatorConstraintInterface {
+  validate(trainingDays: CreateTrainingDayInput[], args: ValidationArguments) {
+    if (!Array.isArray(trainingDays)) return true;
+    
+    const daysOfWeek = trainingDays.map(day => day.dayOfWeek);
+    const uniqueDays = new Set(daysOfWeek);
+    
+    return uniqueDays.size === daysOfWeek.length;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return 'Cada dia da semana pode aparecer apenas uma vez no treino';
+  }
+}
 
 @InputType()
 export class CreateRepSchemeInput {
@@ -73,6 +90,8 @@ export class CreateTrainingDayInput {
   @Field()
   @IsNotEmpty()
   @IsNumber()
+  @Min(0)
+  @Max(6)
   dayOfWeek: number;
 
   @Field(() => [CreateTrainingDayExerciseInput])
@@ -108,5 +127,6 @@ export class CreateWorkoutInput {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateTrainingDayInput)
+  @Validate(UniqueDaysOfWeekConstraint)
   trainingDays: CreateTrainingDayInput[];
 }
