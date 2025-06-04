@@ -8,7 +8,9 @@
     "cypress:run:chrome": "cypress run --browser chrome",
     "test": "cypress run",
     "test:headed": "cypress run --headed",
-    "test:dev": "cypress open --env configFile=dev"
+    "test:dev": "cypress open --env configFile=dev",
+    "cleanup": "node cypress/scripts/cleanup-database.js",
+    "cleanup:workouts": "cypress run --spec 'cypress/support/cleanup-helper.cy.ts'"
   },
   "keywords": [],
   "author": "",
