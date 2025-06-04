@@ -14,14 +14,12 @@ RUN npm install
 # Copiar código fonte
 COPY frontend/ .
 
-# Gerar tipos GraphQL
-RUN npm run generate
 
 # Expor porta
 EXPOSE 5173
 
 # Comando para desenvolvimento
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["npm", "run", "dev"]
 
 # Estágio de produção
 FROM node:18-alpine AS production
