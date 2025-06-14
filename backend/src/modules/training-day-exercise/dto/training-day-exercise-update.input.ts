@@ -18,13 +18,4 @@ export class UpdateTrainingDayExerciseInput {
   @IsOptional()
   order?: number;
 
-  @Field(() => Int, { nullable: true })
-  @IsNumber()
-  @IsOptional()
-  sets?: number;
-
-  @Field(() => String, { nullable: true })
-  @IsString()
-  @IsOptional()
-  notes?: string;
 }

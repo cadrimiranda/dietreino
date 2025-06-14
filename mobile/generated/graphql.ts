@@ -33,20 +33,20 @@ export type CreateRestIntervalInput = {
 export type CreateTrainingDayExerciseInput = {
   exerciseId: Scalars['ID']['input'];
   order: Scalars['Float']['input'];
-  repSchemes: Array<CreateRepSchemeInput>;
-  restIntervals: Array<CreateRestIntervalInput>;
+  repSchemes: CreateRepSchemeInput[];
+  restIntervals: CreateRestIntervalInput[];
 };
 
 export type CreateTrainingDayInput = {
   dayOfWeek: Scalars['Float']['input'];
-  exercises: Array<CreateTrainingDayExerciseInput>;
+  exercises: CreateTrainingDayExerciseInput[];
   name: Scalars['String']['input'];
   order: Scalars['Float']['input'];
 };
 
 export type CreateWorkoutInput = {
   name: Scalars['String']['input'];
-  trainingDays: Array<CreateTrainingDayInput>;
+  trainingDays: CreateTrainingDayInput[];
   userId: Scalars['ID']['input'];
   weekEnd: Scalars['String']['input'];
   weekStart: Scalars['String']['input'];
@@ -65,8 +65,8 @@ export type ExerciseInfo = {
   __typename?: 'ExerciseInfo';
   name: Scalars['String']['output'];
   rawReps: Scalars['String']['output'];
-  repSchemes: Array<RepRange>;
-  restIntervals: Array<Scalars['String']['output']>;
+  repSchemes: RepRange[];
+  restIntervals: Scalars['String']['output'][];
 };
 
 export type ExerciseType = {
@@ -114,7 +114,7 @@ export type Mutation = {
   deleteExercise: Scalars['Boolean']['output'];
   deleteUser: Scalars['Boolean']['output'];
   deleteWorkout: Scalars['Boolean']['output'];
-  extractWorkoutSheet: Array<SheetExercises>;
+  extractWorkoutSheet: SheetExercises[];
   importXlsxAndCreateWorkout: WorkoutType;
   login: LoginResponse;
   me: UserType;
@@ -223,13 +223,13 @@ export type Query = {
   __typename?: 'Query';
   clientForProfessional: UserType;
   exercise?: Maybe<ExerciseType>;
-  exercises: Array<ExerciseType>;
-  nutritionistClients: Array<UserType>;
-  trainerClients: Array<UserType>;
+  exercises: ExerciseType[];
+  nutritionistClients: UserType[];
+  trainerClients: UserType[];
   user: UserType;
-  users: Array<UserType>;
+  users: UserType[];
   workout?: Maybe<WorkoutType>;
-  workouts: Array<WorkoutType>;
+  workouts: WorkoutType[];
 };
 
 
@@ -295,13 +295,13 @@ export type RestInterval = {
 
 export type SheetData = {
   __typename?: 'SheetData';
-  data: Array<Array<Scalars['String']['output']>>;
+  data: Scalars['String']['output'][][];
   name: Scalars['String']['output'];
 };
 
 export type SheetExercises = {
   __typename?: 'SheetExercises';
-  exercises: Array<ExerciseInfo>;
+  exercises: ExerciseInfo[];
   sheetName: Scalars['String']['output'];
 };
 
@@ -317,7 +317,7 @@ export type TrainingDay = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   order: Scalars['Float']['output'];
-  trainingDayExercises: Array<TrainingDayExercise>;
+  trainingDayExercises: TrainingDayExercise[];
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -327,8 +327,8 @@ export type TrainingDayExercise = {
   exercise: Exercise;
   id: Scalars['ID']['output'];
   order: Scalars['Float']['output'];
-  repSchemes: Array<RepScheme>;
-  restIntervals: Array<RestInterval>;
+  repSchemes: RepScheme[];
+  restIntervals: RestInterval[];
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -349,20 +349,20 @@ export type UpdateTrainingDayExerciseInput = {
   exerciseId: Scalars['ID']['input'];
   id?: InputMaybe<Scalars['ID']['input']>;
   order: Scalars['Int']['input'];
-  repSchemes: Array<UpdateRepSchemeInput>;
-  restIntervals: Array<UpdateRestIntervalInput>;
+  repSchemes: UpdateRepSchemeInput[];
+  restIntervals: UpdateRestIntervalInput[];
 };
 
 export type UpdateTrainingDayInput = {
   dayOfWeek: Scalars['Int']['input'];
-  exercises: Array<UpdateTrainingDayExerciseInput>;
+  exercises: UpdateTrainingDayExerciseInput[];
   id?: InputMaybe<Scalars['ID']['input']>;
   name: Scalars['String']['input'];
   order: Scalars['Int']['input'];
 };
 
 export type UpdateWorkoutExercisesInput = {
-  trainingDays: Array<UpdateTrainingDayInput>;
+  trainingDays: UpdateTrainingDayInput[];
   workoutId: Scalars['ID']['input'];
 };
 
@@ -393,19 +393,19 @@ export enum UserRole {
 
 export type UserType = {
   __typename?: 'UserType';
-  clients_as_nutritionist?: Maybe<Array<UserType>>;
-  clients_as_trainer?: Maybe<Array<UserType>>;
+  clients_as_nutritionist?: Maybe<UserType[]>;
+  clients_as_trainer?: Maybe<UserType[]>;
   createdAt: Scalars['DateTime']['output'];
   email: Scalars['String']['output'];
   generatedPassword?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   nutritionist?: Maybe<UserType>;
-  phone: Scalars['String']['output'];
+  phone?: Maybe<Scalars['String']['output']>;
   role: UserRole;
   trainer?: Maybe<UserType>;
   updatedAt: Scalars['DateTime']['output'];
-  workouts?: Maybe<Array<WorkoutType>>;
+  workouts?: Maybe<WorkoutType[]>;
 };
 
 export type WorkoutType = {
@@ -415,7 +415,7 @@ export type WorkoutType = {
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   startedAt?: Maybe<Scalars['DateTime']['output']>;
-  trainingDays?: Maybe<Array<TrainingDay>>;
+  trainingDays?: Maybe<TrainingDay[]>;
   trainingDaysBitfield?: Maybe<Scalars['Int']['output']>;
   userId: Scalars['String']['output'];
   weekEnd: Scalars['DateTime']['output'];

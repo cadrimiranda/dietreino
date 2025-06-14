@@ -2,7 +2,8 @@ import React from "react";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { StyleSheet, View, Text } from "react-native";
 import { ListItem } from "@rneui/themed";
-import { WorkoutScheduleList, WorkoutType } from "@/types/workout";
+import { WorkoutScheduleList } from "@/types/workout";
+import { WORKOUT_DAY_TYPES } from "@/constants/workoutTypes";
 
 interface WorkoutScheduleProps {
   workoutScheduleList: WorkoutScheduleList | null;
@@ -19,31 +20,33 @@ const WorkoutSchedule: React.FC<WorkoutScheduleProps> = ({
     <View style={styles.container}>
       <Text style={styles.scheduleTitle}>📅 Cronograma de Treino</Text>
       {workoutScheduleList?.map((item, index) => {
-        const isExpanded = expandedDay === item.day;
+        const dayKey = item.day.toString();
+        const isExpanded = expandedDay === dayKey;
+        const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-        if (item.workout === WorkoutType.REST) return null;
+        if (item.workout === WORKOUT_DAY_TYPES.REST) return null;
 
         return (
           <ListItem.Accordion
-            key={item.day}
+            key={dayKey}
             content={
               <ListItem.Content>
                 <View style={styles.accordionHeader}>
                   <FontAwesome6 name="dumbbell" size={18} color="#7C3AED" />
-                  <Text style={styles.accordionTitle}>{item.day}</Text>
+                  <Text style={styles.accordionTitle}>{dayNames[item.day]} - {item.workout}</Text>
                 </View>
               </ListItem.Content>
             }
             isExpanded={isExpanded}
             containerStyle={styles.accordionContainer}
-            onPress={() => setExpandedDay(isExpanded ? null : item.day)}
+            onPress={() => setExpandedDay(isExpanded ? null : dayKey)}
           >
             <View>
               {item.exercises.map((exercise, i) => (
                 <ListItem key={i} containerStyle={styles.exerciseItem}>
                   <FontAwesome6 name="circle" size={8} color="#7C3AED" />
                   <ListItem.Title style={styles.exerciseText}>
-                    {exercise}
+                    {exercise.name} - {exercise.sets} séries x {exercise.reps} - Descanso: {exercise.rest}
                   </ListItem.Title>
                 </ListItem>
               ))}

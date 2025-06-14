@@ -1,5 +1,16 @@
-import type { WorkoutType } from "./workout";
+// Re-export GraphQL types
+export type {
+  WorkoutType,
+  Exercise as GraphQLExercise,
+  TrainingDay,
+  TrainingDayExercise,
+  RepScheme,
+  RestInterval,
+  UserType,
+  ExerciseType
+} from "../generated/graphql";
 
+// UI-specific types
 export interface Series {
   reps: number;
   weight?: number;
@@ -16,21 +27,19 @@ export interface HistoryEntry {
   sets: Set[];
 }
 
+// Extended Exercise interface for UI compatibility
 export interface Exercise {
   id: string;
   name: string;
-  youtubeUrl: string;
-  restTime: number[];
-  trainerNotes: string;
-  series: number;
-  repsPerSeries: number;
+  videoLink?: string;
+  youtubeUrl?: string;
+  restTime?: number[];
+  series?: number;
+  repsPerSeries?: number;
+  trainerNotes?: string;
   userNotes?: string;
   completedSeries?: Series[];
   history?: HistoryEntry[];
   isCompleted?: boolean;
-}
-
-export interface WorkoutDetails {
-  type: WorkoutType;
-  exercises: Exercise[];
+  order?: number;
 }

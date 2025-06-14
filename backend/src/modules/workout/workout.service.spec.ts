@@ -120,8 +120,6 @@ describe('WorkoutService - updateWorkoutExercises', () => {
           return Promise.resolve({ id: 'td-new', ...data });
         }
         if (EntityClass.name === 'TrainingDayExercise') {
-          // Verify that sets is calculated correctly
-          expect(data.sets).toBe(5); // 2 + 2 + 1 = 5
           return Promise.resolve({ id: 'tde-new', ...data });
         }
         return Promise.resolve(data);
@@ -134,7 +132,6 @@ describe('WorkoutService - updateWorkoutExercises', () => {
       expect(mockEntityManager.save).toHaveBeenCalledWith(
         expect.any(Function),
         expect.objectContaining({
-          sets: 5,
           order: 0,
         })
       );
@@ -187,8 +184,6 @@ describe('WorkoutService - updateWorkoutExercises', () => {
       
       mockEntityManager.save.mockImplementation((EntityClass, data) => {
         if (EntityClass.name === 'TrainingDayExercise') {
-          // Verify default sets value
-          expect(data.sets).toBe(1);
           return Promise.resolve({ id: 'tde-new', ...data });
         }
         return Promise.resolve(data);
@@ -198,9 +193,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
 
       expect(mockEntityManager.save).toHaveBeenCalledWith(
         expect.any(Function),
-        expect.objectContaining({
-          sets: 1,
-        })
+        expect.anything()
       );
     });
 
@@ -242,7 +235,6 @@ describe('WorkoutService - updateWorkoutExercises', () => {
       
       mockEntityManager.save.mockImplementation((EntityClass, data) => {
         if (EntityClass.name === 'TrainingDayExercise') {
-          expect(data.sets).toBe(4);
           return Promise.resolve({ id: 'tde-new', ...data });
         }
         return Promise.resolve(data);
@@ -709,9 +701,9 @@ describe('WorkoutService - createWorkout', () => {
 
       await service.createWorkout(input);
 
-      // Verify total sets calculation (3 + 2 = 5)
+      // Verify training day exercise creation
       expect(mockEntityManager.save).toHaveBeenCalledWith('training_day_exercises', expect.objectContaining({
-        sets: 5,
+        order: 0,
       }));
     });
 
@@ -747,9 +739,9 @@ describe('WorkoutService - createWorkout', () => {
 
       await service.createWorkout(input);
 
-      // Verify default sets value
+      // Verify training day exercise creation
       expect(mockEntityManager.save).toHaveBeenCalledWith('training_day_exercises', expect.objectContaining({
-        sets: 1,
+        order: 0,
       }));
     });
   });

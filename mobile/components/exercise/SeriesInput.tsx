@@ -25,7 +25,7 @@ const SeriesInput = ({
                         keyboardType="numeric"
                         value={seriesInputs[index]?.reps?.toString() || ''}
                         onChangeText={(value) => handleSeriesInput(index, 'reps', value)}
-                        placeholder={exercise.repsPerSeries.toString()}
+                        placeholder={(exercise.repsPerSeries || 10).toString()}
                         maxLength={2}
                         editable={!isCompleted}
                     />

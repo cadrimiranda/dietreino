@@ -47,9 +47,9 @@ const ExerciseRestTimes = ({ exercise }: { exercise: Exercise }) => {
 		null,
 	);
 	const [selectedRestTime, setSelectedRestTime] = useState(
-		exercise.restTime[0],
+		exercise.restTime?.[0] || 60,
 	);
-	const [firstInterval, secondInterval] = exercise.restTime;
+	const [firstInterval, secondInterval] = exercise.restTime || [60];
 	const rightRestTime = secondInterval || firstInterval;
 
 	const handleTimerPress = () => {

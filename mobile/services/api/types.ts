@@ -1,16 +1,18 @@
 // Import necessary types
-import { LoginResponse } from "../../generated/graphql";
-import { WorkoutDetails } from "@/types/exercise";
+import { LoginResponse, WorkoutType } from "../../generated/graphql";
 import { WorkoutScheduleList } from "@/types/workout";
-import { WorkoutSchedule as WS } from "./mock";
+
+export interface WorkoutSchedule {
+  [key: number]: string;
+}
 
 export interface ApiClient {
   login(email: string, password: string): Promise<LoginResponse>;
   refreshAccessToken(refreshToken: string): Promise<string>;
-  getWorkoutSchedule(): Promise<WS>;
-  getWorkoutDetails(): Promise<WorkoutDetails>;
+  getWorkoutSchedule(): Promise<WorkoutSchedule>;
+  getWorkoutDetails(): Promise<WorkoutType>;
   getUserProfile(): Promise<any>;
-  getWorkoutScheduleList(): Promise<WorkoutScheduleList>; // Novo método
+  getWorkoutScheduleList(): Promise<WorkoutScheduleList>;
 }
 
 // Service container interface

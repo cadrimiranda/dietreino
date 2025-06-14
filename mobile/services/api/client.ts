@@ -2,13 +2,13 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 import { AuthStorage } from '../../utils/auth';
 import { ApiClient } from './types';
 import { LoginResponse } from '../../generated/graphql';
-import { WorkoutSchedule } from './mock';
-import { WorkoutDetails } from '@/types/exercise';
-import { WorkoutScheduleList } from '@/types/workout';
+import { WorkoutSchedule } from './types';
+import { WorkoutType } from '../../types/exercise';
+import { WorkoutScheduleList } from '../../types/workout';
 
 interface GraphQLResponse<T> {
   data?: T;
-  errors?: Array<{ message: string; extensions?: { code: string } }>;
+  errors?: { message: string; extensions?: { code: string } }[];
 }
 
 export class HttpApiClient implements ApiClient {
@@ -26,7 +26,7 @@ export class HttpApiClient implements ApiClient {
     this.setupInterceptors();
   }
 
-  async getWorkoutDetails(): Promise<WorkoutDetails> {
+  async getWorkoutDetails(): Promise<WorkoutType> {
     const response = await this.api.get('/workout/details');
     return response.data;
   }

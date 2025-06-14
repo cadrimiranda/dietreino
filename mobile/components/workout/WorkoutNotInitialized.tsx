@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
-import { Button, Select, SelectItem, Text } from "@ui-kitten/components";
+import { Button, Text } from "@ui-kitten/components";
+import { ButtonGroup } from "@rneui/themed";
 import { useGlobalStore } from "@/store/store";
-import { WorkoutType } from "@/types/workout";
+import { WORKOUT_DAY_TYPES } from "@/constants/workoutTypes";
 
-interface WorkoutNotInitializedProps {}
-
-const WorkoutNotInitialized: React.FC<WorkoutNotInitializedProps> = () => {
+const WorkoutNotInitialized: React.FC = () => {
   const [workoutSelected, setWorkoutSelected] = useState<number | undefined>(
     undefined
   );
@@ -18,7 +17,7 @@ const WorkoutNotInitialized: React.FC<WorkoutNotInitializedProps> = () => {
     }
 
     return workoutScheduleList
-      .filter((item) => item.workout !== WorkoutType.REST)
+      .filter((item) => item.workout !== WORKOUT_DAY_TYPES.REST)
       .map((item, index) => ({
         id: index,
         name: item.workout,
@@ -36,7 +35,7 @@ const WorkoutNotInitialized: React.FC<WorkoutNotInitializedProps> = () => {
       if (workoutScheduleList[adjustedIndex]) {
         const todayWorkout = workoutScheduleList[adjustedIndex];
 
-        if (todayWorkout.workout !== WorkoutType.REST) {
+        if (todayWorkout.workout !== WORKOUT_DAY_TYPES.REST) {
           const todayWorkoutIndex = workoutList.findIndex(
             (item) => item.day === todayWorkout.day
           );
@@ -79,27 +78,16 @@ const WorkoutNotInitialized: React.FC<WorkoutNotInitializedProps> = () => {
           : "Você ainda não selecionou o treino de hoje."}
       </Text>
 
-      <Select
-        placeholder="Selecione um treino"
-        value={
-          workoutSelected !== undefined
-            ? `${workoutList[workoutSelected].name} (${workoutList[workoutSelected].day})`
-            : ""
-        }
-        onSelect={(index) =>
-          Array.isArray(index)
-            ? setWorkoutSelected(index[0].row)
-            : setWorkoutSelected(index.row)
-        }
-        style={{ width: "80%" }}
-      >
-        {workoutList.map((workout) => (
-          <SelectItem
-            key={workout.id}
-            title={`${workout.name} (${workout.day})`}
-          />
-        ))}
-      </Select>
+      <ButtonGroup
+        buttons={workoutList.map(workout => `${workout.name}`)}
+        selectedIndex={workoutSelected}
+        onPress={setWorkoutSelected}
+        containerStyle={{ width: "90%", marginVertical: 16 }}
+        buttonStyle={{ backgroundColor: "#f5f5f5" }}
+        selectedButtonStyle={{ backgroundColor: "#7C3AED" }}
+        textStyle={{ color: "#333" }}
+        selectedTextStyle={{ color: "#fff" }}
+      />
 
       {workoutSelected !== undefined && (
         <View style={styles.exerciseList}>
@@ -108,7 +96,7 @@ const WorkoutNotInitialized: React.FC<WorkoutNotInitializedProps> = () => {
           </Text>
           {workoutList[workoutSelected].exercises.map((exercise, idx) => (
             <Text key={idx} style={styles.exercise}>
-              • {exercise}
+              • {exercise.name} - {exercise.sets} séries x {exercise.reps}
             </Text>
           ))}
         </View>

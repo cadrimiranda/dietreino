@@ -21,6 +21,8 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ApolloProvider } from "@apollo/client";
 import { apolloClient } from "../services/apollo";
 
+import { AuthGuard } from "../components/AuthGuard";
+
 export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
@@ -29,8 +31,6 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-
-import { AuthGuard } from "../components/AuthGuard";
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
