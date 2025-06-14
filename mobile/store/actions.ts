@@ -1,6 +1,7 @@
 import { TActions, TState, UserData } from "./types";
 import { StoreApi } from "zustand";
-import { WorkoutScheduleList, WorkoutType } from "@/types/workout";
+import { WorkoutScheduleList } from "@/types/workout";
+import { WorkoutDayType } from "@/constants/workoutTypes";
 
 type TStoreApi = StoreApi<TState & TActions>;
 
@@ -13,7 +14,7 @@ const createActions = (
     setIsWorkoutStarted: (value: boolean) => {
       set({ isWorkoutStarted: value });
     },
-    setSelectedWorkout: (workout: WorkoutType | null) => {
+    setSelectedWorkout: (workout: WorkoutDayType | null) => {
       set({ selectedWorkout: workout });
     },
     setWorkoutScheduleList: (scheduleList: WorkoutScheduleList | null) => {

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useGlobalStore } from "@/store/store";
 import { WorkoutType } from "@/types/workout";
+import { WORKOUT_DAY_TYPES, WorkoutDayType } from "@/constants/workoutTypes";
 import { useRouter } from "expo-router";
 import WorkoutSchedule from "./WorkoutSchedule";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -26,26 +27,26 @@ export default function HomeDashboard() {
     if (activeWorkout?.trainingDays) {
       // Convert training days to workout schedule format
       const schedule = Array(7).fill(null).map((_, index) => {
-        const trainingDay = activeWorkout.trainingDays?.find(
-          (day) => day.dayOfWeek === index
+        const trainingDay = activeWorkout?.trainingDays?.find(
+          (day: any) => day.dayOfWeek === index
         );
         
         if (trainingDay) {
           return {
             day: index,
-            workout: trainingDay.name as WorkoutType,
-            exercises: trainingDay.trainingDayExercises?.map((tde) => ({
+            workout: trainingDay.name as WorkoutDayType,
+            exercises: trainingDay.trainingDayExercises?.map((tde: any) => ({
               name: tde.exercise?.name || '',
-              sets: tde.repSchemes?.reduce((acc, rep) => acc + rep.sets, 0) || 0,
-              reps: tde.repSchemes?.map(rep => `${rep.minReps}-${rep.maxReps}`).join(', ') || '',
-              rest: tde.restIntervals?.map(rest => `${rest.intervalTime}s`).join(', ') || ''
+              sets: tde.repSchemes?.reduce((acc: number, rep: any) => acc + rep.sets, 0) || 0,
+              reps: tde.repSchemes?.map((rep: any) => `${rep.minReps}-${rep.maxReps}`).join(', ') || '',
+              rest: tde.restIntervals?.map((rest: any) => `${rest.intervalTime}s`).join(', ') || ''
             })) || []
           };
         }
         
         return {
           day: index,
-          workout: WorkoutType.REST,
+          workout: WORKOUT_DAY_TYPES.REST,
           exercises: []
         };
       });
@@ -54,7 +55,7 @@ export default function HomeDashboard() {
     }
   }, [activeWorkout, setWorkoutScheduleList]);
 
-  const handleStartWorkout = (workoutType: WorkoutType) => {
+  const handleStartWorkout = (workoutType: WorkoutDayType) => {
     setSelectedWorkout(workoutType);
     router.push("/workout");
   };
@@ -84,7 +85,7 @@ export default function HomeDashboard() {
   const weeklyProgress = "3/5 treinos concluídos";
   const lastNote = "Foquei mais em resistência no último treino de pernas.";
   const dailyTip = "Hidrate-se antes, durante e depois do treino! 💧";
-  const isRestDay = todayWorkout?.workout === WorkoutType.REST;
+  const isRestDay = todayWorkout?.workout === WORKOUT_DAY_TYPES.REST;
   const workoutTitle = isRestDay
     ? "Dia de descanso"
     : `Treino de ${todayWorkout?.workout}`;
@@ -124,7 +125,7 @@ export default function HomeDashboard() {
                 </View>
                 <Text style={styles.workoutDay}>
                   {workoutScheduleList?.[index]?.workout ===
-                  WorkoutType.REST ? (
+                  WORKOUT_DAY_TYPES.REST ? (
                     <FontAwesome6 name="dumbbell" size={20} color="#e5e5e5" />
                   ) : (
                     <FontAwesome6 name="dumbbell" size={20} color="#A0A0A0" />
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   startButtonText: {
-    color: "FFFFFF",
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",

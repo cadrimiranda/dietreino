@@ -10,9 +10,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Ionicons } from "@expo/vector-icons";
 
-import { container } from "../../services/container";
-import type { WorkoutSchedule } from "../../services/api/mock";
 import { useGlobalStore } from "../../store/store";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 
 interface WorkoutTimerProps {
   startTime: Date;
@@ -57,30 +56,9 @@ function WorkoutTimer({ startTime }: WorkoutTimerProps) {
 }
 
 export function WorkoutDay() {
-  const { isWorkoutStarted, setIsWorkoutStarted, setSelectedWorkout } =
-    useGlobalStore();
-  const [schedule, setSchedule] = useState<WorkoutSchedule>();
-  const [isLoading, setIsLoading] = useState(true);
+  const { isWorkoutStarted, setIsWorkoutStarted } = useGlobalStore();
+  const { user, loading: isLoading, activeWorkout } = useCurrentUser();
   const [startTime, setStartTime] = useState<Date | null>(null);
-
-  useEffect(() => {
-    async function loadSchedule() {
-      try {
-        const data = await container.api.getWorkoutSchedule();
-        setSchedule(data);
-      } catch (error) {
-        console.error("Erro ao carregar cronograma:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadSchedule();
-  }, []);
-
-  const handleCancelWorkout = () => {
-    // Limpa o treino selecionado, o que fará voltar para WorkoutNotInitialized
-    setSelectedWorkout(null);
-  };
 
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -96,7 +74,7 @@ export function WorkoutDay() {
     );
   }
 
-  if (!schedule) {
+  if (!activeWorkout) {
     return (
       <View style={[styles.container, styles.errorContainer]}>
         <Text style={styles.errorText}>Erro ao carregar o treino</Text>
@@ -104,7 +82,9 @@ export function WorkoutDay() {
     );
   }
 
-  const workoutType = schedule[dayOfWeek];
+  // Find today's training day
+  const todayTrainingDay = activeWorkout.trainingDays?.find((day: any) => day.dayOfWeek === dayOfWeek);
+  const workoutType = todayTrainingDay?.name || "Descanso";
 
   return (
     <View
@@ -121,31 +101,6 @@ export function WorkoutDay() {
         <View>
           <Text style={styles.greeting}>Hoje é {capitalizedDayName}</Text>
           <Text style={styles.workout}>Seu treino é: {workoutType}</Text>
-
-          <View style={styles.buttonsContainer}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancelWorkout}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={18}
-                color="#fff"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.cancelButtonText}>Trocar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => {
-                setStartTime(new Date());
-                setIsWorkoutStarted(true);
-              }}
-            >
-              <Text style={styles.buttonText}>Iniciar Treino</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       ) : (
         <View style={styles.stickyHeader}>
@@ -301,24 +256,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  buttonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 16,
-  },
-  cancelButton: {
-    backgroundColor: "#6B7280",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  cancelButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
   },
 });

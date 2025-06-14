@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
-import { UserType } from '@/generated/graphql';
+import { UserType, WorkoutType } from '@/generated/graphql';
 import { AuthStorage } from '@/utils/auth';
 import { useEffect, useState } from 'react';
 
@@ -68,7 +68,7 @@ interface UseCurrentUserReturn {
   loading: boolean;
   error: any;
   refetch: () => Promise<any>;
-  activeWorkout: UserType['workouts'][0] | undefined;
+  activeWorkout: WorkoutType | undefined;
 }
 
 export function useCurrentUser(): UseCurrentUserReturn {

@@ -101,7 +101,7 @@ export function ExerciseCard({
         >
           {Array.from({ length: exercise.series || 0 }).map((_, index) => (
             <SeriesInput
-              key={index + exercise.series}
+              key={index + (exercise.series || 0)}
               index={index}
               seriesInputs={seriesInputs}
               handleSeriesInput={handleSeriesInput}
@@ -190,14 +190,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   notesTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "black",
+    fontWeight: 'bold',
+    color: '#A16207',
     marginBottom: 4,
+    fontSize: 14,
   },
   notesText: {
-    color: "#1a1a1a",
-    lineHeight: 20,
+    color: '#A16207',
+    fontSize: 14,
+    lineHeight: 18,
   },
   seriesTitle: {
     fontSize: 16,
@@ -228,5 +229,45 @@ const styles = StyleSheet.create({
   menuButton: {
     marginLeft: "auto",
     padding: 4,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    marginLeft: 8,
+    padding: 4,
+  },
+  metaContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metaText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  notesContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#FEFCE8',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FACC15',
+  },
+  userNotesTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "black",
+    marginBottom: 4,
   },
 });

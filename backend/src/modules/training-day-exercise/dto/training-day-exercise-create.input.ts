@@ -18,13 +18,4 @@ export class CreateTrainingDayExerciseInput {
   @IsNotEmpty()
   order: number;
 
-  @Field(() => Int)
-  @IsNumber()
-  @IsNotEmpty()
-  sets: number;
-
-  @Field(() => String, { nullable: true })
-  @IsString()
-  @IsOptional()
-  notes?: string;
 }
