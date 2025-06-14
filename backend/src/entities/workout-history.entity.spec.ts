@@ -34,7 +34,7 @@ describe('WorkoutHistory Entity', () => {
 
     it('should have all required properties', () => {
       const executedAt = new Date();
-      
+
       workoutHistory.user = mockUser;
       workoutHistory.workout = mockWorkout;
       workoutHistory.executedAt = executedAt;
@@ -83,9 +83,9 @@ describe('WorkoutHistory Entity', () => {
     it('should have a relationship with WorkoutHistoryExercises', () => {
       const mockExercise1 = new WorkoutHistoryExercise();
       const mockExercise2 = new WorkoutHistoryExercise();
-      
+
       workoutHistory.workoutHistoryExercises = [mockExercise1, mockExercise2];
-      
+
       expect(workoutHistory.workoutHistoryExercises).toHaveLength(2);
       expect(workoutHistory.workoutHistoryExercises).toContain(mockExercise1);
       expect(workoutHistory.workoutHistoryExercises).toContain(mockExercise2);
@@ -96,7 +96,7 @@ describe('WorkoutHistory Entity', () => {
     it('should validate that executedAt is a valid date', () => {
       const validDate = new Date('2024-01-15T10:30:00Z');
       workoutHistory.executedAt = validDate;
-      
+
       expect(workoutHistory.executedAt).toBeInstanceOf(Date);
       expect(workoutHistory.executedAt.getTime()).toBe(validDate.getTime());
     });
@@ -104,7 +104,7 @@ describe('WorkoutHistory Entity', () => {
     it('should handle training day order within valid range', () => {
       workoutHistory.trainingDayOrder = 1;
       expect(workoutHistory.trainingDayOrder).toBe(1);
-      
+
       workoutHistory.trainingDayOrder = 7;
       expect(workoutHistory.trainingDayOrder).toBe(7);
     });
@@ -112,7 +112,7 @@ describe('WorkoutHistory Entity', () => {
     it('should handle duration in minutes as positive integer', () => {
       workoutHistory.durationMinutes = 0;
       expect(workoutHistory.durationMinutes).toBe(0);
-      
+
       workoutHistory.durationMinutes = 120;
       expect(workoutHistory.durationMinutes).toBe(120);
     });
@@ -120,9 +120,9 @@ describe('WorkoutHistory Entity', () => {
     it('should preserve workout and training day names as snapshots', () => {
       workoutHistory.workoutName = 'Original Workout Name';
       workoutHistory.trainingDayName = 'Original Day Name';
-      
+
       mockWorkout.name = 'Modified Workout Name';
-      
+
       expect(workoutHistory.workoutName).toBe('Original Workout Name');
       expect(workoutHistory.trainingDayName).toBe('Original Day Name');
     });
@@ -132,7 +132,7 @@ describe('WorkoutHistory Entity', () => {
     it('should maintain reference to original workout even if workout becomes inactive', () => {
       mockWorkout.is_active = false;
       workoutHistory.workout = mockWorkout;
-      
+
       expect(workoutHistory.workout.is_active).toBe(false);
       expect(workoutHistory.workout.id).toBe('workout-1');
     });
@@ -140,7 +140,7 @@ describe('WorkoutHistory Entity', () => {
     it('should allow long notes text', () => {
       const longNotes = 'A'.repeat(1000);
       workoutHistory.notes = longNotes;
-      
+
       expect(workoutHistory.notes).toHaveLength(1000);
       expect(workoutHistory.notes).toBe(longNotes);
     });
@@ -148,7 +148,7 @@ describe('WorkoutHistory Entity', () => {
     it('should handle workout name within length limit', () => {
       const workoutName = 'A'.repeat(100);
       workoutHistory.workoutName = workoutName;
-      
+
       expect(workoutHistory.workoutName).toHaveLength(100);
       expect(workoutHistory.workoutName).toBe(workoutName);
     });
@@ -156,7 +156,7 @@ describe('WorkoutHistory Entity', () => {
     it('should handle training day name within length limit', () => {
       const dayName = 'B'.repeat(100);
       workoutHistory.trainingDayName = dayName;
-      
+
       expect(workoutHistory.trainingDayName).toHaveLength(100);
       expect(workoutHistory.trainingDayName).toBe(dayName);
     });

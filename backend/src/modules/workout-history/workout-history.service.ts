@@ -36,8 +36,8 @@ export class WorkoutHistoryService {
       try {
         // Create workout history
         const workoutHistory = manager.create(WorkoutHistory, {
-          user: { id: parseInt(input.userId) },
-          workout: { id: parseInt(input.workoutId) },
+          user: { id: input.userId },
+          workout: { id: input.workoutId },
           executedAt: input.executedAt,
           workoutName: input.workoutName,
           trainingDayOrder: input.trainingDayOrder,
@@ -50,40 +50,46 @@ export class WorkoutHistoryService {
 
         // Create exercises and sets
         for (const exerciseInput of input.exercises) {
-          const workoutHistoryExercise = manager.create(WorkoutHistoryExercise, {
-            workoutHistory: savedWorkoutHistory,
-            exercise: { id: parseInt(exerciseInput.exerciseId) },
-            order: exerciseInput.order,
-            exerciseName: exerciseInput.exerciseName,
-            plannedSets: exerciseInput.plannedSets,
-            completedSets: exerciseInput.completedSets,
-            notes: exerciseInput.notes,
-          });
+          const workoutHistoryExercise = manager.create(
+            WorkoutHistoryExercise,
+            {
+              workoutHistory: savedWorkoutHistory,
+              exercise: { id: exerciseInput.exerciseId },
+              order: exerciseInput.order,
+              exerciseName: exerciseInput.exerciseName,
+              plannedSets: exerciseInput.plannedSets,
+              completedSets: exerciseInput.completedSets,
+              notes: exerciseInput.notes,
+            },
+          );
 
           const savedExercise = await manager.save(workoutHistoryExercise);
 
           // Create sets
           for (const setInput of exerciseInput.sets) {
-            const workoutHistoryExerciseSet = manager.create(WorkoutHistoryExerciseSet, {
-              workoutHistoryExercise: savedExercise,
-              setNumber: setInput.setNumber,
-              weight: setInput.weight,
-              reps: setInput.reps,
-              plannedRepsMin: setInput.plannedRepsMin,
-              plannedRepsMax: setInput.plannedRepsMax,
-              restSeconds: setInput.restSeconds,
-              isCompleted: setInput.isCompleted,
-              isFailure: setInput.isFailure,
-              notes: setInput.notes,
-              executedAt: setInput.executedAt,
-            });
+            const workoutHistoryExerciseSet = manager.create(
+              WorkoutHistoryExerciseSet,
+              {
+                workoutHistoryExercise: savedExercise,
+                setNumber: setInput.setNumber,
+                weight: setInput.weight,
+                reps: setInput.reps,
+                plannedRepsMin: setInput.plannedRepsMin,
+                plannedRepsMax: setInput.plannedRepsMax,
+                restSeconds: setInput.restSeconds,
+                isCompleted: setInput.isCompleted,
+                isFailure: setInput.isFailure,
+                notes: setInput.notes,
+                executedAt: setInput.executedAt,
+              },
+            );
 
             await manager.save(workoutHistoryExerciseSet);
           }
         }
 
         // Return the complete workout history with relations
-        return manager.findOne(WorkoutHistory, {
+        const result = await manager.findOne(WorkoutHistory, {
           where: { id: savedWorkoutHistory.id },
           relations: [
             'user',
@@ -93,6 +99,12 @@ export class WorkoutHistoryService {
             'workoutHistoryExercises.workoutHistoryExerciseSets',
           ],
         });
+        
+        if (!result) {
+          throw new Error('Failed to create workout history');
+        }
+        
+        return result;
       } catch (error) {
         console.error('[TRANSACTION ERROR] Create workout history:', error);
         throw error;
@@ -100,7 +112,10 @@ export class WorkoutHistoryService {
     });
   }
 
-  async update(id: string, updates: Partial<WorkoutHistory>): Promise<WorkoutHistory | null> {
+  async update(
+    id: string,
+    updates: Partial<WorkoutHistory>,
+  ): Promise<WorkoutHistory | null> {
     const existing = await this.repository.findById(id);
     if (!existing) {
       throw new NotFoundException(`Workout history with ID ${id} not found`);
@@ -127,34 +142,37 @@ export class WorkoutHistoryService {
       trainingDayName: entity.trainingDayName,
       notes: entity.notes,
       durationMinutes: entity.durationMinutes,
-      workoutHistoryExercises: entity.workoutHistoryExercises?.map(exercise => ({
-        id: exercise.id.toString(),
-        workoutHistoryId: exercise.workoutHistory?.id.toString(),
-        exerciseId: exercise.exercise?.id.toString(),
-        order: exercise.order,
-        exerciseName: exercise.exerciseName,
-        plannedSets: exercise.plannedSets,
-        completedSets: exercise.completedSets,
-        notes: exercise.notes,
-        workoutHistoryExerciseSets: exercise.workoutHistoryExerciseSets?.map(set => ({
-          id: set.id.toString(),
-          workoutHistoryExerciseId: set.workoutHistoryExercise?.id.toString(),
-          setNumber: set.setNumber,
-          weight: set.weight,
-          reps: set.reps,
-          plannedRepsMin: set.plannedRepsMin,
-          plannedRepsMax: set.plannedRepsMax,
-          restSeconds: set.restSeconds,
-          isCompleted: set.isCompleted,
-          isFailure: set.isFailure,
-          notes: set.notes,
-          executedAt: set.executedAt,
-          createdAt: set.createdAt,
-          updatedAt: set.updatedAt,
+      workoutHistoryExercises:
+        entity.workoutHistoryExercises?.map((exercise) => ({
+          id: exercise.id.toString(),
+          workoutHistoryId: exercise.workoutHistory?.id.toString(),
+          exerciseId: exercise.exercise?.id.toString(),
+          order: exercise.order,
+          exerciseName: exercise.exerciseName,
+          plannedSets: exercise.plannedSets,
+          completedSets: exercise.completedSets,
+          notes: exercise.notes,
+          workoutHistoryExerciseSets:
+            exercise.workoutHistoryExerciseSets?.map((set) => ({
+              id: set.id.toString(),
+              workoutHistoryExerciseId:
+                set.workoutHistoryExercise?.id.toString(),
+              setNumber: set.setNumber,
+              weight: set.weight,
+              reps: set.reps,
+              plannedRepsMin: set.plannedRepsMin,
+              plannedRepsMax: set.plannedRepsMax,
+              restSeconds: set.restSeconds,
+              isCompleted: set.isCompleted,
+              isFailure: set.isFailure,
+              notes: set.notes,
+              executedAt: set.executedAt,
+              createdAt: set.createdAt,
+              updatedAt: set.updatedAt,
+            })) || [],
+          createdAt: exercise.createdAt,
+          updatedAt: exercise.updatedAt,
         })) || [],
-        createdAt: exercise.createdAt,
-        updatedAt: exercise.updatedAt,
-      })) || [],
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     };

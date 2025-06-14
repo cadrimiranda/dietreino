@@ -1,11 +1,28 @@
 import { InputType, Field, ID, Int } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsArray, ValidateNested, IsNumber, Min, Max, ArrayMinSize, Validate } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  Min,
+  Max,
+  ArrayMinSize,
+  Validate,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import {
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+} from 'class-validator';
 import { CreateWorkoutHistoryExerciseSetInput } from './create-workout-history-exercise-set.input';
 
 @ValidatorConstraint({ name: 'completedSetsValidation', async: false })
-export class CompletedSetsValidationConstraint implements ValidatorConstraintInterface {
+export class CompletedSetsValidationConstraint
+  implements ValidatorConstraintInterface
+{
   validate(completedSets: number, args: ValidationArguments) {
     const obj = args.object as CreateWorkoutHistoryExerciseInput;
     return completedSets <= obj.plannedSets;

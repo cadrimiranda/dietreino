@@ -137,7 +137,7 @@ export class WorkoutService {
     // Update the workout's active status
     return this.repository.update(workoutId, {
       is_active: active,
-    }) as Promise<Workout>;
+    });
   }
 
   async importXlsxUserWorkout(
@@ -244,17 +244,22 @@ export class WorkoutService {
           );
 
           // Create training day exercise
-          const trainingDayExercise = await queryRunner.manager.save(TrainingDayExercise, {
-            trainingDay: { id: trainingDay.id } as TrainingDay,
-            exercise: { id: exercise.id } as Exercise,
-            order: i,
-            sets: totalSets || 1,
-          });
+          const trainingDayExercise = await queryRunner.manager.save(
+            TrainingDayExercise,
+            {
+              trainingDay: { id: trainingDay.id } as TrainingDay,
+              exercise: { id: exercise.id } as Exercise,
+              order: i,
+              sets: totalSets || 1,
+            },
+          );
 
           // Create rep schemes
           for (const rs of exerciseInfo.repSchemes) {
             await queryRunner.manager.save(RepScheme, {
-              trainingDayExercise: { id: trainingDayExercise.id } as TrainingDayExercise,
+              trainingDayExercise: {
+                id: trainingDayExercise.id,
+              } as TrainingDayExercise,
               sets: rs.sets,
               minReps: rs.minReps,
               maxReps: rs.maxReps,
@@ -265,7 +270,9 @@ export class WorkoutService {
           for (let idx = 0; idx < exerciseInfo.restIntervals.length; idx++) {
             const interval = exerciseInfo.restIntervals[idx];
             await queryRunner.manager.save(RestInterval, {
-              trainingDayExercise: { id: trainingDayExercise.id } as TrainingDayExercise,
+              trainingDayExercise: {
+                id: trainingDayExercise.id,
+              } as TrainingDayExercise,
               intervalTime: interval,
               order: idx,
             });

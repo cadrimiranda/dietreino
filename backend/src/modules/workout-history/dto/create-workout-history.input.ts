@@ -1,5 +1,16 @@
 import { InputType, Field, ID, Int } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsArray, ValidateNested, IsNumber, Min, Max, IsDateString, ArrayMinSize } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  Min,
+  Max,
+  IsDateString,
+  ArrayMinSize,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateWorkoutHistoryExerciseInput } from './create-workout-history-exercise.input';
 

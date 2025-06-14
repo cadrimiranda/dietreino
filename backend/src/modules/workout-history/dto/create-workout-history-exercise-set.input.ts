@@ -1,9 +1,25 @@
 import { InputType, Field, Int, Float } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsNumber, Min, Max, IsBoolean, IsDateString, Validate } from 'class-validator';
-import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  IsBoolean,
+  IsDateString,
+  Validate,
+} from 'class-validator';
+import {
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+} from 'class-validator';
 
 @ValidatorConstraint({ name: 'plannedRepsValidation', async: false })
-export class PlannedRepsValidationConstraint implements ValidatorConstraintInterface {
+export class PlannedRepsValidationConstraint
+  implements ValidatorConstraintInterface
+{
   validate(plannedRepsMax: number, args: ValidationArguments) {
     const obj = args.object as CreateWorkoutHistoryExerciseSetInput;
     if (!obj.plannedRepsMin || !plannedRepsMax) return true;

@@ -52,7 +52,6 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         graphqlUploadExpress({
           maxFileSize: 10_000_000,
           maxFiles: 1,

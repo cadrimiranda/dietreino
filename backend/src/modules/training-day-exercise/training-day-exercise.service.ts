@@ -40,7 +40,7 @@ export class TrainingDayExerciseService extends BaseService<TrainingDayExercise>
   async createBatchByTrainingDay(input: WorkoutExerciseCreateData[]) {
     const createdExercises: TrainingDayExercise[] = [];
 
-    for (let data in input) {
+    for (const data in input) {
       const { exerciseName, trainingDayId, repSchemes, restIntervals } =
         input[data];
 
@@ -53,8 +53,11 @@ export class TrainingDayExerciseService extends BaseService<TrainingDayExercise>
       }
 
       // Calculate total sets from all rep schemes
-      const totalSets = repSchemes.reduce((sum, scheme) => sum + scheme.sets, 0);
-      
+      const totalSets = repSchemes.reduce(
+        (sum, scheme) => sum + scheme.sets,
+        0,
+      );
+
       const trainingDayExercise =
         await this.trainingDayExerciseRepository.create({
           trainingDay: { id: trainingDayId },

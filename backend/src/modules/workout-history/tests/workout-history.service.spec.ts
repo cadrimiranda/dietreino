@@ -15,9 +15,9 @@ describe('WorkoutHistoryService', () => {
   let mockEntityManager: any;
 
   const mockWorkoutHistory: WorkoutHistory = {
-    id: 1,
-    user: { id: 1 } as any,
-    workout: { id: 1 } as any,
+    id: 'uuid-test-id',
+    user: { id: 'user-uuid-test-id' } as any,
+    workout: { id: 'workout-uuid-test-id' } as any,
     executedAt: new Date('2024-01-15T10:00:00Z'),
     workoutName: 'Treino A - Peito e Tríceps',
     trainingDayOrder: 1,
@@ -163,9 +163,15 @@ describe('WorkoutHistoryService', () => {
     };
 
     it('should create workout history with exercises and sets', async () => {
-      const savedWorkoutHistory = { ...mockWorkoutHistory, id: 1 };
-      const savedExercise = { id: 1, workoutHistory: savedWorkoutHistory } as any;
-      const savedSet = { id: 1, workoutHistoryExercise: savedExercise } as any;
+      const savedWorkoutHistory = { ...mockWorkoutHistory, id: 'uuid-test-id' };
+      const savedExercise = {
+        id: 'exercise-uuid-test-id',
+        workoutHistory: savedWorkoutHistory,
+      } as any;
+      const savedSet = {
+        id: 'set-uuid-test-id',
+        workoutHistoryExercise: savedExercise,
+      } as any;
 
       mockEntityManager.create
         .mockReturnValueOnce(savedWorkoutHistory)
@@ -199,20 +205,27 @@ describe('WorkoutHistoryService', () => {
       const error = new Error('Transaction failed');
       dataSource.transaction.mockRejectedValue(error);
 
-      await expect(service.create(createInput)).rejects.toThrow('Transaction failed');
+      await expect(service.create(createInput)).rejects.toThrow(
+        'Transaction failed',
+      );
     });
   });
 
   describe('update', () => {
     it('should update existing workout history', async () => {
       repository.findById.mockResolvedValue(mockWorkoutHistory);
-      repository.update.mockResolvedValue({ ...mockWorkoutHistory, notes: 'Updated notes' });
+      repository.update.mockResolvedValue({
+        ...mockWorkoutHistory,
+        notes: 'Updated notes',
+      });
 
       const result = await service.update('1', { notes: 'Updated notes' });
 
       expect(repository.findById).toHaveBeenCalledWith('1');
-      expect(repository.update).toHaveBeenCalledWith('1', { notes: 'Updated notes' });
-      expect(result.notes).toBe('Updated notes');
+      expect(repository.update).toHaveBeenCalledWith('1', {
+        notes: 'Updated notes',
+      });
+      expect(result?.notes).toBe('Updated notes');
     });
 
     it('should throw NotFoundException when workout history not found', async () => {
@@ -251,9 +264,9 @@ describe('WorkoutHistoryService', () => {
         ...mockWorkoutHistory,
         workoutHistoryExercises: [
           {
-            id: 1,
-            workoutHistory: { id: 1 },
-            exercise: { id: 1 },
+            id: 'exercise-uuid-test-id',
+            workoutHistory: { id: 'uuid-test-id' },
+            exercise: { id: 'exercise-uuid-test-id' },
             order: 1,
             exerciseName: 'Supino Reto',
             plannedSets: 3,
@@ -261,8 +274,8 @@ describe('WorkoutHistoryService', () => {
             notes: 'Boa execução',
             workoutHistoryExerciseSets: [
               {
-                id: 1,
-                workoutHistoryExercise: { id: 1 },
+                id: 'set-uuid-test-id',
+                workoutHistoryExercise: { id: 'exercise-uuid-test-id' },
                 setNumber: 1,
                 weight: 80,
                 reps: 12,
@@ -286,9 +299,9 @@ describe('WorkoutHistoryService', () => {
       const result = service.toWorkoutHistoryType(workoutHistoryWithExercises);
 
       expect(result).toMatchObject({
-        id: '1',
-        userId: '1',
-        workoutId: '1',
+        id: 'uuid-test-id',
+        userId: 'user-uuid-test-id',
+        workoutId: 'workout-uuid-test-id',
         executedAt: mockWorkoutHistory.executedAt,
         workoutName: 'Treino A - Peito e Tríceps',
         trainingDayOrder: 1,
@@ -297,9 +310,9 @@ describe('WorkoutHistoryService', () => {
         durationMinutes: 60,
         workoutHistoryExercises: [
           {
-            id: '1',
-            workoutHistoryId: '1',
-            exerciseId: '1',
+            id: 'exercise-uuid-test-id',
+            workoutHistoryId: 'uuid-test-id',
+            exerciseId: 'exercise-uuid-test-id',
             order: 1,
             exerciseName: 'Supino Reto',
             plannedSets: 3,
@@ -307,8 +320,8 @@ describe('WorkoutHistoryService', () => {
             notes: 'Boa execução',
             workoutHistoryExerciseSets: [
               {
-                id: '1',
-                workoutHistoryExerciseId: '1',
+                id: 'set-uuid-test-id',
+                workoutHistoryExerciseId: 'exercise-uuid-test-id',
                 setNumber: 1,
                 weight: 80,
                 reps: 12,

@@ -9,7 +9,8 @@ export class WorkoutHistoryExerciseSet extends BaseEntity {
   @Field(() => WorkoutHistoryExercise)
   @ManyToOne(
     () => WorkoutHistoryExercise,
-    (workoutHistoryExercise) => workoutHistoryExercise.workoutHistoryExerciseSets,
+    (workoutHistoryExercise) =>
+      workoutHistoryExercise.workoutHistoryExerciseSets,
     {
       onDelete: 'CASCADE',
     },
@@ -54,6 +55,10 @@ export class WorkoutHistoryExerciseSet extends BaseEntity {
   notes: string;
 
   @Field(() => Date, { nullable: true })
-  @Column({ type: 'timestamp with time zone', nullable: true, name: 'executed_at' })
+  @Column({
+    type: 'timestamp with time zone',
+    nullable: true,
+    name: 'executed_at',
+  })
   executedAt: Date;
 }

@@ -79,14 +79,14 @@ describe('WorkoutHistoryExercise Entity', () => {
   describe('Relationships', () => {
     it('should have a relationship with WorkoutHistory', () => {
       workoutHistoryExercise.workoutHistory = mockWorkoutHistory;
-      
+
       expect(workoutHistoryExercise.workoutHistory).toBe(mockWorkoutHistory);
       expect(workoutHistoryExercise.workoutHistory.id).toBe('history-1');
     });
 
     it('should have a relationship with Exercise', () => {
       workoutHistoryExercise.exercise = mockExercise;
-      
+
       expect(workoutHistoryExercise.exercise).toBe(mockExercise);
       expect(workoutHistoryExercise.exercise.id).toBe('exercise-1');
       expect(workoutHistoryExercise.exercise.name).toBe('Supino Reto');
@@ -96,13 +96,23 @@ describe('WorkoutHistoryExercise Entity', () => {
       const mockSet1 = new WorkoutHistoryExerciseSet();
       const mockSet2 = new WorkoutHistoryExerciseSet();
       const mockSet3 = new WorkoutHistoryExerciseSet();
-      
-      workoutHistoryExercise.workoutHistoryExerciseSets = [mockSet1, mockSet2, mockSet3];
-      
+
+      workoutHistoryExercise.workoutHistoryExerciseSets = [
+        mockSet1,
+        mockSet2,
+        mockSet3,
+      ];
+
       expect(workoutHistoryExercise.workoutHistoryExerciseSets).toHaveLength(3);
-      expect(workoutHistoryExercise.workoutHistoryExerciseSets).toContain(mockSet1);
-      expect(workoutHistoryExercise.workoutHistoryExerciseSets).toContain(mockSet2);
-      expect(workoutHistoryExercise.workoutHistoryExerciseSets).toContain(mockSet3);
+      expect(workoutHistoryExercise.workoutHistoryExerciseSets).toContain(
+        mockSet1,
+      );
+      expect(workoutHistoryExercise.workoutHistoryExerciseSets).toContain(
+        mockSet2,
+      );
+      expect(workoutHistoryExercise.workoutHistoryExerciseSets).toContain(
+        mockSet3,
+      );
     });
   });
 
@@ -110,7 +120,7 @@ describe('WorkoutHistoryExercise Entity', () => {
     it('should handle valid exercise order', () => {
       workoutHistoryExercise.order = 1;
       expect(workoutHistoryExercise.order).toBe(1);
-      
+
       workoutHistoryExercise.order = 10;
       expect(workoutHistoryExercise.order).toBe(10);
     });
@@ -119,32 +129,42 @@ describe('WorkoutHistoryExercise Entity', () => {
       // Scenario: User completed all planned sets
       workoutHistoryExercise.plannedSets = 3;
       workoutHistoryExercise.completedSets = 3;
-      
-      expect(workoutHistoryExercise.completedSets).toBe(workoutHistoryExercise.plannedSets);
-      
+
+      expect(workoutHistoryExercise.completedSets).toBe(
+        workoutHistoryExercise.plannedSets,
+      );
+
       // Scenario: User completed fewer sets than planned
       workoutHistoryExercise.completedSets = 2;
-      expect(workoutHistoryExercise.completedSets).toBeLessThan(workoutHistoryExercise.plannedSets);
-      
+      expect(workoutHistoryExercise.completedSets).toBeLessThan(
+        workoutHistoryExercise.plannedSets,
+      );
+
       // Scenario: User completed more sets than planned
       workoutHistoryExercise.completedSets = 4;
-      expect(workoutHistoryExercise.completedSets).toBeGreaterThan(workoutHistoryExercise.plannedSets);
+      expect(workoutHistoryExercise.completedSets).toBeGreaterThan(
+        workoutHistoryExercise.plannedSets,
+      );
     });
 
     it('should preserve exercise name as snapshot', () => {
       workoutHistoryExercise.exerciseName = 'Original Exercise Name';
       mockExercise.name = 'Modified Exercise Name';
-      
-      expect(workoutHistoryExercise.exerciseName).toBe('Original Exercise Name');
+
+      expect(workoutHistoryExercise.exerciseName).toBe(
+        'Original Exercise Name',
+      );
       expect(mockExercise.name).toBe('Modified Exercise Name');
     });
 
     it('should handle zero completed sets', () => {
       workoutHistoryExercise.plannedSets = 3;
       workoutHistoryExercise.completedSets = 0;
-      
+
       expect(workoutHistoryExercise.completedSets).toBe(0);
-      expect(workoutHistoryExercise.completedSets).toBeLessThan(workoutHistoryExercise.plannedSets);
+      expect(workoutHistoryExercise.completedSets).toBeLessThan(
+        workoutHistoryExercise.plannedSets,
+      );
     });
   });
 
@@ -152,7 +172,7 @@ describe('WorkoutHistoryExercise Entity', () => {
     it('should handle exercise name within length limit', () => {
       const exerciseName = 'A'.repeat(100);
       workoutHistoryExercise.exerciseName = exerciseName;
-      
+
       expect(workoutHistoryExercise.exerciseName).toHaveLength(100);
       expect(workoutHistoryExercise.exerciseName).toBe(exerciseName);
     });
@@ -160,7 +180,7 @@ describe('WorkoutHistoryExercise Entity', () => {
     it('should allow long notes text', () => {
       const longNotes = 'Detailed notes about exercise execution. '.repeat(50);
       workoutHistoryExercise.notes = longNotes;
-      
+
       expect(workoutHistoryExercise.notes.length).toBeGreaterThan(1000);
       expect(workoutHistoryExercise.notes).toBe(longNotes);
     });
@@ -168,13 +188,13 @@ describe('WorkoutHistoryExercise Entity', () => {
     it('should handle positive integer values for sets', () => {
       workoutHistoryExercise.plannedSets = 1;
       workoutHistoryExercise.completedSets = 1;
-      
+
       expect(workoutHistoryExercise.plannedSets).toBeGreaterThan(0);
       expect(workoutHistoryExercise.completedSets).toBeGreaterThan(0);
-      
+
       workoutHistoryExercise.plannedSets = 10;
       workoutHistoryExercise.completedSets = 8;
-      
+
       expect(workoutHistoryExercise.plannedSets).toBe(10);
       expect(workoutHistoryExercise.completedSets).toBe(8);
     });
@@ -189,9 +209,12 @@ describe('WorkoutHistoryExercise Entity', () => {
       workoutHistoryExercise.exerciseName = 'Supino Reto';
       workoutHistoryExercise.plannedSets = 4;
       workoutHistoryExercise.completedSets = 2;
-      workoutHistoryExercise.notes = 'Parei no 2º set por fadiga muscular excessiva';
+      workoutHistoryExercise.notes =
+        'Parei no 2º set por fadiga muscular excessiva';
 
-      expect(workoutHistoryExercise.completedSets).toBeLessThan(workoutHistoryExercise.plannedSets);
+      expect(workoutHistoryExercise.completedSets).toBeLessThan(
+        workoutHistoryExercise.plannedSets,
+      );
       expect(workoutHistoryExercise.notes).toContain('fadiga');
     });
 
@@ -201,7 +224,9 @@ describe('WorkoutHistoryExercise Entity', () => {
       workoutHistoryExercise.completedSets = 4;
       workoutHistoryExercise.notes = 'Me senti bem e fiz uma série extra';
 
-      expect(workoutHistoryExercise.completedSets).toBeGreaterThan(workoutHistoryExercise.plannedSets);
+      expect(workoutHistoryExercise.completedSets).toBeGreaterThan(
+        workoutHistoryExercise.plannedSets,
+      );
       expect(workoutHistoryExercise.notes).toContain('série extra');
     });
 
@@ -211,7 +236,9 @@ describe('WorkoutHistoryExercise Entity', () => {
       workoutHistoryExercise.completedSets = 3;
       workoutHistoryExercise.notes = 'Treino conforme planejado, boa execução';
 
-      expect(workoutHistoryExercise.completedSets).toBe(workoutHistoryExercise.plannedSets);
+      expect(workoutHistoryExercise.completedSets).toBe(
+        workoutHistoryExercise.plannedSets,
+      );
       expect(workoutHistoryExercise.notes).toContain('conforme planejado');
     });
   });

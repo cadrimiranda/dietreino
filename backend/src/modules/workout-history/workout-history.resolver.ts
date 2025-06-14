@@ -25,7 +25,9 @@ export class WorkoutHistoryResolver {
     @Args('id', { type: () => ID }) id: string,
   ): Promise<Partial<WorkoutHistoryType> | null> {
     const entity = await this.workoutHistoryService.findById(id);
-    return entity ? this.workoutHistoryService.toWorkoutHistoryType(entity) : null;
+    return entity
+      ? this.workoutHistoryService.toWorkoutHistoryType(entity)
+      : null;
   }
 
   @UseGuards(GqlAuthGuard)
@@ -42,7 +44,8 @@ export class WorkoutHistoryResolver {
   async workoutHistoriesByWorkout(
     @Args('workoutId', { type: () => ID }) workoutId: string,
   ): Promise<Partial<WorkoutHistoryType>[]> {
-    const entities = await this.workoutHistoryService.findByWorkoutId(workoutId);
+    const entities =
+      await this.workoutHistoryService.findByWorkoutId(workoutId);
     return entities.map(this.workoutHistoryService.toWorkoutHistoryType);
   }
 

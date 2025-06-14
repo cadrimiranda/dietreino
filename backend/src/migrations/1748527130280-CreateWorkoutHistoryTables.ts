@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateWorkoutHistoryTables1748527130280 implements MigrationInterface {
+export class CreateWorkoutHistoryTables1748527130280
+  implements MigrationInterface
+{
   name = 'CreateWorkoutHistoryTables1748527130280';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -87,8 +89,12 @@ export class CreateWorkoutHistoryTables1748527130280 implements MigrationInterfa
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Remover índices
-    await queryRunner.query(`DROP INDEX "IDX_workout_history_exercise_sets_workout_history_exercise_id"`);
-    await queryRunner.query(`DROP INDEX "IDX_workout_history_exercises_workout_history_id"`);
+    await queryRunner.query(
+      `DROP INDEX "IDX_workout_history_exercise_sets_workout_history_exercise_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "IDX_workout_history_exercises_workout_history_id"`,
+    );
     await queryRunner.query(`DROP INDEX "IDX_workout_history_executed_at"`);
     await queryRunner.query(`DROP INDEX "IDX_workout_history_user_id"`);
 

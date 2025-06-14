@@ -2,9 +2,20 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { INestApplication } from '@nestjs/common';
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import {
+  PostgreSqlContainer,
+  StartedPostgreSqlContainer,
+} from '@testcontainers/postgresql';
 
-import { WorkoutHistory, WorkoutHistoryExercise, WorkoutHistoryExerciseSet, User, Workout, Exercise } from '@/entities';
+import {
+  WorkoutHistory,
+  WorkoutHistoryExercise,
+  WorkoutHistoryExerciseSet,
+  User,
+  Workout,
+  Exercise,
+} from '@/entities';
+import { UserRole } from '../../../utils/roles.enum';
 import { WorkoutHistoryModule } from '../workout-history.module';
 import { WorkoutHistoryService } from '../workout-history.service';
 import { WorkoutHistoryResolver } from '../workout-history.resolver';
@@ -35,7 +46,7 @@ describe('WorkoutHistory Integration Tests', () => {
           port: container.getPort(),
           username: container.getUsername(),
           password: container.getPassword(),
-          database: container.getDatabaseName(),
+          database: container.getDatabase(),
           entities: [
             WorkoutHistory,
             WorkoutHistoryExercise,
@@ -56,7 +67,9 @@ describe('WorkoutHistory Integration Tests', () => {
     await app.init();
 
     service = moduleFixture.get<WorkoutHistoryService>(WorkoutHistoryService);
-    resolver = moduleFixture.get<WorkoutHistoryResolver>(WorkoutHistoryResolver);
+    resolver = moduleFixture.get<WorkoutHistoryResolver>(
+      WorkoutHistoryResolver,
+    );
     workoutHistoryRepo = moduleFixture.get('WorkoutHistoryRepository');
     userRepo = moduleFixture.get('UserRepository');
     workoutRepo = moduleFixture.get('WorkoutRepository');
@@ -70,8 +83,12 @@ describe('WorkoutHistory Integration Tests', () => {
 
   beforeEach(async () => {
     // Clean all tables before each test
-    await workoutHistoryRepo.query('TRUNCATE TABLE workout_history_exercise_sets CASCADE');
-    await workoutHistoryRepo.query('TRUNCATE TABLE workout_history_exercises CASCADE');
+    await workoutHistoryRepo.query(
+      'TRUNCATE TABLE workout_history_exercise_sets CASCADE',
+    );
+    await workoutHistoryRepo.query(
+      'TRUNCATE TABLE workout_history_exercises CASCADE',
+    );
     await workoutHistoryRepo.query('TRUNCATE TABLE workout_history CASCADE');
     await workoutRepo.query('TRUNCATE TABLE workout CASCADE');
     await exerciseRepo.query('TRUNCATE TABLE exercise CASCADE');
@@ -85,7 +102,7 @@ describe('WorkoutHistory Integration Tests', () => {
         name: 'Test User',
         email: 'test@example.com',
         password: 'password',
-        role: 'CLIENT',
+        role: UserRole.CLIENT,
       });
 
       const workout = await workoutRepo.save({
@@ -193,7 +210,7 @@ describe('WorkoutHistory Integration Tests', () => {
         name: 'Test User',
         email: 'test@example.com',
         password: 'password',
-        role: 'CLIENT',
+        role: UserRole.CLIENT,
       });
 
       const workout = await workoutRepo.save({
@@ -230,7 +247,7 @@ describe('WorkoutHistory Integration Tests', () => {
         name: 'Test User',
         email: 'test@example.com',
         password: 'password',
-        role: 'CLIENT',
+        role: UserRole.CLIENT,
       });
 
       const workout = await workoutRepo.save({
@@ -296,7 +313,7 @@ describe('WorkoutHistory Integration Tests', () => {
         name: 'Test User',
         email: 'test@example.com',
         password: 'password',
-        role: 'CLIENT',
+        role: UserRole.CLIENT,
       });
 
       const workout = await workoutRepo.save({

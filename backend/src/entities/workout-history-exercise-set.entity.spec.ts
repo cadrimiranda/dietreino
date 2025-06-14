@@ -47,13 +47,16 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
   describe('Entity Properties', () => {
     it('should create a WorkoutHistoryExerciseSet instance', () => {
       expect(workoutHistoryExerciseSet).toBeDefined();
-      expect(workoutHistoryExerciseSet).toBeInstanceOf(WorkoutHistoryExerciseSet);
+      expect(workoutHistoryExerciseSet).toBeInstanceOf(
+        WorkoutHistoryExerciseSet,
+      );
     });
 
     it('should have all required properties', () => {
       const executedAt = new Date();
-      
-      workoutHistoryExerciseSet.workoutHistoryExercise = mockWorkoutHistoryExercise;
+
+      workoutHistoryExerciseSet.workoutHistoryExercise =
+        mockWorkoutHistoryExercise;
       workoutHistoryExerciseSet.setNumber = 1;
       workoutHistoryExerciseSet.weight = 80.5;
       workoutHistoryExerciseSet.reps = 12;
@@ -65,7 +68,9 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
       workoutHistoryExerciseSet.notes = 'Primeira série boa';
       workoutHistoryExerciseSet.executedAt = executedAt;
 
-      expect(workoutHistoryExerciseSet.workoutHistoryExercise).toBe(mockWorkoutHistoryExercise);
+      expect(workoutHistoryExerciseSet.workoutHistoryExercise).toBe(
+        mockWorkoutHistoryExercise,
+      );
       expect(workoutHistoryExerciseSet.setNumber).toBe(1);
       expect(workoutHistoryExerciseSet.weight).toBe(80.5);
       expect(workoutHistoryExerciseSet.reps).toBe(12);
@@ -79,7 +84,8 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
     });
 
     it('should allow nullable fields to be null', () => {
-      workoutHistoryExerciseSet.workoutHistoryExercise = mockWorkoutHistoryExercise;
+      workoutHistoryExerciseSet.workoutHistoryExercise =
+        mockWorkoutHistoryExercise;
       workoutHistoryExerciseSet.setNumber = 1;
       workoutHistoryExerciseSet.isCompleted = false;
       workoutHistoryExerciseSet.isFailure = false;
@@ -96,7 +102,7 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
     it('should have default boolean values', () => {
       workoutHistoryExerciseSet.isCompleted = false;
       workoutHistoryExerciseSet.isFailure = false;
-      
+
       expect(workoutHistoryExerciseSet.isCompleted).toBe(false);
       expect(workoutHistoryExerciseSet.isFailure).toBe(false);
     });
@@ -104,10 +110,15 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
 
   describe('Relationships', () => {
     it('should have a relationship with WorkoutHistoryExercise', () => {
-      workoutHistoryExerciseSet.workoutHistoryExercise = mockWorkoutHistoryExercise;
-      
-      expect(workoutHistoryExerciseSet.workoutHistoryExercise).toBe(mockWorkoutHistoryExercise);
-      expect(workoutHistoryExerciseSet.workoutHistoryExercise.id).toBe('history-exercise-1');
+      workoutHistoryExerciseSet.workoutHistoryExercise =
+        mockWorkoutHistoryExercise;
+
+      expect(workoutHistoryExerciseSet.workoutHistoryExercise).toBe(
+        mockWorkoutHistoryExercise,
+      );
+      expect(workoutHistoryExerciseSet.workoutHistoryExercise.id).toBe(
+        'history-exercise-1',
+      );
     });
   });
 
@@ -115,7 +126,7 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
     it('should handle valid set numbers', () => {
       workoutHistoryExerciseSet.setNumber = 1;
       expect(workoutHistoryExerciseSet.setNumber).toBe(1);
-      
+
       workoutHistoryExerciseSet.setNumber = 10;
       expect(workoutHistoryExerciseSet.setNumber).toBe(10);
     });
@@ -123,10 +134,10 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
     it('should handle decimal weight values', () => {
       workoutHistoryExerciseSet.weight = 80.25;
       expect(workoutHistoryExerciseSet.weight).toBe(80.25);
-      
+
       workoutHistoryExerciseSet.weight = 100.0;
       expect(workoutHistoryExerciseSet.weight).toBe(100.0);
-      
+
       workoutHistoryExerciseSet.weight = 0.5;
       expect(workoutHistoryExerciseSet.weight).toBe(0.5);
     });
@@ -135,9 +146,13 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
       workoutHistoryExerciseSet.plannedRepsMin = 8;
       workoutHistoryExerciseSet.plannedRepsMax = 12;
       workoutHistoryExerciseSet.reps = 10;
-      
-      expect(workoutHistoryExerciseSet.reps).toBeGreaterThanOrEqual(workoutHistoryExerciseSet.plannedRepsMin);
-      expect(workoutHistoryExerciseSet.reps).toBeLessThanOrEqual(workoutHistoryExerciseSet.plannedRepsMax);
+
+      expect(workoutHistoryExerciseSet.reps).toBeGreaterThanOrEqual(
+        workoutHistoryExerciseSet.plannedRepsMin,
+      );
+      expect(workoutHistoryExerciseSet.reps).toBeLessThanOrEqual(
+        workoutHistoryExerciseSet.plannedRepsMax,
+      );
     });
 
     it('should handle completion status logic', () => {
@@ -147,15 +162,15 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
       workoutHistoryExerciseSet.reps = 12;
       workoutHistoryExerciseSet.isCompleted = true;
       workoutHistoryExerciseSet.isFailure = false;
-      
+
       expect(workoutHistoryExerciseSet.isCompleted).toBe(true);
       expect(workoutHistoryExerciseSet.isFailure).toBe(false);
-      
+
       // Failure scenario
       workoutHistoryExerciseSet.reps = 8;
       workoutHistoryExerciseSet.isCompleted = false;
       workoutHistoryExerciseSet.isFailure = true;
-      
+
       expect(workoutHistoryExerciseSet.isCompleted).toBe(false);
       expect(workoutHistoryExerciseSet.isFailure).toBe(true);
     });
@@ -163,10 +178,10 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
     it('should handle rest time in seconds', () => {
       workoutHistoryExerciseSet.restSeconds = 60;
       expect(workoutHistoryExerciseSet.restSeconds).toBe(60);
-      
+
       workoutHistoryExerciseSet.restSeconds = 120;
       expect(workoutHistoryExerciseSet.restSeconds).toBe(120);
-      
+
       workoutHistoryExerciseSet.restSeconds = 0;
       expect(workoutHistoryExerciseSet.restSeconds).toBe(0);
     });
@@ -174,9 +189,10 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
 
   describe('Data Integrity', () => {
     it('should allow long notes text', () => {
-      const longNotes = 'Detailed notes about this specific set execution. '.repeat(100);
+      const longNotes =
+        'Detailed notes about this specific set execution. '.repeat(100);
       workoutHistoryExerciseSet.notes = longNotes;
-      
+
       expect(workoutHistoryExerciseSet.notes.length).toBeGreaterThan(1000);
       expect(workoutHistoryExerciseSet.notes).toBe(longNotes);
     });
@@ -184,9 +200,11 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
     it('should handle execution timestamp', () => {
       const executedAt = new Date('2024-01-15T10:30:45Z');
       workoutHistoryExerciseSet.executedAt = executedAt;
-      
+
       expect(workoutHistoryExerciseSet.executedAt).toBeInstanceOf(Date);
-      expect(workoutHistoryExerciseSet.executedAt.getTime()).toBe(executedAt.getTime());
+      expect(workoutHistoryExerciseSet.executedAt.getTime()).toBe(
+        executedAt.getTime(),
+      );
     });
 
     it('should handle large weight values', () => {
@@ -198,7 +216,7 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
       workoutHistoryExerciseSet.reps = 100;
       workoutHistoryExerciseSet.plannedRepsMin = 50;
       workoutHistoryExerciseSet.plannedRepsMax = 100;
-      
+
       expect(workoutHistoryExerciseSet.reps).toBe(100);
       expect(workoutHistoryExerciseSet.plannedRepsMin).toBe(50);
       expect(workoutHistoryExerciseSet.plannedRepsMax).toBe(100);
@@ -208,7 +226,8 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
   describe('Real World Scenarios', () => {
     it('should handle successful set completion scenario', () => {
       // User completes set within planned range
-      workoutHistoryExerciseSet.workoutHistoryExercise = mockWorkoutHistoryExercise;
+      workoutHistoryExerciseSet.workoutHistoryExercise =
+        mockWorkoutHistoryExercise;
       workoutHistoryExerciseSet.setNumber = 1;
       workoutHistoryExerciseSet.weight = 80.0;
       workoutHistoryExerciseSet.reps = 12;
@@ -228,7 +247,8 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
 
     it('should handle failure scenario from the example', () => {
       // Third set from the supino example - user failed at 9 reps
-      workoutHistoryExerciseSet.workoutHistoryExercise = mockWorkoutHistoryExercise;
+      workoutHistoryExerciseSet.workoutHistoryExercise =
+        mockWorkoutHistoryExercise;
       workoutHistoryExerciseSet.setNumber = 3;
       workoutHistoryExerciseSet.weight = 80.0;
       workoutHistoryExerciseSet.reps = 9;
@@ -236,10 +256,13 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
       workoutHistoryExerciseSet.plannedRepsMax = 12;
       workoutHistoryExerciseSet.isCompleted = false;
       workoutHistoryExerciseSet.isFailure = true;
-      workoutHistoryExerciseSet.notes = 'Falhei com 9, músculo já estava fatigado';
+      workoutHistoryExerciseSet.notes =
+        'Falhei com 9, músculo já estava fatigado';
       workoutHistoryExerciseSet.executedAt = new Date();
 
-      expect(workoutHistoryExerciseSet.reps).toBeLessThan(workoutHistoryExerciseSet.plannedRepsMin);
+      expect(workoutHistoryExerciseSet.reps).toBeLessThan(
+        workoutHistoryExerciseSet.plannedRepsMin,
+      );
       expect(workoutHistoryExerciseSet.isCompleted).toBe(false);
       expect(workoutHistoryExerciseSet.isFailure).toBe(true);
       expect(workoutHistoryExerciseSet.notes).toContain('Falhei');
@@ -249,12 +272,30 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
     it('should handle progressive set degradation scenario', () => {
       // Simulating the example: 12, 11, 9 reps across 3 sets
       const sets = [
-        { setNumber: 1, reps: 12, notes: 'Primeira série boa', isCompleted: true, isFailure: false },
-        { setNumber: 2, reps: 11, notes: 'Segunda mais pesada', isCompleted: true, isFailure: false },
-        { setNumber: 3, reps: 9, notes: 'Terceira falhei com 9', isCompleted: false, isFailure: true }
+        {
+          setNumber: 1,
+          reps: 12,
+          notes: 'Primeira série boa',
+          isCompleted: true,
+          isFailure: false,
+        },
+        {
+          setNumber: 2,
+          reps: 11,
+          notes: 'Segunda mais pesada',
+          isCompleted: true,
+          isFailure: false,
+        },
+        {
+          setNumber: 3,
+          reps: 9,
+          notes: 'Terceira falhei com 9',
+          isCompleted: false,
+          isFailure: true,
+        },
       ];
 
-      sets.forEach(setData => {
+      sets.forEach((setData) => {
         const set = new WorkoutHistoryExerciseSet();
         set.workoutHistoryExercise = mockWorkoutHistoryExercise;
         set.setNumber = setData.setNumber;
@@ -281,7 +322,8 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
 
     it('should handle bodyweight exercise scenario', () => {
       // Exercise without weight (like push-ups)
-      workoutHistoryExerciseSet.workoutHistoryExercise = mockWorkoutHistoryExercise;
+      workoutHistoryExerciseSet.workoutHistoryExercise =
+        mockWorkoutHistoryExercise;
       workoutHistoryExerciseSet.setNumber = 1;
       // No weight for bodyweight exercise - weight remains undefined
       workoutHistoryExerciseSet.reps = 20;
@@ -298,7 +340,8 @@ describe('WorkoutHistoryExerciseSet Entity', () => {
 
     it('should handle time-based exercise scenario', () => {
       // Exercise measured in time (like plank)
-      workoutHistoryExerciseSet.workoutHistoryExercise = mockWorkoutHistoryExercise;
+      workoutHistoryExerciseSet.workoutHistoryExercise =
+        mockWorkoutHistoryExercise;
       workoutHistoryExerciseSet.setNumber = 1;
       // Time-based exercise - weight remains undefined
       workoutHistoryExerciseSet.reps = 60; // 60 seconds
