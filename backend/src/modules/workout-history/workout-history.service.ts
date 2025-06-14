@@ -99,11 +99,11 @@ export class WorkoutHistoryService {
             'workoutHistoryExercises.workoutHistoryExerciseSets',
           ],
         });
-        
+
         if (!result) {
           throw new Error('Failed to create workout history');
         }
-        
+
         return result;
       } catch (error) {
         console.error('[TRANSACTION ERROR] Create workout history:', error);
