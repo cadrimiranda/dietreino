@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 import * as Entities from './entities';
 import { UsersModule } from './modules/users/users.module';
 import { WorkoutModule } from './modules/workout/workout.module';
+import { WorkoutHistoryModule } from './modules/workout-history/workout-history.module';
 import { XlsxModule } from './modules/xlsx/xlsx.module';
 import { join } from 'path';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
@@ -40,7 +41,7 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     UsersModule,
     WorkoutModule,
-
+    WorkoutHistoryModule,
     XlsxModule,
     AuthModule,
   ],
