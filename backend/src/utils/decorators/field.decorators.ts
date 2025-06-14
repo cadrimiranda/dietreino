@@ -8,7 +8,7 @@ export function Field(
   typeFunc?: ReturnTypeFunc,
   options?: FieldOptions,
 ): PropertyDecorator {
-  return (target: Object, propertyKey: string | symbol) => {
+  return (target: object, propertyKey: string | symbol) => {
     GqlField(typeFunc, {
       nullable: false,
       ...options,
@@ -20,7 +20,7 @@ export function FieldNullable(
   typeFunc?: ReturnTypeFunc,
   options?: FieldOptions,
 ): PropertyDecorator {
-  return (target: Object, propertyKey: string | symbol) => {
+  return (target: object, propertyKey: string | symbol) => {
     GqlField(typeFunc, {
       nullable: true,
       ...options,
@@ -32,7 +32,7 @@ export function FieldArray(
   typeFunc: ReturnTypeFunc,
   options?: FieldOptions,
 ): PropertyDecorator {
-  return (target: Object, propertyKey: string | symbol) => {
+  return (target: object, propertyKey: string | symbol) => {
     GqlField(() => [typeFunc()], {
       nullable: false,
       ...options,
@@ -44,7 +44,7 @@ export function FieldArrayNullable(
   typeFunc: ReturnTypeFunc,
   options?: FieldOptions,
 ): PropertyDecorator {
-  return (target: Object, propertyKey: string | symbol) => {
+  return (target: object, propertyKey: string | symbol) => {
     GqlField(() => [typeFunc()], {
       nullable: true,
       ...options,

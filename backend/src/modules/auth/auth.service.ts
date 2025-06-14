@@ -64,7 +64,7 @@ export class AuthService {
         secret:
           this.configService.get<string>('JWT_REFRESH_SECRET') ||
           this.configService.get<string>('JWT_SECRET'),
-      }) as JwtPayload;
+      });
 
       // Verificar se o token é do tipo refresh
       if (payload.type !== 'refresh') {

@@ -40,7 +40,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
     };
 
     mockDataSource = {
-      transaction: jest.fn(callback => callback(mockEntityManager)),
+      transaction: jest.fn((callback) => callback(mockEntityManager)),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -87,12 +87,12 @@ describe('WorkoutService - updateWorkoutExercises', () => {
         trainingDays: [
           {
             name: 'Day 1',
-            order: 0,  // Explicitly ensure order is 0
+            order: 0, // Explicitly ensure order is 0
             dayOfWeek: 0,
             exercises: [
               {
                 exerciseId: 'ex1',
-                order: 0,  // First exercise order 0
+                order: 0, // First exercise order 0
                 repSchemes: [
                   { sets: 2, minReps: 10, maxReps: 12 },
                   { sets: 2, minReps: 8, maxReps: 10 },
@@ -113,7 +113,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
 
       mockRepository.findById.mockResolvedValue(mockWorkout);
       mockExerciseService.findById.mockResolvedValue(mockExercise);
-      
+
       // Mock saves
       mockEntityManager.save.mockImplementation((EntityClass, data) => {
         if (EntityClass.name === 'TrainingDay') {
@@ -136,12 +136,13 @@ describe('WorkoutService - updateWorkoutExercises', () => {
         expect.objectContaining({
           sets: 5,
           order: 0,
-        })
+        }),
       );
-      
+
       // Additional verification that order is always a valid number
       const trainingDayCall = mockEntityManager.save.mock.calls.find(
-        call => call[1].hasOwnProperty('order') && call[1].hasOwnProperty('name')
+        (call) =>
+          call[1].hasOwnProperty('order') && call[1].hasOwnProperty('name'),
       );
       if (trainingDayCall) {
         expect(trainingDayCall[1].order).toBe(0);
@@ -184,7 +185,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
 
       mockRepository.findById.mockResolvedValue(mockWorkout);
       mockExerciseService.findById.mockResolvedValue(mockExercise);
-      
+
       mockEntityManager.save.mockImplementation((EntityClass, data) => {
         if (EntityClass.name === 'TrainingDayExercise') {
           // Verify default sets value
@@ -200,7 +201,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
         expect.any(Function),
         expect.objectContaining({
           sets: 1,
-        })
+        }),
       );
     });
 
@@ -227,9 +228,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
               {
                 exerciseId: 'ex1',
                 order: 0,
-                repSchemes: [
-                  { sets: 4, minReps: 8, maxReps: 10 },
-                ],
+                repSchemes: [{ sets: 4, minReps: 8, maxReps: 10 }],
                 restIntervals: [],
               },
             ],
@@ -239,7 +238,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
 
       mockRepository.findById.mockResolvedValue(mockWorkout);
       mockExerciseService.findById.mockResolvedValue(mockExercise);
-      
+
       mockEntityManager.save.mockImplementation((EntityClass, data) => {
         if (EntityClass.name === 'TrainingDayExercise') {
           expect(data.sets).toBe(4);
@@ -268,7 +267,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
       };
 
       await expect(service.updateWorkoutExercises(input)).rejects.toThrow(
-        'Não é possível editar um treino que já foi iniciado.'
+        'Não é possível editar um treino que já foi iniciado.',
       );
     });
 
@@ -281,7 +280,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
       };
 
       await expect(service.updateWorkoutExercises(input)).rejects.toThrow(
-        NotFoundException
+        NotFoundException,
       );
     });
 
@@ -315,7 +314,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
       };
 
       await expect(service.updateWorkoutExercises(input)).rejects.toThrow(
-        NotFoundException
+        NotFoundException,
       );
     });
   });
@@ -341,46 +340,80 @@ describe('WorkoutService - updateWorkoutExercises', () => {
             order: 0,
             dayOfWeek: 0,
             exercises: [
-              { exerciseId: 'ex1', order: 0, repSchemes: [], restIntervals: [] },
-              { exerciseId: 'ex1', order: 1, repSchemes: [], restIntervals: [] },
+              {
+                exerciseId: 'ex1',
+                order: 0,
+                repSchemes: [],
+                restIntervals: [],
+              },
+              {
+                exerciseId: 'ex1',
+                order: 1,
+                repSchemes: [],
+                restIntervals: [],
+              },
             ],
           },
           {
-            name: 'Day 2', 
+            name: 'Day 2',
             order: 1,
             dayOfWeek: 1,
             exercises: [
-              { exerciseId: 'ex1', order: 0, repSchemes: [], restIntervals: [] },
+              {
+                exerciseId: 'ex1',
+                order: 0,
+                repSchemes: [],
+                restIntervals: [],
+              },
             ],
           },
           {
             name: 'Day 3',
-            order: 2, 
+            order: 2,
             dayOfWeek: 2,
             exercises: [
-              { exerciseId: 'ex1', order: 0, repSchemes: [], restIntervals: [] },
-              { exerciseId: 'ex1', order: 1, repSchemes: [], restIntervals: [] },
-              { exerciseId: 'ex1', order: 2, repSchemes: [], restIntervals: [] },
+              {
+                exerciseId: 'ex1',
+                order: 0,
+                repSchemes: [],
+                restIntervals: [],
+              },
+              {
+                exerciseId: 'ex1',
+                order: 1,
+                repSchemes: [],
+                restIntervals: [],
+              },
+              {
+                exerciseId: 'ex1',
+                order: 2,
+                repSchemes: [],
+                restIntervals: [],
+              },
             ],
           },
         ],
       };
 
       // Validate proper sequential ordering before test execution
-      const trainingDayOrders = input.trainingDays.map(td => td.order).sort((a, b) => a - b);
+      const trainingDayOrders = input.trainingDays
+        .map((td) => td.order)
+        .sort((a, b) => a - b);
       expect(trainingDayOrders).toEqual([0, 1, 2]);
-      
+
       // Validate each training day has proper exercise ordering
       input.trainingDays.forEach((day, dayIndex) => {
         expect(day.order).toBe(dayIndex);
         expect(typeof day.order).toBe('number');
         expect(day.order).not.toBeNull();
         expect(day.order).not.toBeUndefined();
-        
-        const exerciseOrders = day.exercises.map(ex => ex.order).sort((a, b) => a - b);
+
+        const exerciseOrders = day.exercises
+          .map((ex) => ex.order)
+          .sort((a, b) => a - b);
         const expectedOrders = day.exercises.map((_, index) => index);
         expect(exerciseOrders).toEqual(expectedOrders);
-        
+
         day.exercises.forEach((exercise, exerciseIndex) => {
           expect(exercise.order).toBe(exerciseIndex);
           expect(typeof exercise.order).toBe('number');
@@ -406,7 +439,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
 
       // Verify all save calls had proper order values
       const saveCalls = mockEntityManager.save.mock.calls;
-      saveCalls.forEach(call => {
+      saveCalls.forEach((call) => {
         const data = call[1];
         if (data.hasOwnProperty('order')) {
           expect(typeof data.order).toBe('number');
@@ -422,21 +455,21 @@ describe('WorkoutService - updateWorkoutExercises', () => {
       const validTestInputs = [
         {
           name: 'Single Day',
-          order: 0,  // Must be explicit
+          order: 0, // Must be explicit
           dayOfWeek: 0,
           exercises: [
-            { exerciseId: 'ex1', order: 0, repSchemes: [], restIntervals: [] }
+            { exerciseId: 'ex1', order: 0, repSchemes: [], restIntervals: [] },
           ],
         },
         {
           name: 'Multi Day',
-          order: 1,  // Sequential
-          dayOfWeek: 1, 
+          order: 1, // Sequential
+          dayOfWeek: 1,
           exercises: [
             { exerciseId: 'ex1', order: 0, repSchemes: [], restIntervals: [] },
-            { exerciseId: 'ex2', order: 1, repSchemes: [], restIntervals: [] }
+            { exerciseId: 'ex2', order: 1, repSchemes: [], restIntervals: [] },
           ],
-        }
+        },
       ];
 
       validTestInputs.forEach((day, dayIndex) => {
@@ -445,7 +478,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
         expect(typeof day.order).toBe('number');
         expect(day.order).not.toBeNull();
         expect(day.order).not.toBeUndefined();
-        
+
         // Exercise order validation
         day.exercises.forEach((exercise, exerciseIndex) => {
           expect(exercise.order).toBe(exerciseIndex);
@@ -594,11 +627,14 @@ describe('WorkoutService - createWorkout', () => {
       expect(mockEntityManager.createQueryBuilder).toHaveBeenCalled();
 
       // Verify workout creation
-      expect(mockEntityManager.save).toHaveBeenCalledWith('workouts', expect.objectContaining({
-        user_id: 'user-123',
-        name: 'Test Workout',
-        is_active: true,
-      }));
+      expect(mockEntityManager.save).toHaveBeenCalledWith(
+        'workouts',
+        expect.objectContaining({
+          user_id: 'user-123',
+          name: 'Test Workout',
+          is_active: true,
+        }),
+      );
 
       expect(result).toEqual(mockCreatedWorkout);
     });
@@ -638,7 +674,9 @@ describe('WorkoutService - createWorkout', () => {
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      await expect(service.createWorkout(input)).rejects.toThrow(NotFoundException);
+      await expect(service.createWorkout(input)).rejects.toThrow(
+        NotFoundException,
+      );
 
       // Verify transaction rollback
       expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
@@ -649,7 +687,7 @@ describe('WorkoutService - createWorkout', () => {
       // Verify error logging
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('[TRANSACTION ERROR] createWorkout:'),
-        expect.any(Object)
+        expect.any(Object),
       );
 
       consoleSpy.mockRestore();
@@ -665,9 +703,13 @@ describe('WorkoutService - createWorkout', () => {
       };
 
       // Mock the connect to fail, but we need to make sure release still gets called in finally
-      mockQueryRunner.connect.mockRejectedValueOnce(new Error('Database connection failed'));
+      mockQueryRunner.connect.mockRejectedValueOnce(
+        new Error('Database connection failed'),
+      );
 
-      await expect(service.createWorkout(input)).rejects.toThrow('Database connection failed');
+      await expect(service.createWorkout(input)).rejects.toThrow(
+        'Database connection failed',
+      );
 
       expect(mockQueryRunner.release).toHaveBeenCalled();
     });
@@ -710,9 +752,12 @@ describe('WorkoutService - createWorkout', () => {
       await service.createWorkout(input);
 
       // Verify total sets calculation (3 + 2 = 5)
-      expect(mockEntityManager.save).toHaveBeenCalledWith('training_day_exercises', expect.objectContaining({
-        sets: 5,
-      }));
+      expect(mockEntityManager.save).toHaveBeenCalledWith(
+        'training_day_exercises',
+        expect.objectContaining({
+          sets: 5,
+        }),
+      );
     });
 
     it('should use default sets when no rep schemes provided', async () => {
@@ -748,9 +793,12 @@ describe('WorkoutService - createWorkout', () => {
       await service.createWorkout(input);
 
       // Verify default sets value
-      expect(mockEntityManager.save).toHaveBeenCalledWith('training_day_exercises', expect.objectContaining({
-        sets: 1,
-      }));
+      expect(mockEntityManager.save).toHaveBeenCalledWith(
+        'training_day_exercises',
+        expect.objectContaining({
+          sets: 1,
+        }),
+      );
     });
   });
 });
@@ -866,8 +914,7 @@ describe('WorkoutService - importSheetWorkout', () => {
         .mockResolvedValueOnce({}) // rep scheme save
         .mockResolvedValueOnce({}); // rest interval save
 
-      mockEntityManager.findOne
-        .mockResolvedValueOnce(mockExercise); // find existing exercise
+      mockEntityManager.findOne.mockResolvedValueOnce(mockExercise); // find existing exercise
 
       mockRepository.findById.mockResolvedValue(mockCreatedWorkout);
 
@@ -881,11 +928,14 @@ describe('WorkoutService - importSheetWorkout', () => {
       expect(mockQueryRunner.rollbackTransaction).not.toHaveBeenCalled();
 
       // Verify workout creation
-      expect(mockEntityManager.save).toHaveBeenCalledWith('workouts', expect.objectContaining({
-        user_id: 'user-123',
-        name: 'Imported Workout',
-        is_active: true,
-      }));
+      expect(mockEntityManager.save).toHaveBeenCalledWith(
+        'workouts',
+        expect.objectContaining({
+          user_id: 'user-123',
+          name: 'Imported Workout',
+          is_active: true,
+        }),
+      );
 
       expect(result).toHaveProperty('id', 'workout-123');
     });
@@ -934,9 +984,12 @@ describe('WorkoutService - importSheetWorkout', () => {
       await service.importSheetWorkout(input);
 
       // Verify new exercise creation
-      expect(mockEntityManager.save).toHaveBeenCalledWith('exercises', expect.objectContaining({
-        name: 'New Exercise',
-      }));
+      expect(mockEntityManager.save).toHaveBeenCalledWith(
+        'exercises',
+        expect.objectContaining({
+          name: 'New Exercise',
+        }),
+      );
     });
 
     it('should rollback transaction on import error', async () => {
@@ -961,11 +1014,15 @@ describe('WorkoutService - importSheetWorkout', () => {
         ],
       };
 
-      mockEntityManager.save.mockRejectedValue(new Error('Database save failed'));
+      mockEntityManager.save.mockRejectedValue(
+        new Error('Database save failed'),
+      );
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      await expect(service.importSheetWorkout(input)).rejects.toThrow('Database save failed');
+      await expect(service.importSheetWorkout(input)).rejects.toThrow(
+        'Database save failed',
+      );
 
       // Verify transaction rollback
       expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
@@ -976,7 +1033,7 @@ describe('WorkoutService - importSheetWorkout', () => {
       // Verify error logging
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining('[TRANSACTION ERROR] importSheetWorkout:'),
-        expect.any(Object)
+        expect.any(Object),
       );
 
       consoleSpy.mockRestore();
@@ -1011,10 +1068,13 @@ describe('WorkoutService - importSheetWorkout', () => {
       const result = await service.importSheetWorkout(input);
 
       // Verify workout update instead of creation
-      expect(mockEntityManager.save).toHaveBeenCalledWith('workouts', expect.objectContaining({
-        id: 'existing-workout-123',
-        name: 'Updated Workout Name',
-      }));
+      expect(mockEntityManager.save).toHaveBeenCalledWith(
+        'workouts',
+        expect.objectContaining({
+          id: 'existing-workout-123',
+          name: 'Updated Workout Name',
+        }),
+      );
 
       expect(result).toHaveProperty('name', 'Existing Workout');
     });

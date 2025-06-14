@@ -1,16 +1,32 @@
 import { InputType, Field, ID } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsOptional, IsArray, ValidateNested, IsNumber, Min, Max, Validate } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  Min,
+  Max,
+  Validate,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import {
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+} from 'class-validator';
 
 @ValidatorConstraint({ name: 'uniqueDaysOfWeek', async: false })
-export class UniqueDaysOfWeekConstraint implements ValidatorConstraintInterface {
+export class UniqueDaysOfWeekConstraint
+  implements ValidatorConstraintInterface
+{
   validate(trainingDays: CreateTrainingDayInput[], args: ValidationArguments) {
     if (!Array.isArray(trainingDays)) return true;
-    
-    const daysOfWeek = trainingDays.map(day => day.dayOfWeek);
+
+    const daysOfWeek = trainingDays.map((day) => day.dayOfWeek);
     const uniqueDays = new Set(daysOfWeek);
-    
+
     return uniqueDays.size === daysOfWeek.length;
   }
 
