@@ -1,11 +1,18 @@
 import React from "react";
-import { SafeAreaView } from "react-native";
-import HomeDashboard from "@/components/dashbaord/HomeDashboard";
+import { SafeAreaView, StyleSheet } from "react-native";
+import TodayWorkout from "@/components/today/TodayWorkout";
 
 export default function HomeScreen() {
   return (
-    <SafeAreaView>
-      <HomeDashboard />
+    <SafeAreaView style={styles.container}>
+      <TodayWorkout />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+});

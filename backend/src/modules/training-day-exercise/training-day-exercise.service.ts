@@ -51,20 +51,12 @@ export class TrainingDayExerciseService extends BaseService<TrainingDayExercise>
           name: exerciseName,
         });
       }
-
-      // Calculate total sets from all rep schemes
-      const totalSets = repSchemes.reduce(
-        (sum, scheme) => sum + scheme.sets,
-        0,
-      );
-
+      
       const trainingDayExercise =
         await this.trainingDayExerciseRepository.create({
           trainingDay: { id: trainingDayId },
           exercise: { id: exercise.id },
           order: createdExercises.length + 1,
-          sets: totalSets || 1, // default to 1 if no rep schemes
-          notes: '',
         });
 
       if (repSchemes.length > 0) {

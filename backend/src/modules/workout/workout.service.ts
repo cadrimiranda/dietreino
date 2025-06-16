@@ -237,22 +237,12 @@ export class WorkoutService {
             });
           }
 
-          // Calculate total sets
-          const totalSets = exerciseInfo.repSchemes.reduce(
-            (sum, rs) => sum + rs.sets,
-            0,
-          );
-
           // Create training day exercise
-          const trainingDayExercise = await queryRunner.manager.save(
-            TrainingDayExercise,
-            {
-              trainingDay: { id: trainingDay.id } as TrainingDay,
-              exercise: { id: exercise.id } as Exercise,
-              order: i,
-              sets: totalSets || 1,
-            },
-          );
+          const trainingDayExercise = await queryRunner.manager.save(TrainingDayExercise, {
+            trainingDay: { id: trainingDay.id } as TrainingDay,
+            exercise: { id: exercise.id } as Exercise,
+            order: i,
+          });
 
           // Create rep schemes
           for (const rs of exerciseInfo.repSchemes) {
@@ -357,15 +347,9 @@ export class WorkoutService {
             );
           }
 
-          // Calculate total sets from rep schemes
-          const totalSets = exInput.repSchemes.reduce(
-            (sum, rs) => sum + rs.sets,
-            0,
-          );
 
           const trainingDayExercise = await manager.save(TrainingDayExercise, {
             order: exInput.order,
-            sets: totalSets || 1, // default to 1 if no rep schemes
             trainingDay: { id: trainingDay.id },
             exercise: { id: exercise.id },
           });
@@ -461,11 +445,6 @@ export class WorkoutService {
             );
           }
 
-          // Calculate total sets from rep schemes
-          const totalSets = exerciseInput.repSchemes.reduce(
-            (sum, rs) => sum + rs.sets,
-            0,
-          );
 
           // Create training day exercise
           const trainingDayExercise = await queryRunner.manager.save(
@@ -474,7 +453,6 @@ export class WorkoutService {
               training_day_id: (trainingDay as any).id,
               exercise_id: (exercise as any).id,
               order: exerciseInput.order,
-              sets: totalSets || 1,
               created_at: new Date(),
               updated_at: new Date(),
             },
