@@ -1,4 +1,4 @@
-schema: ../backend/src/schema.graphql
+schema: http://localhost:3000/graphql
 generates:
   ./generated/graphql.ts:
     plugins:
@@ -9,8 +9,9 @@ generates:
       withHooks: true
       withComponent: false
       withHOC: false
+
   ./generated/introspection.json:
     plugins:
       - introspection
     config:
-      minify: true
+      minify: false

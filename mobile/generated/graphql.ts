@@ -13,9 +13,7 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
-  /** A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format. */
   DateTime: { input: any; output: any; }
-  /** The `Upload` scalar type represents a file upload. */
   Upload: { input: any; output: any; }
 };
 
@@ -329,6 +327,7 @@ export type TrainingDayExercise = {
   order: Scalars['Float']['output'];
   repSchemes: Array<RepScheme>;
   restIntervals: Array<RestInterval>;
+  sets: Scalars['Float']['output'];
   updatedAt: Scalars['DateTime']['output'];
 };
 
@@ -401,7 +400,7 @@ export type UserType = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   nutritionist?: Maybe<UserType>;
-  phone: Scalars['String']['output'];
+  phone?: Maybe<Scalars['String']['output']>;
   role: UserRole;
   trainer?: Maybe<UserType>;
   updatedAt: Scalars['DateTime']['output'];
