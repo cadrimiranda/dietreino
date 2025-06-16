@@ -16,7 +16,7 @@ export class FixAllEntityMismatches1748527130277 implements MigrationInterface {
       ALTER TABLE "workout" 
       DROP COLUMN IF EXISTS "created_at"
     `);
-    
+
     // Rename created_at_timestamp to created_at to match BaseEntity
     await queryRunner.query(`
       ALTER TABLE "workout" 
@@ -25,7 +25,7 @@ export class FixAllEntityMismatches1748527130277 implements MigrationInterface {
 
     // 3. Fix all updated_at columns to have proper auto-update behavior
     // This ensures TypeORM's @UpdateDateColumn works correctly
-    
+
     // Users table
     await queryRunner.query(`
       CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -39,8 +39,14 @@ export class FixAllEntityMismatches1748527130277 implements MigrationInterface {
 
     // Create triggers for all tables to auto-update updated_at
     const tables = [
-      'users', 'workout', 'training_days', 'exercises', 
-      'training_day_exercises', 'weekly_loads', 'rep_schemes', 'rest_intervals'
+      'users',
+      'workout',
+      'training_days',
+      'exercises',
+      'training_day_exercises',
+      'weekly_loads',
+      'rep_schemes',
+      'rest_intervals',
     ];
 
     for (const table of tables) {
@@ -69,23 +75,23 @@ export class FixAllEntityMismatches1748527130277 implements MigrationInterface {
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS "IDX_users_trainer_id" ON "users" ("trainer_id")
     `);
-    
+
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS "IDX_users_nutritionist_id" ON "users" ("nutritionist_id")
     `);
-    
+
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS "IDX_workout_user_id" ON "workout" ("user_id")
     `);
-    
+
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS "IDX_training_days_workout_id" ON "training_days" ("workout_id")
     `);
-    
+
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS "IDX_training_day_exercises_training_day_id" ON "training_day_exercises" ("training_day_id")
     `);
-    
+
     await queryRunner.query(`
       CREATE INDEX IF NOT EXISTS "IDX_training_day_exercises_exercise_id" ON "training_day_exercises" ("exercise_id")
     `);
@@ -120,23 +126,39 @@ export class FixAllEntityMismatches1748527130277 implements MigrationInterface {
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_users_trainer_id"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_users_nutritionist_id"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_workout_user_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_training_days_workout_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_training_day_exercises_training_day_id"`);
-    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_training_day_exercises_exercise_id"`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_training_days_workout_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_training_day_exercises_training_day_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS "IDX_training_day_exercises_exercise_id"`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS "IDX_users_email_unique"`);
 
     // Remove triggers
     const tables = [
-      'users', 'workout', 'training_days', 'exercises', 
-      'training_day_exercises', 'weekly_loads', 'rep_schemes', 'rest_intervals'
+      'users',
+      'workout',
+      'training_days',
+      'exercises',
+      'training_day_exercises',
+      'weekly_loads',
+      'rep_schemes',
+      'rest_intervals',
     ];
 
     for (const table of tables) {
-      await queryRunner.query(`DROP TRIGGER IF EXISTS update_${table}_updated_at ON "${table}"`);
+      await queryRunner.query(
+        `DROP TRIGGER IF EXISTS update_${table}_updated_at ON "${table}"`,
+      );
     }
 
     // Remove function
-    await queryRunner.query(`DROP FUNCTION IF EXISTS update_updated_at_column()`);
+    await queryRunner.query(
+      `DROP FUNCTION IF EXISTS update_updated_at_column()`,
+    );
 
     // Revert column changes
     await queryRunner.query(`

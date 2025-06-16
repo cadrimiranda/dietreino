@@ -5,14 +5,14 @@ export class FixUpdatedAtColumns1748527130276 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Fix updated_at columns to have proper default values and NOT NULL constraint
-    
+
     // Users table - set default value for existing null records and add constraint
     await queryRunner.query(`
       UPDATE "users" 
       SET "updated_at" = "created_at" 
       WHERE "updated_at" IS NULL
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "users" 
       ALTER COLUMN "updated_at" SET DEFAULT now(),
@@ -25,7 +25,7 @@ export class FixUpdatedAtColumns1748527130276 implements MigrationInterface {
       SET "updated_at" = "created_at_timestamp" 
       WHERE "updated_at" IS NULL
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "workout" 
       ALTER COLUMN "updated_at" SET DEFAULT now(),
@@ -38,7 +38,7 @@ export class FixUpdatedAtColumns1748527130276 implements MigrationInterface {
       SET "updated_at" = "created_at" 
       WHERE "updated_at" IS NULL
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "training_days" 
       ALTER COLUMN "updated_at" SET DEFAULT now(),
@@ -51,7 +51,7 @@ export class FixUpdatedAtColumns1748527130276 implements MigrationInterface {
       SET "updated_at" = "created_at" 
       WHERE "updated_at" IS NULL
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "exercises" 
       ALTER COLUMN "updated_at" SET DEFAULT now(),
@@ -64,7 +64,7 @@ export class FixUpdatedAtColumns1748527130276 implements MigrationInterface {
       SET "updated_at" = "created_at" 
       WHERE "updated_at" IS NULL
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "training_day_exercises" 
       ALTER COLUMN "updated_at" SET DEFAULT now(),
@@ -77,7 +77,7 @@ export class FixUpdatedAtColumns1748527130276 implements MigrationInterface {
       SET "updated_at" = "created_at" 
       WHERE "updated_at" IS NULL
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "weekly_loads" 
       ALTER COLUMN "updated_at" SET DEFAULT now(),
@@ -90,7 +90,7 @@ export class FixUpdatedAtColumns1748527130276 implements MigrationInterface {
       SET "updated_at" = "created_at" 
       WHERE "updated_at" IS NULL
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "rep_schemes" 
       ALTER COLUMN "updated_at" SET DEFAULT now(),
@@ -103,7 +103,7 @@ export class FixUpdatedAtColumns1748527130276 implements MigrationInterface {
       SET "updated_at" = "created_at" 
       WHERE "updated_at" IS NULL
     `);
-    
+
     await queryRunner.query(`
       ALTER TABLE "rest_intervals" 
       ALTER COLUMN "updated_at" SET DEFAULT now(),
@@ -113,13 +113,29 @@ export class FixUpdatedAtColumns1748527130276 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Revert all updated_at columns back to nullable
-    await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`);
-    await queryRunner.query(`ALTER TABLE "workout" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`);
-    await queryRunner.query(`ALTER TABLE "training_days" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`);
-    await queryRunner.query(`ALTER TABLE "exercises" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`);
-    await queryRunner.query(`ALTER TABLE "training_day_exercises" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`);
-    await queryRunner.query(`ALTER TABLE "weekly_loads" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`);
-    await queryRunner.query(`ALTER TABLE "rep_schemes" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`);
-    await queryRunner.query(`ALTER TABLE "rest_intervals" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`);
+    await queryRunner.query(
+      `ALTER TABLE "users" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "workout" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "training_days" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "exercises" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "training_day_exercises" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "weekly_loads" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "rep_schemes" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "rest_intervals" ALTER COLUMN "updated_at" DROP DEFAULT, ALTER COLUMN "updated_at" DROP NOT NULL`,
+    );
   }
 }

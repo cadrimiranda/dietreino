@@ -40,7 +40,7 @@ export class TrainingDayExerciseService extends BaseService<TrainingDayExercise>
   async createBatchByTrainingDay(input: WorkoutExerciseCreateData[]) {
     const createdExercises: TrainingDayExercise[] = [];
 
-    for (let data in input) {
+    for (const data in input) {
       const { exerciseName, trainingDayId, repSchemes, restIntervals } =
         input[data];
 
@@ -51,7 +51,6 @@ export class TrainingDayExerciseService extends BaseService<TrainingDayExercise>
           name: exerciseName,
         });
       }
-
       
       const trainingDayExercise =
         await this.trainingDayExerciseRepository.create({

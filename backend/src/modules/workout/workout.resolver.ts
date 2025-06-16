@@ -76,8 +76,8 @@ export class WorkoutResolver {
     @Args('input') input: ToggleWorkoutActiveInput,
   ): Promise<Partial<WorkoutType>> {
     const workout = await this.workoutService.toggleWorkoutActive(
-      input.id, 
-      input.active
+      input.id,
+      input.active,
     );
     return this.workoutService.toWorkoutType(workout);
   }
