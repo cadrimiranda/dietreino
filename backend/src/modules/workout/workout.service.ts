@@ -238,11 +238,14 @@ export class WorkoutService {
           }
 
           // Create training day exercise
-          const trainingDayExercise = await queryRunner.manager.save(TrainingDayExercise, {
-            trainingDay: { id: trainingDay.id } as TrainingDay,
-            exercise: { id: exercise.id } as Exercise,
-            order: i,
-          });
+          const trainingDayExercise = await queryRunner.manager.save(
+            TrainingDayExercise,
+            {
+              trainingDay: { id: trainingDay.id } as TrainingDay,
+              exercise: { id: exercise.id } as Exercise,
+              order: i,
+            },
+          );
 
           // Create rep schemes
           for (const rs of exerciseInfo.repSchemes) {
@@ -347,7 +350,6 @@ export class WorkoutService {
             );
           }
 
-
           const trainingDayExercise = await manager.save(TrainingDayExercise, {
             order: exInput.order,
             trainingDay: { id: trainingDay.id },
@@ -444,7 +446,6 @@ export class WorkoutService {
               `Exercise with ID ${exerciseInput.exerciseId} not found`,
             );
           }
-
 
           // Create training day exercise
           const trainingDayExercise = await queryRunner.manager.save(

@@ -31,7 +31,6 @@ export class TrainingDayExercise extends BaseEntity {
   @Column({ type: 'int' })
   order: number;
 
-
   @OneToMany(() => WeeklyLoad, (wl: WeeklyLoad) => wl.trainingDayExercise, {
     eager: true,
   })

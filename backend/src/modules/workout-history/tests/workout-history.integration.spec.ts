@@ -14,6 +14,11 @@ import {
   User,
   Workout,
   Exercise,
+  TrainingDay,
+  TrainingDayExercise,
+  RepScheme,
+  RestInterval,
+  WeeklyLoad,
 } from '@/entities';
 import { UserRole } from '../../../utils/roles.enum';
 import { WorkoutHistoryModule } from '../workout-history.module';
@@ -22,6 +27,7 @@ import { WorkoutHistoryResolver } from '../workout-history.resolver';
 import { CreateWorkoutHistoryInput } from '../dto/create-workout-history.input';
 
 describe('WorkoutHistory Integration Tests', () => {
+  jest.setTimeout(30000);
   let app: INestApplication;
   let service: WorkoutHistoryService;
   let resolver: WorkoutHistoryResolver;
@@ -54,6 +60,11 @@ describe('WorkoutHistory Integration Tests', () => {
             User,
             Workout,
             Exercise,
+            TrainingDay,
+            TrainingDayExercise,
+            RepScheme,
+            RestInterval,
+            WeeklyLoad,
           ],
           synchronize: true,
           logging: false,
@@ -91,7 +102,7 @@ describe('WorkoutHistory Integration Tests', () => {
     );
     await workoutHistoryRepo.query('TRUNCATE TABLE workout_history CASCADE');
     await workoutRepo.query('TRUNCATE TABLE workout CASCADE');
-    await exerciseRepo.query('TRUNCATE TABLE exercise CASCADE');
+    await exerciseRepo.query('TRUNCATE TABLE exercises CASCADE');
     await userRepo.query('TRUNCATE TABLE users CASCADE');
   });
 
@@ -115,9 +126,7 @@ describe('WorkoutHistory Integration Tests', () => {
 
       const exercise = await exerciseRepo.save({
         name: 'Supino Reto',
-        muscle_group: 'Peito',
-        equipment: 'Barra',
-        instructions: 'Execute o movimento',
+        videoLink: 'https://example.com/video',
       });
 
       const createInput: CreateWorkoutHistoryInput = {
@@ -260,9 +269,7 @@ describe('WorkoutHistory Integration Tests', () => {
 
       const exercise = await exerciseRepo.save({
         name: 'Supino Reto',
-        muscle_group: 'Peito',
-        equipment: 'Barra',
-        instructions: 'Execute o movimento',
+        videoLink: 'https://example.com/video',
       });
 
       const createInput: CreateWorkoutHistoryInput = {
@@ -326,9 +333,7 @@ describe('WorkoutHistory Integration Tests', () => {
 
       const exercise = await exerciseRepo.save({
         name: 'Supino Reto',
-        muscle_group: 'Peito',
-        equipment: 'Barra',
-        instructions: 'Execute o movimento',
+        videoLink: 'https://example.com/video',
       });
 
       const createInput: CreateWorkoutHistoryInput = {

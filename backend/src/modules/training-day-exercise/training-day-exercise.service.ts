@@ -51,7 +51,7 @@ export class TrainingDayExerciseService extends BaseService<TrainingDayExercise>
           name: exerciseName,
         });
       }
-      
+
       const trainingDayExercise =
         await this.trainingDayExerciseRepository.create({
           trainingDay: { id: trainingDayId },
