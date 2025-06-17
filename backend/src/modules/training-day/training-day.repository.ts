@@ -13,7 +13,7 @@ export class TrainingDayRepository extends BaseRepository<TrainingDay> {
     super(repository);
   }
 
-  async findByWorkoutId(workoutId: number): Promise<TrainingDay[]> {
+  async findByWorkoutId(workoutId: string): Promise<TrainingDay[]> {
     return this.getRepository().find({
       where: { workout_id: workoutId },
       order: { order: 'ASC' },
@@ -21,7 +21,7 @@ export class TrainingDayRepository extends BaseRepository<TrainingDay> {
   }
 
   async findByWorkoutAndDay(
-    workoutId: number,
+    workoutId: string,
     dayOfWeek: number,
   ): Promise<TrainingDay | null> {
     return this.getRepository().findOne({
