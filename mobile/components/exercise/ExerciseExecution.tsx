@@ -12,6 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useWorkoutHistory } from '@/hooks/useWorkoutHistory';
+import { WorkoutHistoryMapper } from '@/utils/workoutHistoryMapper';
 
 interface ExerciseSet {
   id: string;
@@ -39,7 +41,8 @@ interface Exercise {
 export default function ExerciseExecution() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { activeWorkout } = useCurrentUser();
+  const { user, activeWorkout } = useCurrentUser();
+  const { saveWorkoutHistory, loading: savingHistory, error: saveError, success: saveSuccess } = useWorkoutHistory();
   
   // Get exercises data from navigation params
   const exercises: Exercise[] = params.exercises 
@@ -63,6 +66,9 @@ export default function ExerciseExecution() {
   const [showTimeSelector, setShowTimeSelector] = useState(false);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
   const [showExerciseDropdown, setShowExerciseDropdown] = useState(false);
+  const [workoutStartTime] = useState(new Date());
+  const [allExerciseSets, setAllExerciseSets] = useState<Map<number, ExerciseSet[]>>(new Map());
+  const [allExerciseNotes, setAllExerciseNotes] = useState<Map<number, string>>(new Map());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const stopwatchRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -79,20 +85,33 @@ export default function ExerciseExecution() {
 
   useEffect(() => {
     if (currentExercise) {
-      // Initialize sets for current exercise
-      const initialSets: ExerciseSet[] = Array.from({ length: currentExercise.sets }, (_, index) => ({
-        id: `set-${index}`,
-        weight: 0,
-        reps: 0,
-        completed: false,
-      }));
-      setSets(initialSets);
-      setCurrentSet(0);
+      // Load existing sets for this exercise if any
+      const existingSets = allExerciseSets.get(currentExerciseIndex);
+      if (existingSets) {
+        setSets(existingSets);
+        // Find current set index
+        const nextIncompleteSet = existingSets.findIndex(set => !set.completed);
+        setCurrentSet(nextIncompleteSet >= 0 ? nextIncompleteSet : existingSets.length - 1);
+      } else {
+        // Initialize sets for current exercise
+        const initialSets: ExerciseSet[] = Array.from({ length: currentExercise.sets }, (_, index) => ({
+          id: `set-${index}`,
+          weight: 0,
+          reps: 0,
+          completed: false,
+        }));
+        setSets(initialSets);
+        setCurrentSet(0);
+      }
+      
+      // Load existing notes
+      const existingNotes = allExerciseNotes.get(currentExerciseIndex) || '';
+      setExerciseNotes(existingNotes);
+      
       setWeight('');
       setReps('');
-      setExerciseNotes('');
     }
-  }, [currentExerciseIndex, currentExercise?.sets]);
+  }, [currentExerciseIndex, currentExercise?.sets, allExerciseSets, allExerciseNotes]);
 
   useEffect(() => {
     if (isResting && restTimer > 0) {
@@ -198,11 +217,15 @@ export default function ExerciseExecution() {
   };
 
   const handleSelectExercise = (exerciseIndex: number) => {
+    // Save current exercise notes before switching
+    if (exerciseNotes.trim()) {
+      setAllExerciseNotes(prev => new Map(prev.set(currentExerciseIndex, exerciseNotes)));
+    }
+    
     setCurrentExerciseIndex(exerciseIndex);
     setShowExerciseDropdown(false);
     
     // Reset states for new exercise
-    setCurrentSet(0);
     setWeight('');
     setReps('');
     setIsCountdownRunning(false);
@@ -290,6 +313,9 @@ export default function ExerciseExecution() {
       completed: true,
     };
     setSets(updatedSets);
+    
+    // Store sets for this exercise
+    setAllExerciseSets(prev => new Map(prev.set(currentExerciseIndex, updatedSets)));
 
     // Start rest timer if not the last set
     if (currentSet < (currentExercise?.sets || 0) - 1) {
@@ -338,11 +364,16 @@ export default function ExerciseExecution() {
     if (isWorkoutFullyCompleted()) {
       Alert.alert(
         'Treino Finalizado!',
-        'Parabéns! Você completou todos os exercícios do treino.',
+        'Parabéns! Você completou todos os exercícios do treino. Deseja salvar o histórico?',
         [
           {
-            text: 'Finalizar',
+            text: 'Não Salvar',
+            style: 'cancel',
             onPress: () => router.back(),
+          },
+          {
+            text: 'Salvar e Finalizar',
+            onPress: handleSaveWorkoutHistory,
           }
         ]
       );
@@ -368,11 +399,16 @@ export default function ExerciseExecution() {
         // All exercises completed
         Alert.alert(
           'Treino Finalizado!',
-          'Parabéns! Você completou todos os exercícios do treino.',
+          'Parabéns! Você completou todos os exercícios do treino. Deseja salvar o histórico?',
           [
             {
-              text: 'Finalizar',
+              text: 'Não Salvar',
+              style: 'cancel',
               onPress: () => router.back(),
+            },
+            {
+              text: 'Salvar e Finalizar',
+              onPress: handleSaveWorkoutHistory,
             }
           ]
         );
@@ -440,6 +476,52 @@ export default function ExerciseExecution() {
     return '';
   };
 
+  const handleSaveWorkoutHistory = async () => {
+    if (!user || !activeWorkout) {
+      Alert.alert('Erro', 'Dados do usuário ou treino não encontrados.');
+      return;
+    }
+
+    try {
+      // Save current exercise notes if any
+      if (exerciseNotes.trim()) {
+        setAllExerciseNotes(prev => new Map(prev.set(currentExerciseIndex, exerciseNotes)));
+      }
+
+      const executionData = {
+        userId: user.id,
+        workoutId: activeWorkout.id,
+        workoutName: activeWorkout.name,
+        trainingDayName,
+        trainingDayOrder: 1, // Could be enhanced to get actual day order
+        exercises,
+        executedSets: allExerciseSets,
+        exerciseNotes: allExerciseNotes,
+        startTime: workoutStartTime,
+        endTime: new Date(),
+      };
+
+      const historyData = WorkoutHistoryMapper.mapToWorkoutHistory(executionData);
+      await saveWorkoutHistory(historyData);
+      
+      Alert.alert(
+        'Sucesso!',
+        'Histórico do treino salvo com sucesso.',
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+    } catch (error) {
+      console.error('Error saving workout history:', error);
+      Alert.alert(
+        'Erro',
+        'Não foi possível salvar o histórico. Deseja tentar novamente?',
+        [
+          { text: 'Não', style: 'cancel', onPress: () => router.back() },
+          { text: 'Tentar Novamente', onPress: handleSaveWorkoutHistory }
+        ]
+      );
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -465,6 +547,28 @@ export default function ExerciseExecution() {
         
         <View style={styles.headerSpacer} />
       </View>
+
+      {/* Saving Status */}
+      {savingHistory && (
+        <View style={styles.savingStatusCard}>
+          <Ionicons name="cloud-upload" size={20} color="#007AFF" />
+          <Text style={styles.savingStatusText}>Salvando histórico...</Text>
+        </View>
+      )}
+      
+      {saveSuccess && (
+        <View style={styles.successStatusCard}>
+          <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+          <Text style={styles.successStatusText}>Histórico salvo com sucesso!</Text>
+        </View>
+      )}
+      
+      {saveError && (
+        <View style={styles.errorStatusCard}>
+          <Ionicons name="alert-circle" size={20} color="#FF3B30" />
+          <Text style={styles.errorStatusText}>Erro ao salvar histórico</Text>
+        </View>
+      )}
 
       {/* Exercise Info */}
       <View style={styles.exerciseCard}>
@@ -1431,5 +1535,56 @@ const styles = StyleSheet.create({
     color: '#FF9500',
     fontSize: 14,
     fontWeight: '600',
+  },
+  savingStatusCard: {
+    margin: 16,
+    marginTop: 0,
+    padding: 16,
+    backgroundColor: '#F0F8FF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  savingStatusText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  successStatusCard: {
+    margin: 16,
+    marginTop: 0,
+    padding: 16,
+    backgroundColor: '#F0F9F5',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#34C759',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  successStatusText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#34C759',
+  },
+  errorStatusCard: {
+    margin: 16,
+    marginTop: 0,
+    padding: 16,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  errorStatusText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FF3B30',
   },
 });
