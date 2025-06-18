@@ -186,6 +186,7 @@ export default defineComponent({
         { name: "Clientes", path: "/clients", icon: "fas fa-user-group" },
         { name: "Treinos", path: "/training", icon: "fas fa-running" },
         { name: "Dietas", path: "/diet", icon: "fas fa-utensils" },
+        { name: "Histórico", path: "/workout-history", icon: "fas fa-chart-line" },
         { name: "Relatórios", path: "/reports", icon: "fas fa-clipboard-list" },
         { name: "Configurações", path: "/settings", icon: "fas fa-sliders-h" },
       ] as NavItem[],
