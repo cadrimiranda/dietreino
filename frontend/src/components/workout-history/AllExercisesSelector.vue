@@ -15,48 +15,53 @@
       />
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <a-card
-        v-for="exercise in filteredExercises"
-        :key="exercise.id"
-        :class="[
-          'cursor-pointer transition-all duration-200 hover:shadow-md',
-          selectedExerciseId === exercise.id ? 'border-green-500 bg-green-50' : 'hover:border-gray-300'
-        ]"
-        size="small"
-        @click="selectExercise(exercise)"
-      >
-        <div class="space-y-2">
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <h4 class="font-medium text-gray-900">{{ exercise.name }}</h4>
+    <div class="space-y-4">
+      <div v-for="exercise in filteredExercises" :key="exercise.id" class="exercise-item">
+        <a-card
+          :class="[
+            'cursor-pointer transition-all duration-200 hover:shadow-md',
+            selectedExerciseId === exercise.id ? 'border-green-500 bg-green-50' : 'hover:border-gray-300'
+          ]"
+          size="small"
+          @click="selectExercise(exercise)"
+        >
+          <div class="space-y-2">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <h4 class="font-medium text-gray-900">{{ exercise.name }}</h4>
+              </div>
+              <line-chart-outlined class="text-gray-400 flex-shrink-0" />
             </div>
-            <line-chart-outlined class="text-gray-400 flex-shrink-0" />
-          </div>
-          
-          <div class="text-xs text-gray-500 space-y-1">
-            <div>Aparece em: {{ exercise.trainingDays.join(', ') }}</div>
-            <div>{{ exercise.totalSets }} séries total</div>
-            <div v-if="exercise.lastWorkout">
-              Último treino: {{ formatDate(exercise.lastWorkout) }}
+            
+            <div class="text-xs text-gray-500 space-y-1">
+              <div>Aparece em: {{ exercise.trainingDays.join(', ') }}</div>
+              <div>{{ exercise.totalSets }} séries total</div>
+              <div v-if="exercise.lastWorkout">
+                Último treino: {{ formatDate(exercise.lastWorkout) }}
+              </div>
             </div>
-          </div>
-          
-          <!-- Mini preview dos dados -->
-          <div v-if="exercise.recentData.length > 0" class="mt-2">
-            <div class="text-xs text-gray-400 mb-1">Últimas 3 sessões:</div>
-            <div class="flex space-x-2">
-              <div 
-                v-for="data in exercise.recentData.slice(-3)" 
-                :key="data.date"
-                class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
-              >
-                {{ data.weight }}kg × {{ data.reps }}
+            
+            <!-- Mini preview dos dados -->
+            <div v-if="exercise.recentData.length > 0" class="mt-2">
+              <div class="text-xs text-gray-400 mb-1">Últimas 3 sessões:</div>
+              <div class="flex space-x-2">
+                <div 
+                  v-for="data in exercise.recentData.slice(-3)" 
+                  :key="data.date"
+                  class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
+                >
+                  {{ data.weight }}kg × {{ data.reps }}
+                </div>
               </div>
             </div>
           </div>
+        </a-card>
+        
+        <!-- Gráfico aparece imediatamente abaixo do exercício selecionado -->
+        <div v-if="selectedExerciseId === exercise.id" class="mt-3">
+          <slot name="exercise-chart" :exercise="exercise"></slot>
         </div>
-      </a-card>
+      </div>
     </div>
 
     <!-- Estado vazio -->
@@ -124,7 +129,12 @@ export default defineComponent({
     })
 
     const selectExercise = (exercise: AllExercise) => {
-      emit('exercise-selected', exercise)
+      // Se o exercício já está selecionado, desmarcar
+      if (props.selectedExerciseId === exercise.id) {
+        emit('exercise-selected', null)
+      } else {
+        emit('exercise-selected', exercise)
+      }
     }
 
     const onSearch = (value: string) => {

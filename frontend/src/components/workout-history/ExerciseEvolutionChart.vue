@@ -5,7 +5,7 @@
         <div class="flex justify-between items-center">
           <div>
             <h4 class="text-lg font-semibold">{{ exercise.name }}</h4>
-            <p class="text-sm text-gray-500">Evolução de Carga</p>
+            <p class="text-sm text-gray-500">Evolução de Peso</p>
           </div>
           <a-button 
             v-if="!showPreviousWorkouts" 
@@ -178,15 +178,7 @@ export default defineComponent({
               borderColor: 'rgb(59, 130, 246)',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               tension: 0.1,
-              yAxisID: 'y'
-            },
-            {
-              label: 'Volume (kg)',
-              data: data.map(d => d.volume),
-              borderColor: 'rgb(16, 185, 129)',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              tension: 0.1,
-              yAxisID: 'y1'
+              fill: true
             }
           ]
         },
@@ -213,18 +205,7 @@ export default defineComponent({
                 display: true,
                 text: 'Peso (kg)'
               },
-            },
-            y1: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              title: {
-                display: true,
-                text: 'Volume (kg)'
-              },
-              grid: {
-                drawOnChartArea: false,
-              },
+              beginAtZero: false
             }
           },
           plugins: {

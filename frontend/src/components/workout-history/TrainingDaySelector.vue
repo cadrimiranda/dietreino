@@ -25,27 +25,32 @@
 
     <div v-if="selectedDay" class="border-t pt-4">
       <h4 class="text-md font-medium mb-3">Exercícios - {{ selectedDay.name }}</h4>
-      <div class="space-y-2">
-        <a-card
-          v-for="exercise in selectedDay.exercises"
-          :key="exercise.id"
-          :class="[
-            'cursor-pointer transition-all duration-200',
-            selectedExerciseId === exercise.id ? 'border-green-500 bg-green-50' : 'hover:border-gray-300'
-          ]"
-          size="small"
-          @click="selectExercise(exercise)"
-        >
-          <div class="flex justify-between items-center">
-            <div>
-              <div class="font-medium">{{ exercise.exercise.name }}</div>
-              <div class="text-sm text-gray-500">
-                {{ exercise.sets }} séries • {{ exercise.repsDisplay }}
+      <div class="space-y-4">
+        <div v-for="exercise in selectedDay.exercises" :key="exercise.id" class="exercise-item">
+          <a-card
+            :class="[
+              'cursor-pointer transition-all duration-200',
+              selectedExerciseId === exercise.id ? 'border-green-500 bg-green-50' : 'hover:border-gray-300'
+            ]"
+            size="small"
+            @click="selectExercise(exercise)"
+          >
+            <div class="flex justify-between items-center">
+              <div>
+                <div class="font-medium">{{ exercise.exercise.name }}</div>
+                <div class="text-sm text-gray-500">
+                  {{ exercise.sets }} séries • {{ exercise.repsDisplay }}
+                </div>
               </div>
+              <line-chart-outlined class="text-gray-400" />
             </div>
-            <line-chart-outlined class="text-gray-400" />
+          </a-card>
+          
+          <!-- Gráfico aparece imediatamente abaixo do exercício selecionado -->
+          <div v-if="selectedExerciseId === exercise.id" class="mt-3">
+            <slot name="exercise-chart" :exercise="exercise"></slot>
           </div>
-        </a-card>
+        </div>
       </div>
     </div>
   </div>
@@ -103,7 +108,12 @@ export default defineComponent({
     }
 
     const selectExercise = (exercise: Exercise) => {
-      emit('exercise-selected', exercise)
+      // Se o exercício já está selecionado, desmarcar
+      if (props.selectedExerciseId === exercise.id) {
+        emit('exercise-selected', null)
+      } else {
+        emit('exercise-selected', exercise)
+      }
     }
 
     return {

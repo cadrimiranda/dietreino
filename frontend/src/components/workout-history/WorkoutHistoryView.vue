@@ -34,17 +34,17 @@
           :selected-exercise-id="selectedExerciseId"
           @day-selected="handleDaySelected"
           @exercise-selected="handleExerciseSelected"
-        />
-
-        <!-- Gráfico do Exercício Selecionado -->
-        <div v-if="selectedExercise && exerciseHistoryData">
-          <ExerciseEvolutionChart
-            :exercise="selectedExercise"
-            :workout-data="exerciseHistoryData.currentWorkoutData"
-            :workout-notes="exerciseHistoryData.notes"
-            :previous-workouts="exerciseHistoryData.previousWorkouts"
-          />
-        </div>
+        >
+          <template #exercise-chart="{ exercise }">
+            <ExerciseEvolutionChart
+              v-if="selectedExercise && exerciseHistoryData"
+              :exercise="selectedExercise"
+              :workout-data="exerciseHistoryData.currentWorkoutData"
+              :workout-notes="exerciseHistoryData.notes"
+              :previous-workouts="exerciseHistoryData.previousWorkouts"
+            />
+          </template>
+        </TrainingDaySelector>
       </div>
 
       <!-- Visualização de Todos os Exercícios -->
@@ -53,17 +53,17 @@
           :exercises="allExercises"
           :selected-exercise-id="selectedExerciseId"
           @exercise-selected="handleExerciseSelected"
-        />
-
-        <!-- Gráfico do Exercício Selecionado -->
-        <div v-if="selectedExercise && exerciseHistoryData">
-          <ExerciseEvolutionChart
-            :exercise="selectedExercise"
-            :workout-data="exerciseHistoryData.currentWorkoutData"
-            :workout-notes="exerciseHistoryData.notes"
-            :previous-workouts="exerciseHistoryData.previousWorkouts"
-          />
-        </div>
+        >
+          <template #exercise-chart="{ exercise }">
+            <ExerciseEvolutionChart
+              v-if="selectedExercise && exerciseHistoryData"
+              :exercise="selectedExercise"
+              :workout-data="exerciseHistoryData.currentWorkoutData"
+              :workout-notes="exerciseHistoryData.notes"
+              :previous-workouts="exerciseHistoryData.previousWorkouts"
+            />
+          </template>
+        </AllExercisesSelector>
       </div>
 
       <!-- Estado vazio -->
@@ -238,21 +238,29 @@ export default defineComponent({
     }
 
     const handleExerciseSelected = async (exercise: any) => {
-      selectedExerciseId.value = exercise.id
-      selectedExercise.value = exercise.exercise || exercise
-      
-      // Para demonstração, usar dados mock
-      exerciseHistoryData.value = {
-        currentWorkoutData: [
-          { date: '2024-01-15', weight: 80, reps: 10, volume: 800 },
-          { date: '2024-01-17', weight: 82.5, reps: 8, volume: 660 },
-          { date: '2024-01-19', weight: 85, reps: 12, volume: 1020 },
-        ],
-        notes: [
-          { date: '2024-01-15', note: 'Primeira vez fazendo este exercício' },
-          { date: '2024-01-19', note: 'Consegui aumentar o peso!' }
-        ],
-        previousWorkouts: []
+      if (exercise === null) {
+        // Desmarcando exercício
+        selectedExerciseId.value = undefined
+        selectedExercise.value = null
+        exerciseHistoryData.value = null
+      } else {
+        // Selecionando exercício
+        selectedExerciseId.value = exercise.id
+        selectedExercise.value = exercise.exercise || exercise
+        
+        // Para demonstração, usar dados mock
+        exerciseHistoryData.value = {
+          currentWorkoutData: [
+            { date: '2024-01-15', weight: 80, reps: 10 },
+            { date: '2024-01-17', weight: 82.5, reps: 8 },
+            { date: '2024-01-19', weight: 85, reps: 12 },
+          ],
+          notes: [
+            { date: '2024-01-15', note: 'Primeira vez fazendo este exercício' },
+            { date: '2024-01-19', note: 'Consegui aumentar o peso!' }
+          ],
+          previousWorkouts: []
+        }
       }
     }
 
