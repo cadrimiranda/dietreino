@@ -24,6 +24,57 @@
         </div>
       </div>
 
+      <!-- Detalhes das Séries por Data -->
+      <div v-if="workoutData.length > 0" class="mb-6">
+        <h5 class="text-md font-medium mb-3">Detalhes das Séries</h5>
+        <div class="space-y-4">
+          <a-card 
+            v-for="workout in workoutData" 
+            :key="workout.date" 
+            size="small"
+            class="bg-gray-50"
+          >
+            <div class="flex justify-between items-start mb-3">
+              <div>
+                <h6 class="font-medium text-gray-900">{{ formatDate(workout.date) }}</h6>
+                <p class="text-sm text-gray-600">Peso: {{ workout.weight }}kg</p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm text-gray-600">Total: {{ workout.totalSets || workout.sets?.length || 0 }} séries</p>
+              </div>
+            </div>
+            
+            <!-- Séries individuais -->
+            <div v-if="workout.sets && workout.sets.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              <div 
+                v-for="(set, index) in workout.sets" 
+                :key="index"
+                class="bg-white p-3 rounded border"
+              >
+                <div class="text-sm">
+                  <div class="font-medium text-gray-900">Série {{ index + 1 }}</div>
+                  <div class="text-gray-600 mt-1">
+                    <div>Alvo: {{ set.targetRepsMin }}-{{ set.targetRepsMax }} reps</div>
+                    <div class="flex justify-between">
+                      <span>Concluídas: {{ set.completedReps }}</span>
+                      <span :class="getCompletionClass(set.completedReps, set.targetRepsMin, set.targetRepsMax)">
+                        {{ getCompletionStatus(set.completedReps, set.targetRepsMin, set.targetRepsMax) }}
+                      </span>
+                    </div>
+                    <div v-if="set.weight" class="text-xs text-gray-500 mt-1">{{ set.weight }}kg</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fallback quando não há dados detalhados das séries -->
+            <div v-else class="text-sm text-gray-600">
+              <p>Repetições: {{ workout.repsDisplay }}</p>
+            </div>
+          </a-card>
+        </div>
+      </div>
+
       <!-- Anotações -->
       <div v-if="workoutNotes.length > 0" class="mb-6">
         <h5 class="text-md font-medium mb-3">Anotações do Treino</h5>
@@ -89,11 +140,19 @@ import { Chart, registerables } from 'chart.js'
 
 Chart.register(...registerables)
 
+interface WorkoutSet {
+  targetRepsMin: number
+  targetRepsMax: number
+  completedReps: number
+  weight?: number
+}
+
 interface WorkoutData {
   date: string
   weight: number
-  reps: number
-  volume: number
+  repsDisplay: string
+  sets?: WorkoutSet[]
+  totalSets?: number
 }
 
 interface WorkoutNote {
@@ -163,31 +222,81 @@ export default defineComponent({
       return `${formatDate(range.start)} - ${formatDate(range.end)}`
     }
 
+    const getCompletionStatus = (completed: number, min: number, max: number) => {
+      if (completed >= min && completed <= max) {
+        return '✓'
+      } else if (completed > max) {
+        return '↗'
+      } else {
+        return '↘'
+      }
+    }
+
+    const getCompletionClass = (completed: number, min: number, max: number) => {
+      if (completed >= min && completed <= max) {
+        return 'text-green-600 font-medium'
+      } else if (completed > max) {
+        return 'text-blue-600 font-medium'
+      } else {
+        return 'text-red-600 font-medium'
+      }
+    }
+
     const createChart = (canvas: HTMLCanvasElement, data: WorkoutData[], label: string = 'Treino Atual') => {
       const ctx = canvas.getContext('2d')
       if (!ctx) return null
 
+      // Encontrar o número máximo de séries para criar datasets
+      const maxSets = Math.max(...data.map(d => d.sets?.length || 0))
+      
+      // Cores para diferentes séries
+      const seriesColors = [
+        'rgba(59, 130, 246, 0.8)',   // Azul
+        'rgba(16, 185, 129, 0.8)',   // Verde
+        'rgba(245, 158, 11, 0.8)',   // Amarelo
+        'rgba(239, 68, 68, 0.8)',    // Vermelho
+        'rgba(139, 92, 246, 0.8)',   // Roxo
+        'rgba(236, 72, 153, 0.8)',   // Rosa
+      ]
+
+      // Criar um dataset para cada série
+      const datasets = []
+      for (let serieIndex = 0; serieIndex < maxSets; serieIndex++) {
+        datasets.push({
+          label: `Série ${serieIndex + 1}`,
+          data: data.map(workout => {
+            const set = workout.sets?.[serieIndex]
+            return set ? set.weight : null
+          }),
+          backgroundColor: seriesColors[serieIndex % seriesColors.length],
+          borderColor: seriesColors[serieIndex % seriesColors.length].replace('0.8', '1'),
+          borderWidth: 2,
+          borderRadius: 4,
+          borderSkipped: false,
+          // Dados customizados para tooltips
+          repsData: data.map(workout => {
+            const set = workout.sets?.[serieIndex]
+            return set ? set.completedReps : null
+          }),
+          targetRepsData: data.map(workout => {
+            const set = workout.sets?.[serieIndex]
+            return set ? `${set.targetRepsMin}-${set.targetRepsMax}` : null
+          })
+        })
+      }
+
       return new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
           labels: data.map(d => formatDate(d.date)),
-          datasets: [
-            {
-              label: 'Peso (kg)',
-              data: data.map(d => d.weight),
-              borderColor: 'rgb(59, 130, 246)',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              tension: 0.1,
-              fill: true
-            }
-          ]
+          datasets: datasets
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           interaction: {
-            mode: 'index',
-            intersect: false,
+            mode: 'nearest',
+            intersect: true,
           },
           scales: {
             x: {
@@ -215,6 +324,37 @@ export default defineComponent({
             },
             legend: {
               display: true
+            },
+            tooltip: {
+              callbacks: {
+                title: function(context: any) {
+                  return context[0].label;
+                },
+                label: function(context: any) {
+                  const dataset = context.dataset;
+                  const dataIndex = context.dataIndex;
+                  const weight = context.parsed.y;
+                  const reps = dataset.repsData ? dataset.repsData[dataIndex] : null;
+                  const targetReps = dataset.targetRepsData ? dataset.targetRepsData[dataIndex] : null;
+                  
+                  if (weight === null) return null;
+                  
+                  const lines = [`${dataset.label}: ${weight}kg`];
+                  if (reps !== null) {
+                    lines.push(`Reps: ${reps}`);
+                  }
+                  if (targetReps !== null) {
+                    lines.push(`Alvo: ${targetReps}`);
+                  }
+                  
+                  return lines;
+                }
+              }
+            }
+          },
+          layout: {
+            padding: {
+              top: 20
             }
           }
         }
@@ -280,7 +420,9 @@ export default defineComponent({
       setPreviousChartRef,
       formatDate,
       formatDateRange,
-      togglePreviousWorkouts
+      togglePreviousWorkouts,
+      getCompletionStatus,
+      getCompletionClass
     }
   }
 })

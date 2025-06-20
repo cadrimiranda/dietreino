@@ -251,9 +251,40 @@ export default defineComponent({
         // Para demonstração, usar dados mock
         exerciseHistoryData.value = {
           currentWorkoutData: [
-            { date: '2024-01-15', weight: 80, reps: 10 },
-            { date: '2024-01-17', weight: 82.5, reps: 8 },
-            { date: '2024-01-19', weight: 85, reps: 12 },
+            { 
+              date: '2024-01-15', 
+              weight: 80, 
+              repsDisplay: '10, 9, 8',
+              totalSets: 3,
+              sets: [
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 10, weight: 80 },
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 9, weight: 77.5 },
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 8, weight: 75 }
+              ]
+            },
+            { 
+              date: '2024-01-17', 
+              weight: 82.5, 
+              repsDisplay: '9, 8, 8',
+              totalSets: 3,
+              sets: [
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 9, weight: 82.5 },
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 8, weight: 80 },
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 8, weight: 77.5 }
+              ]
+            },
+            { 
+              date: '2024-01-19', 
+              weight: 85, 
+              repsDisplay: '10, 9, 8, 8',
+              totalSets: 4,
+              sets: [
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 10, weight: 85 },
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 9, weight: 82.5 },
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 8, weight: 80 },
+                { targetRepsMin: 8, targetRepsMax: 10, completedReps: 8, weight: 77.5 }
+              ]
+            },
           ],
           notes: [
             { date: '2024-01-15', note: 'Primeira vez fazendo este exercício' },
