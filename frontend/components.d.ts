@@ -36,6 +36,7 @@ declare module 'vue' {
     ARadioGroup: typeof import('ant-design-vue/es')['RadioGroup']
     ARow: typeof import('ant-design-vue/es')['Row']
     ASelect: typeof import('ant-design-vue/es')['Select']
+    ASelectOption: typeof import('ant-design-vue/es')['SelectOption']
     ASkeleton: typeof import('ant-design-vue/es')['Skeleton']
     ASkeletonAvatar: typeof import('ant-design-vue/es')['SkeletonAvatar']
     ASkeletonImage: typeof import('ant-design-vue/es')['SkeletonImage']

@@ -7,20 +7,75 @@
             <h4 class="text-lg font-semibold">{{ exercise.name }}</h4>
             <p class="text-sm text-gray-500">Evolução de Peso</p>
           </div>
-          <a-button 
-            v-if="!showPreviousWorkouts" 
-            type="link" 
-            @click="togglePreviousWorkouts"
-          >
-            Ver Treinos Anteriores
-          </a-button>
         </div>
       </template>
 
       <!-- Gráfico Principal -->
-      <div class="mb-6">
+      <div class="mb-4">
         <div class="chart-container" style="height: 300px;">
           <canvas ref="chartCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Controles do Histórico -->
+      <div class="mb-6 text-center">
+        <a-button 
+          @click="togglePreviousWorkouts"
+          :type="showPreviousWorkouts ? 'default' : 'primary'"
+          size="small"
+        >
+          {{ showPreviousWorkouts ? 'Ocultar Treinos Anteriores' : 'Ver Treinos Anteriores' }}
+        </a-button>
+      </div>
+
+      <!-- Treinos Anteriores (Seção Expansível) -->
+      <div v-if="showPreviousWorkouts" class="mb-6">
+        <a-divider>
+          <span class="text-sm text-gray-500">Comparação com Períodos Anteriores</span>
+        </a-divider>
+        
+        <div v-if="safePreviousWorkouts && safePreviousWorkouts.length > 0">
+          <a-collapse v-model:active-key="activeCollapseKeys" size="small">
+            <a-collapse-panel 
+              v-for="previousWorkout in safePreviousWorkouts" 
+              :key="previousWorkout.workoutId"
+              :header="`${previousWorkout.workoutName || 'Treino Anterior'} - ${formatDateRange(previousWorkout.dateRange)}`"
+            >
+              <div class="space-y-4">
+                <div v-for="trainingDay in (previousWorkout.trainingDays || [])" :key="trainingDay.dayId">
+                  <h6 class="font-medium text-gray-700 mb-2">{{ trainingDay.dayName || 'Treino' }}</h6>
+                  <div class="chart-container" style="height: 200px;">
+                    <canvas :ref="el => setPreviousChartRef(el, `${previousWorkout.workoutId}-${trainingDay.dayId}`)"></canvas>
+                  </div>
+                  
+                  <!-- Anotações dos treinos anteriores -->
+                  <div v-if="trainingDay.notes && trainingDay.notes.length > 0" class="mt-3">
+                    <div class="space-y-1">
+                      <div 
+                        v-for="note in trainingDay.notes" 
+                        :key="note.date || Math.random()"
+                        class="text-xs bg-gray-50 p-2 rounded"
+                      >
+                        <div class="flex justify-between">
+                          <span>{{ note.note || 'Sem anotação' }}</span>
+                          <span class="text-gray-500">{{ note.date ? formatDate(note.date) : '' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a-collapse-panel>
+          </a-collapse>
+        </div>
+        
+        <!-- Mensagem quando não há treinos anteriores -->
+        <div v-else class="text-center py-8">
+          <div class="text-gray-400 mb-2">
+            <history-outlined style="font-size: 32px;" />
+          </div>
+          <p class="text-gray-500">Nenhum treino anterior encontrado para este exercício.</p>
+          <p class="text-xs text-gray-400 mt-1">Este exercício só aparece no período atual.</p>
         </div>
       </div>
 
@@ -71,72 +126,34 @@
             <div v-else class="text-sm text-gray-600">
               <p>Repetições: {{ workout.repsDisplay }}</p>
             </div>
-          </a-card>
-        </div>
-      </div>
 
-      <!-- Anotações -->
-      <div v-if="workoutNotes.length > 0" class="mb-6">
-        <h5 class="text-md font-medium mb-3">Anotações do Treino</h5>
-        <div class="space-y-2">
-          <a-card 
-            v-for="note in workoutNotes" 
-            :key="note.date" 
-            size="small"
-            class="bg-yellow-50 border-yellow-200"
-          >
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <p class="text-sm">{{ note.note }}</p>
-              </div>
-              <div class="text-xs text-gray-500 ml-3">
-                {{ formatDate(note.date) }}
-              </div>
-            </div>
-          </a-card>
-        </div>
-      </div>
-
-      <!-- Treinos Anteriores (Colapsável) -->
-      <a-collapse v-if="showPreviousWorkouts" v-model:active-key="activeCollapseKeys">
-        <a-collapse-panel 
-          v-for="previousWorkout in previousWorkouts" 
-          :key="previousWorkout.workoutId"
-          :header="`${previousWorkout.workoutName} - ${formatDateRange(previousWorkout.dateRange)}`"
-        >
-          <div class="space-y-4">
-            <div v-for="trainingDay in previousWorkout.trainingDays" :key="trainingDay.dayId">
-              <h6 class="font-medium text-gray-700 mb-2">{{ trainingDay.dayName }}</h6>
-              <div class="chart-container" style="height: 200px;">
-                <canvas :ref="el => setPreviousChartRef(el, `${previousWorkout.workoutId}-${trainingDay.dayId}`)"></canvas>
-              </div>
-              
-              <!-- Anotações dos treinos anteriores -->
-              <div v-if="trainingDay.notes.length > 0" class="mt-3">
-                <div class="space-y-1">
-                  <div 
-                    v-for="note in trainingDay.notes" 
-                    :key="note.date"
-                    class="text-xs bg-gray-50 p-2 rounded"
-                  >
-                    <div class="flex justify-between">
-                      <span>{{ note.note }}</span>
-                      <span class="text-gray-500">{{ formatDate(note.date) }}</span>
-                    </div>
+            <!-- Anotação deste dia específico -->
+            <div v-if="getWorkoutNote(workout.date)" class="mt-4 pt-3 border-t border-gray-200">
+              <div class="bg-yellow-50 border border-yellow-200 rounded p-3">
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 text-yellow-600 mr-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-sm text-gray-800">{{ getWorkoutNote(workout.date) }}</p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </a-collapse-panel>
-      </a-collapse>
+          </a-card>
+        </div>
+      </div>
+
     </a-card>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, ref, onMounted, watch, nextTick } from 'vue'
+import { defineComponent, PropType, ref, computed, onMounted, watch, nextTick } from 'vue'
 import { Chart, registerables } from 'chart.js'
+import { HistoryOutlined } from '@ant-design/icons-vue'
 
 Chart.register(...registerables)
 
@@ -181,6 +198,9 @@ interface Exercise {
 
 export default defineComponent({
   name: 'ExerciseEvolutionChart',
+  components: {
+    HistoryOutlined
+  },
   props: {
     exercise: {
       type: Object as PropType<Exercise>,
@@ -196,7 +216,10 @@ export default defineComponent({
     },
     previousWorkouts: {
       type: Array as PropType<PreviousWorkout[]>,
-      default: () => []
+      default: () => [],
+      validator: (value: any) => {
+        return Array.isArray(value)
+      }
     }
   },
   setup(props) {
@@ -208,6 +231,11 @@ export default defineComponent({
     let mainChart: Chart | null = null
     const previousCharts = new Map<string, Chart>()
 
+    // Computed para garantir que previousWorkouts seja sempre um array válido
+    const safePreviousWorkouts = computed(() => {
+      return Array.isArray(props.previousWorkouts) ? props.previousWorkouts : []
+    })
+
     const setPreviousChartRef = (el: any, key: string) => {
       if (el && el instanceof HTMLCanvasElement) {
         previousChartRefs.value.set(key, el)
@@ -218,7 +246,8 @@ export default defineComponent({
       return new Date(dateString).toLocaleDateString('pt-BR')
     }
 
-    const formatDateRange = (range: { start: string; end: string }) => {
+    const formatDateRange = (range: { start: string; end: string } | undefined) => {
+      if (!range || !range.start || !range.end) return 'Data não disponível'
       return `${formatDate(range.start)} - ${formatDate(range.end)}`
     }
 
@@ -240,6 +269,11 @@ export default defineComponent({
       } else {
         return 'text-red-600 font-medium'
       }
+    }
+
+    const getWorkoutNote = (date: string) => {
+      const note = props.workoutNotes.find(n => n.date === date)
+      return note ? note.note : null
     }
 
     const createChart = (canvas: HTMLCanvasElement, data: WorkoutData[], label: string = 'Treino Atual') => {
@@ -373,8 +407,20 @@ export default defineComponent({
     const initializePreviousCharts = async () => {
       await nextTick()
       
-      props.previousWorkouts.forEach(workout => {
+      if (!safePreviousWorkouts.value || safePreviousWorkouts.value.length === 0) {
+        return
+      }
+      
+      safePreviousWorkouts.value.forEach(workout => {
+        if (!workout || !workout.trainingDays) {
+          return
+        }
+        
         workout.trainingDays.forEach(day => {
+          if (!day || !day.dayId || !day.data) {
+            return
+          }
+          
           const key = `${workout.workoutId}-${day.dayId}`
           const canvas = previousChartRefs.value.get(key)
           
@@ -422,7 +468,9 @@ export default defineComponent({
       formatDateRange,
       togglePreviousWorkouts,
       getCompletionStatus,
-      getCompletionClass
+      getCompletionClass,
+      getWorkoutNote,
+      safePreviousWorkouts
     }
   }
 })
