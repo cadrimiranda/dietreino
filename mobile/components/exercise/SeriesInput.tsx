@@ -1,22 +1,73 @@
 import { Exercise, Series } from '@/types/exercise';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { useExerciseHistory } from '@/hooks/useExerciseHistory';
+import { useMockExerciseHistory } from '@/hooks/useMockExerciseHistory';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const SeriesInput = ({
     index,
     seriesInputs,
     handleSeriesInput,
     exercise,
-    isCompleted
+    isCompleted,
+    useMockData = false
 }: {
     index: number;
     seriesInputs: Series[];
     handleSeriesInput: (index: number, field: 'reps' | 'weight', value: string) => void;
     exercise: Exercise;
     isCompleted: boolean;
+    useMockData?: boolean;
 }) => {
+    const { user } = useCurrentUser();
+    const { getExerciseHistory } = useExerciseHistory(user?.id || '');
+    const { getMockExerciseHistory } = useMockExerciseHistory();
+
+    // Usar dados mock ou dados reais baseado na prop
+    const exerciseHistory = useMockData 
+        ? getMockExerciseHistory(exercise.id, 1)
+        : getExerciseHistory(exercise.id, 1);
+    
+    const lastSession = exerciseHistory[0];
+    
+    // Buscar a série correspondente da última sessão
+    const lastSeriesData = lastSession?.sets?.find(set => set.setNumber === index + 1);
+
+    const getPlaceholderValues = () => {
+        if (lastSeriesData && lastSeriesData.isCompleted) {
+            return {
+                reps: lastSeriesData.reps.toString(),
+                weight: lastSeriesData.weight?.toString() || '0',
+            };
+        }
+        return {
+            reps: exercise.repsPerSeries.toString(),
+            weight: '0',
+        };
+    };
+
+    const placeholders = getPlaceholderValues();
+
+    const handleQuickFill = () => {
+        if (lastSeriesData && lastSeriesData.isCompleted && !isCompleted) {
+            handleSeriesInput(index, 'reps', lastSeriesData.reps.toString());
+            if (lastSeriesData.weight) {
+                handleSeriesInput(index, 'weight', lastSeriesData.weight.toString());
+            }
+        }
+    };
+
     return (
         <View key={index} style={styles.seriesInput}>
-            <Text style={styles.seriesLabel}>Série {index + 1}</Text>
+            <View style={styles.seriesHeader}>
+                <Text style={styles.seriesLabel}>Série {index + 1}</Text>
+                {lastSeriesData && lastSeriesData.isCompleted && !isCompleted && (
+                    <TouchableOpacity onPress={handleQuickFill} style={styles.quickFillButton}>
+                        <Text style={styles.quickFillText}>⚡</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+            
             <View style={styles.inputGroup}>
                 <View style={styles.inputContainer}>
                     <Text style={styles.inputLabel}>Reps</Text>
@@ -25,7 +76,7 @@ const SeriesInput = ({
                         keyboardType="numeric"
                         value={seriesInputs[index]?.reps?.toString() || ''}
                         onChangeText={(value) => handleSeriesInput(index, 'reps', value)}
-                        placeholder={exercise.repsPerSeries.toString()}
+                        placeholder={placeholders.reps}
                         maxLength={2}
                         editable={!isCompleted}
                     />
@@ -37,12 +88,21 @@ const SeriesInput = ({
                         keyboardType="numeric"
                         value={seriesInputs[index]?.weight?.toString() || ''}
                         onChangeText={(value) => handleSeriesInput(index, 'weight', value)}
-                        placeholder="0"
+                        placeholder={placeholders.weight}
                         maxLength={5}
                         editable={!isCompleted}
                     />
                 </View>
             </View>
+
+            {/* Mostrar dados da última vez */}
+            {lastSeriesData && lastSeriesData.isCompleted && (
+                <View style={styles.previousData}>
+                    <Text style={styles.previousDataText}>
+                        Anterior: {lastSeriesData.reps}x{lastSeriesData.weight || 0}kg
+                    </Text>
+                </View>
+            )}
         </View>
     )
 };
@@ -66,11 +126,29 @@ const styles = StyleSheet.create({
         marginRight: 12,
         width: 120,
     },
+    seriesHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
     seriesLabel: {
         fontSize: 14,
         color: 'black',
-        marginBottom: 4,
         textAlign: 'center',
+        flex: 1,
+    },
+    quickFillButton: {
+        backgroundColor: '#007AFF',
+        borderRadius: 12,
+        width: 24,
+        height: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    quickFillText: {
+        fontSize: 12,
+        color: 'white',
     },
     inputGroup: {
         flexDirection: 'row',
@@ -93,5 +171,17 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontSize: 16,
         marginHorizontal: 2,
+    },
+    previousData: {
+        marginTop: 4,
+        paddingTop: 4,
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+    },
+    previousDataText: {
+        fontSize: 10,
+        color: '#6B7280',
+        textAlign: 'center',
+        fontStyle: 'italic',
     },
 });
