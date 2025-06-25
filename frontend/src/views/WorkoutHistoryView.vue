@@ -15,6 +15,7 @@ import { computed, ref, onMounted } from 'vue';
 import { useQuery } from '@vue/apollo-composable';
 import { gql } from '@apollo/client';
 import WorkoutHistoryDashboard from '@/components/workout-history/WorkoutHistoryDashboard.vue';
+import { useAuth } from '@/composables/useAuth';
 import type { WorkoutHistoryFilters as WorkoutHistoryFiltersType } from '@/types/workoutHistory';
 
 // GraphQL queries for dropdown data
@@ -54,13 +55,10 @@ const { result: usersResult } = useQuery(GET_USERS);
 const { result: workoutsResult } = useQuery(GET_WORKOUTS);
 const { result: exercisesResult } = useQuery(GET_EXERCISES);
 
-// Mock current user context - in real app this would come from auth store
-const currentUser = ref({
-  id: 'current-user-id',
-  role: 'TRAINER' // or 'CLIENT'
-});
+// Get current user from auth
+const { currentUser } = useAuth();
 
-const isTrainer = computed(() => currentUser.value.role === 'TRAINER');
+const isTrainer = computed(() => currentUser.value?.role === 'TRAINER');
 
 // Filter users based on trainer relationship
 const users = computed(() => {
@@ -72,7 +70,7 @@ const users = computed(() => {
   }
   
   // For clients, return only themselves
-  return allUsers.filter((user: any) => user.id === currentUser.value.id);
+  return allUsers.filter((user: any) => user.id === currentUser.value?.id);
 });
 
 const workouts = computed(() => {
@@ -91,7 +89,7 @@ const defaultFilters = computed((): WorkoutHistoryFiltersType => {
   } else {
     // Clients see only their own data
     return {
-      userId: currentUser.value.id
+      userId: currentUser.value?.id
     };
   }
 });
