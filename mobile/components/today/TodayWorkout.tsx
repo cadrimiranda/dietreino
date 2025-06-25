@@ -72,7 +72,7 @@ export default function TodayWorkout() {
 
   const workoutExercises: Exercise[] =
     todayTraining?.trainingDayExercises?.map((tde, index) => ({
-      id: tde.id || index.toString(),
+      id: tde.exercise?.id || index.toString(),
       name: tde.exercise?.name || "Exercício",
       sets: tde.repSchemes?.length || 1,
       reps:

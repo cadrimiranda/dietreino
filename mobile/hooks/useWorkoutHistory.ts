@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useMutation, gql } from '@apollo/client';
+import { useMutation, gql, useApolloClient } from '@apollo/client';
 
 const CREATE_WORKOUT_HISTORY = gql`
   mutation CreateWorkoutHistory($createWorkoutHistoryInput: CreateWorkoutHistoryInput!) {
@@ -79,20 +79,51 @@ export interface UseWorkoutHistoryReturn {
   loading: boolean;
   error: any;
   success: boolean;
+  progress: {
+    step: 'preparing' | 'validating' | 'uploading' | 'completed' | 'idle';
+    message: string;
+  };
 }
 
 export function useWorkoutHistory(): UseWorkoutHistoryReturn {
   const [success, setSuccess] = useState(false);
+  const [progress, setProgress] = useState<{
+    step: 'preparing' | 'validating' | 'uploading' | 'completed' | 'idle';
+    message: string;
+  }>({
+    step: 'idle',
+    message: ''
+  });
+
+  const apolloClient = useApolloClient();
   
   const [createWorkoutHistoryMutation, { loading, error }] = useMutation(
     CREATE_WORKOUT_HISTORY,
     {
-      onCompleted: () => {
+      onCompleted: (data) => {
+        setProgress({
+          step: 'completed',
+          message: 'Histórico salvo com sucesso!'
+        });
         setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000); // Reset success after 3 seconds
+        
+        // Invalidate related queries to refresh cache
+        apolloClient.refetchQueries({
+          include: ['GetWorkoutHistoriesByUser']
+        });
+
+        // Reset states after delay
+        setTimeout(() => {
+          setSuccess(false);
+          setProgress({ step: 'idle', message: '' });
+        }, 3000);
       },
       onError: (err) => {
         console.error('Error saving workout history:', err);
+        setProgress({
+          step: 'idle',
+          message: 'Erro ao salvar histórico'
+        });
       }
     }
   );
@@ -101,6 +132,23 @@ export function useWorkoutHistory(): UseWorkoutHistoryReturn {
     try {
       setSuccess(false);
       
+      // Step 1: Preparing
+      setProgress({
+        step: 'preparing',
+        message: 'Preparando dados do treino...'
+      });
+
+      // Basic validation
+      if (!data.userId || !data.workoutId || !data.exercises.length) {
+        throw new Error('Dados obrigatórios do treino estão faltando');
+      }
+
+      // Step 2: Validating
+      setProgress({
+        step: 'validating',
+        message: 'Validando dados do treino...'
+      });
+
       const input = {
         userId: data.userId,
         workoutId: data.workoutId,
@@ -132,11 +180,21 @@ export function useWorkoutHistory(): UseWorkoutHistoryReturn {
         }))
       };
 
+      // Step 3: Uploading
+      setProgress({
+        step: 'uploading',
+        message: 'Salvando histórico no servidor...'
+      });
+
       await createWorkoutHistoryMutation({
         variables: { createWorkoutHistoryInput: input }
       });
     } catch (err) {
       console.error('Failed to save workout history:', err);
+      setProgress({
+        step: 'idle',
+        message: 'Erro ao salvar histórico'
+      });
       throw err;
     }
   }, [createWorkoutHistoryMutation]);
@@ -146,5 +204,6 @@ export function useWorkoutHistory(): UseWorkoutHistoryReturn {
     loading,
     error,
     success,
+    progress,
   };
 }

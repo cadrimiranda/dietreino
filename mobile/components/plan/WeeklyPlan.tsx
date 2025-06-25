@@ -71,7 +71,7 @@ export default function WeeklyPlan() {
       name: td.name || "",
       exercises:
         td.trainingDayExercises?.map((tde, index) => ({
-          id: tde.id || index.toString(),
+          id: tde.exercise?.id || index.toString(),
           name: tde.exercise?.name || "Exercício",
           sets: tde.repSchemes?.reduce((acc, rep) => acc + rep.sets, 0) || 3,
           reps:

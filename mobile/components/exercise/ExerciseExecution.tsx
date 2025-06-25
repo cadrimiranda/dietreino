@@ -42,7 +42,7 @@ export default function ExerciseExecution() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user, activeWorkout } = useCurrentUser();
-  const { saveWorkoutHistory, loading: savingHistory, error: saveError, success: saveSuccess } = useWorkoutHistory();
+  const { saveWorkoutHistory, loading: savingHistory, error: saveError, success: saveSuccess, progress } = useWorkoutHistory();
   
   // Get exercises data from navigation params
   const exercises: Exercise[] = params.exercises 
@@ -82,6 +82,17 @@ export default function ExerciseExecution() {
       ]);
     }
   }, [exercises.length, router]);
+
+  // Handle workout history save success
+  useEffect(() => {
+    if (saveSuccess && progress.step === 'completed') {
+      Alert.alert(
+        'Sucesso!',
+        'Histórico do treino salvo com sucesso.',
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+    }
+  }, [saveSuccess, progress.step, router]);
 
   useEffect(() => {
     if (currentExercise) {
@@ -407,8 +418,8 @@ export default function ExerciseExecution() {
               onPress: () => router.back(),
             },
             {
-              text: 'Salvar e Finalizar',
-              onPress: handleSaveWorkoutHistory,
+              text: savingHistory ? 'Salvando...' : 'Salvar e Finalizar',
+              onPress: savingHistory ? undefined : handleSaveWorkoutHistory,
             }
           ]
         );
@@ -504,11 +515,7 @@ export default function ExerciseExecution() {
       const historyData = WorkoutHistoryMapper.mapToWorkoutHistory(executionData);
       await saveWorkoutHistory(historyData);
       
-      Alert.alert(
-        'Sucesso!',
-        'Histórico do treino salvo com sucesso.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      // Success handled by the useWorkoutHistory hook via progress state
     } catch (error) {
       console.error('Error saving workout history:', error);
       Alert.alert(
@@ -608,7 +615,7 @@ export default function ExerciseExecution() {
                 { width: `${(countdownTime / initialCountdownTime) * 100}%` }
               ]} />
             </View>
-            <Text style={styles.progressText}>
+            <Text style={styles.exerciseProgressText}>
               {initialCountdownTime > 0 ? `${formatTime(initialCountdownTime)} inicial` : ''}
             </Text>
           </View>
@@ -953,6 +960,18 @@ export default function ExerciseExecution() {
           />
         </TouchableOpacity>
       </View>
+
+      {/* Progress Indicator */}
+      {(savingHistory || progress.step !== 'idle') && (
+        <View style={styles.progressOverlay}>
+          <View style={styles.progressCard}>
+            <Text style={styles.progressText}>{progress.message || 'Salvando histórico...'}</Text>
+            {progress.step === 'completed' && (
+              <Ionicons name="checkmark-circle" size={24} color="#34C759" />
+            )}
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -1338,7 +1357,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     borderRadius: 3,
   },
-  progressText: {
+  exerciseProgressText: {
     fontSize: 12,
     color: '#8E8E93',
   },
@@ -1586,5 +1605,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FF3B30',
+  },
+  progressOverlay: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    zIndex: 1000,
+  },
+  progressCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  progressText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    flex: 1,
   },
 });
