@@ -212,21 +212,22 @@ export default defineComponent({
     const processedTrainingDays = computed(() => {
       if (!currentWorkout.value?.trainingDays) return []
 
-      return currentWorkout.value.trainingDays
+      return [...currentWorkout.value.trainingDays]
         .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
         .map((day: any) => ({
           id: day.id,
           name: day.name,
           order: day.order || 0,
           exercises: day.trainingDayExercises
-            ?.sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-            .map((tde: any) => ({
-              id: tde.id,
-              exercise: tde.exercise,
-              sets: tde.repSchemes?.reduce((acc: any, rs: any) => acc + rs.sets, 0) || 0,
-              repsDisplay: formatRepsDisplay(tde.repSchemes || []),
-              order: tde.order || 0
-            })) || []
+            ? [...day.trainingDayExercises]
+              .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+              .map((tde: any) => ({
+                id: tde.id,
+                exercise: tde.exercise,
+                sets: tde.repSchemes?.reduce((acc: any, rs: any) => acc + rs.sets, 0) || 0,
+                repsDisplay: formatRepsDisplay(tde.repSchemes || []),
+                order: tde.order || 0
+              })) : []
         }))
     })
 
