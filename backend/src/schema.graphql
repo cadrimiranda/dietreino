@@ -349,6 +349,7 @@ type WorkoutHistoryExercise {
   completedSets: Float!
   createdAt: DateTime!
   exercise: Exercise!
+  exerciseId: String!
   exerciseName: String!
   id: ID!
   notes: String
@@ -357,6 +358,7 @@ type WorkoutHistoryExercise {
   updatedAt: DateTime!
   workoutHistory: WorkoutHistory!
   workoutHistoryExerciseSets: [WorkoutHistoryExerciseSet!]!
+  workoutHistoryId: String!
 }
 
 type WorkoutHistoryExerciseSet {
@@ -374,6 +376,7 @@ type WorkoutHistoryExerciseSet {
   updatedAt: DateTime!
   weight: Float
   workoutHistoryExercise: WorkoutHistoryExercise!
+  workoutHistoryExerciseId: String!
 }
 
 type WorkoutHistoryExerciseSetType {

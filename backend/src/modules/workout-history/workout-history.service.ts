@@ -145,8 +145,8 @@ export class WorkoutHistoryService {
       workoutHistoryExercises:
         entity.workoutHistoryExercises?.map((exercise) => ({
           id: exercise.id.toString(),
-          workoutHistoryId: exercise.workoutHistory?.id.toString(),
-          exerciseId: exercise.exercise?.id.toString(),
+          workoutHistoryId: exercise.workoutHistoryId.toString(),
+          exerciseId: exercise.exerciseId,
           order: exercise.order,
           exerciseName: exercise.exerciseName,
           plannedSets: exercise.plannedSets,
@@ -155,8 +155,7 @@ export class WorkoutHistoryService {
           workoutHistoryExerciseSets:
             exercise.workoutHistoryExerciseSets?.map((set) => ({
               id: set.id.toString(),
-              workoutHistoryExerciseId:
-                set.workoutHistoryExercise?.id.toString(),
+              workoutHistoryExerciseId: set.workoutHistoryExerciseId.toString(),
               setNumber: set.setNumber,
               weight: set.weight,
               reps: set.reps,

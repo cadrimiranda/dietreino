@@ -333,6 +333,11 @@ export default defineComponent({
             }
           }).filter(Boolean)
 
+          return {
+            currentWorkoutData,
+            notes: '',
+            previousWorkouts: []
+          }
         }
 
         exerciseHistoryData.value = generateExerciseHistoryData(
