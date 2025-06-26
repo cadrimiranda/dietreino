@@ -8,6 +8,10 @@ import { Field, ObjectType } from '@nestjs/graphql';
 @ObjectType()
 @Entity('workout_history_exercises')
 export class WorkoutHistoryExercise extends BaseEntity {
+  @Field(() => String)
+  @Column({ name: 'workout_history_id' })
+  workoutHistoryId: string;
+
   @Field(() => WorkoutHistory)
   @ManyToOne(
     () => WorkoutHistory,
@@ -18,6 +22,10 @@ export class WorkoutHistoryExercise extends BaseEntity {
   )
   @JoinColumn({ name: 'workout_history_id' })
   workoutHistory: WorkoutHistory;
+
+  @Field(() => String)
+  @Column({ name: 'exercise_id' })
+  exerciseId: string;
 
   @Field(() => Exercise)
   @ManyToOne(() => Exercise, { eager: true })
