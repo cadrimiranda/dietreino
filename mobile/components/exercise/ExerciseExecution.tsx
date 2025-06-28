@@ -13,7 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useWorkoutHistory } from '@/hooks/useWorkoutHistory';
+import { useExerciseHistory, ExerciseHistorySession } from '@/hooks/useExerciseHistory';
 import { WorkoutHistoryMapper } from '@/utils/workoutHistoryMapper';
+import { saveWorkoutState, loadWorkoutState, clearWorkoutState, WorkoutExecutionState } from '@/utils/workoutStorage';
 
 interface ExerciseSet {
   id: string;
@@ -43,12 +45,14 @@ export default function ExerciseExecution() {
   const params = useLocalSearchParams();
   const { user, activeWorkout } = useCurrentUser();
   const { saveWorkoutHistory, loading: savingHistory, error: saveError, success: saveSuccess, progress } = useWorkoutHistory();
+  const { getExerciseHistory, loading: historyLoading } = useExerciseHistory(user?.id || '');
   
   // Get exercises data from navigation params
   const exercises: Exercise[] = params.exercises 
     ? JSON.parse(params.exercises as string) 
     : [];
   const trainingDayName = params.trainingDayName as string || 'Treino de Hoje';
+  const isResuming = params.resumeState === 'true';
   
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [sets, setSets] = useState<ExerciseSet[]>([]);
@@ -62,7 +66,7 @@ export default function ExerciseExecution() {
   const [showRestOptions, setShowRestOptions] = useState(false);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
   const [showExerciseDropdown, setShowExerciseDropdown] = useState(false);
-  const [workoutStartTime] = useState(new Date());
+  const [workoutStartTime, setWorkoutStartTime] = useState(new Date());
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [allExerciseSets, setAllExerciseSets] = useState<Map<number, ExerciseSet[]>>(new Map());
   const [allExerciseNotes, setAllExerciseNotes] = useState<Map<number, string>>(new Map());
@@ -70,6 +74,42 @@ export default function ExerciseExecution() {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const currentExercise = exercises[currentExerciseIndex];
+  
+  // Get exercise history for the current exercise
+  const exerciseHistory = currentExercise ? getExerciseHistory(currentExercise.id, 3) : [];
+
+  const getSuggestedWeightFromHistory = () => {
+    if (exerciseHistory.length === 0) return '';
+    
+    // Get the most recent session's first set weight
+    const lastSession = exerciseHistory[0];
+    const firstSet = lastSession.sets.find(set => set.setNumber === 1);
+    
+    return firstSet?.weight ? firstSet.weight.toString() : '';
+  };
+
+  // Function to save current workout state
+  const saveCurrentWorkoutState = async () => {
+    if (!user || !activeWorkout) return;
+
+    try {
+      const workoutState: WorkoutExecutionState = {
+        isInProgress: true,
+        workoutId: activeWorkout.id,
+        trainingDayName,
+        exercises,
+        currentExerciseIndex,
+        allExerciseSets: Object.fromEntries(allExerciseSets),
+        allExerciseNotes: Object.fromEntries(allExerciseNotes),
+        completedExercises: Array.from(completedExercises),
+        workoutStartTime: workoutStartTime.toISOString(),
+      };
+
+      await saveWorkoutState(workoutState);
+    } catch (error) {
+      console.error('Error saving workout state:', error);
+    }
+  };
 
   // Redirect back if no exercises are provided
   useEffect(() => {
@@ -79,6 +119,36 @@ export default function ExerciseExecution() {
       ]);
     }
   }, [exercises.length, router]);
+
+  // Restore workout state if resuming
+  useEffect(() => {
+    const restoreWorkoutState = async () => {
+      if (isResuming) {
+        try {
+          const savedState = await loadWorkoutState();
+          if (savedState && savedState.isInProgress) {
+            // Restore state
+            setCurrentExerciseIndex(savedState.currentExerciseIndex);
+            setAllExerciseSets(new Map(Object.entries(savedState.allExerciseSets).map(([k, v]) => [parseInt(k), v])));
+            setAllExerciseNotes(new Map(Object.entries(savedState.allExerciseNotes).map(([k, v]) => [parseInt(k), v])));
+            setCompletedExercises(new Set(savedState.completedExercises));
+            setWorkoutStartTime(new Date(savedState.workoutStartTime));
+          }
+        } catch (error) {
+          console.error('Error restoring workout state:', error);
+        }
+      }
+    };
+
+    restoreWorkoutState();
+  }, [isResuming]);
+
+  // Save initial workout state when starting (not resuming)
+  useEffect(() => {
+    if (!isResuming && user && activeWorkout) {
+      saveCurrentWorkoutState();
+    }
+  }, [user, activeWorkout, isResuming]);
 
   // Handle workout history save success
   useEffect(() => {
@@ -116,7 +186,13 @@ export default function ExerciseExecution() {
       const existingNotes = allExerciseNotes.get(currentExerciseIndex) || '';
       setExerciseNotes(existingNotes);
       
-      setWeight('');
+      // Auto-suggest weight from history for first set
+      if (currentSet === 0 || !existingSets) {
+        const suggestedWeight = getSuggestedWeightFromHistory();
+        setWeight(suggestedWeight);
+      } else {
+        setWeight('');
+      }
       setReps('');
     }
   }, [currentExerciseIndex, currentExercise?.sets, allExerciseSets, allExerciseNotes]);
@@ -147,6 +223,36 @@ export default function ExerciseExecution() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Hoje';
+    if (diffDays === 1) return 'Ontem';
+    if (diffDays < 7) return `${diffDays} dias atrás`;
+    if (diffDays < 14) return '1 semana atrás';
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} semanas atrás`;
+    if (diffDays < 60) return '1 mês atrás';
+    return `${Math.floor(diffDays / 30)} meses atrás`;
+  };
+
+  const getMaxWeightFromHistory = () => {
+    if (exerciseHistory.length === 0) return null;
+    
+    let maxWeight = 0;
+    exerciseHistory.forEach(session => {
+      session.sets.forEach(set => {
+        if (set.weight && set.weight > maxWeight) {
+          maxWeight = set.weight;
+        }
+      });
+    });
+    
+    return maxWeight > 0 ? maxWeight : null;
+  };
+
 
   const handleFinishExercise = () => {
     const newCompleted = new Set(completedExercises);
@@ -174,12 +280,19 @@ export default function ExerciseExecution() {
     if (nextUncompletedIndex !== -1) {
       setCurrentExerciseIndex(nextUncompletedIndex);
     }
+
+    // Save workout state after finishing exercise
+    setTimeout(() => saveCurrentWorkoutState(), 100);
   };
 
   const handleSelectExercise = (exerciseIndex: number) => {
     // Save current exercise notes before switching
     if (exerciseNotes.trim()) {
-      setAllExerciseNotes(prev => new Map(prev.set(currentExerciseIndex, exerciseNotes)));
+      setAllExerciseNotes(prev => {
+        const newMap = new Map(prev);
+        newMap.set(currentExerciseIndex, exerciseNotes);
+        return newMap;
+      });
     }
     
     setCurrentExerciseIndex(exerciseIndex);
@@ -257,7 +370,14 @@ export default function ExerciseExecution() {
     setSets(updatedSets);
     
     // Store sets for this exercise
-    setAllExerciseSets(prev => new Map(prev.set(currentExerciseIndex, updatedSets)));
+    setAllExerciseSets(prev => {
+      const newMap = new Map(prev);
+      newMap.set(currentExerciseIndex, updatedSets);
+      return newMap;
+    });
+
+    // Save workout state after completing a set
+    setTimeout(() => saveCurrentWorkoutState(), 100);
 
     // Start rest timer if not the last set
     if (currentSet < (currentExercise?.sets || 0) - 1) {
@@ -422,6 +542,16 @@ export default function ExerciseExecution() {
     return '';
   };
 
+  const getPlaceholderWeight = () => {
+    const lastWeight = getLastSetWeight();
+    if (lastWeight) return lastWeight;
+    
+    const suggestedWeight = getSuggestedWeightFromHistory();
+    if (suggestedWeight) return `${suggestedWeight} (última vez)`;
+    
+    return "0";
+  };
+
   const handleSaveWorkoutHistory = async () => {
     if (!user || !activeWorkout) {
       Alert.alert('Erro', 'Dados do usuário ou treino não encontrados.');
@@ -431,7 +561,11 @@ export default function ExerciseExecution() {
     try {
       // Save current exercise notes if any
       if (exerciseNotes.trim()) {
-        setAllExerciseNotes(prev => new Map(prev.set(currentExerciseIndex, exerciseNotes)));
+        setAllExerciseNotes(prev => {
+          const newMap = new Map(prev);
+          newMap.set(currentExerciseIndex, exerciseNotes);
+          return newMap;
+        });
       }
 
       const executionData = {
@@ -449,6 +583,9 @@ export default function ExerciseExecution() {
 
       const historyData = WorkoutHistoryMapper.mapToWorkoutHistory(executionData);
       await saveWorkoutHistory(historyData);
+      
+      // Clear saved workout state since workout is completed
+      await clearWorkoutState();
       
       // Success handled by the useWorkoutHistory hook via progress state
     } catch (error) {
@@ -528,7 +665,50 @@ export default function ExerciseExecution() {
         <Text style={styles.exerciseTarget}>
           Meta: {currentExercise?.sets || 0} séries • {currentExercise?.reps || '0'} repetições
         </Text>
+        {getMaxWeightFromHistory() && (
+          <Text style={styles.maxWeightText}>
+            🏆 Recorde: {getMaxWeightFromHistory()}kg
+          </Text>
+        )}
       </View>
+
+      {/* Exercise History */}
+      {exerciseHistory.length > 0 ? (
+        <View style={styles.exerciseHistoryCard}>
+          <Text style={styles.exerciseHistoryTitle}>Histórico de Cargas</Text>
+          {exerciseHistory.map((session, index) => (
+            <View key={`${session.date}-${index}`} style={styles.historySession}>
+              <View style={styles.historyHeader}>
+                <Text style={styles.historyDate}>{formatDate(session.date)}</Text>
+                <Text style={styles.historyWorkout}>{session.trainingDayName}</Text>
+              </View>
+              <View style={styles.historySets}>
+                {session.sets.map((set, setIndex) => (
+                  <View key={setIndex} style={styles.historySet}>
+                    <Text style={styles.historySetNumber}>{set.setNumber}</Text>
+                    <Text style={styles.historySetData}>
+                      {set.weight ? `${set.weight}kg` : '—'} × {set.reps}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.exerciseHistoryCard}>
+          <Text style={styles.exerciseHistoryTitle}>Histórico de Cargas</Text>
+          <View style={styles.noHistoryContainer}>
+            <Ionicons name="bar-chart-outline" size={24} color="#8E8E93" />
+            <Text style={styles.noHistoryText}>
+              {historyLoading ? 'Carregando histórico...' : 'Primeira vez fazendo este exercício!'}
+            </Text>
+            <Text style={styles.noHistorySubtext}>
+              {historyLoading ? '' : 'Seu histórico aparecerá aqui após completar o treino.'}
+            </Text>
+          </View>
+        </View>
+      )}
 
 
       {/* Exercise Dropdown Modal */}
@@ -606,7 +786,7 @@ export default function ExerciseExecution() {
               value={weight}
               onChangeText={setWeight}
               keyboardType="numeric"
-              placeholder={getLastSetWeight() || "0"}
+              placeholder={getPlaceholderWeight()}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -863,6 +1043,12 @@ const styles = StyleSheet.create({
   exerciseTarget: {
     fontSize: 16,
     color: '#8E8E93',
+  },
+  maxWeightText: {
+    fontSize: 14,
+    color: '#FF9500',
+    fontWeight: '600',
+    marginTop: 8,
   },
   currentSetCard: {
     margin: 16,
@@ -1320,6 +1506,87 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#34C759',
+  },
+  exerciseHistoryCard: {
+    margin: 16,
+    marginTop: 0,
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  exerciseHistoryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1C1C1E',
+    marginBottom: 16,
+  },
+  historySession: {
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7',
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  historyDate: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  historyWorkout: {
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  historySets: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  historySet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F2F2F7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+  },
+  historySetNumber: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#8E8E93',
+    minWidth: 12,
+  },
+  historySetData: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#1C1C1E',
+  },
+  noHistoryContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  noHistoryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8E8E93',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  noHistorySubtext: {
+    fontSize: 14,
+    color: '#8E8E93',
+    marginTop: 4,
+    textAlign: 'center',
   },
   savingStatusCard: {
     margin: 16,

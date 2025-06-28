@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -10,6 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useRouter } from "expo-router";
+import { loadWorkoutState, clearWorkoutState, WorkoutExecutionState } from "@/utils/workoutStorage";
 
 interface RestInterval {
   id: string;
@@ -31,8 +32,29 @@ export default function TodayWorkout() {
   const { user, loading, error, activeWorkout } = useCurrentUser();
   const router = useRouter();
   const [workoutStarted, setWorkoutStarted] = useState(false);
+  const [savedWorkoutState, setSavedWorkoutState] = useState<WorkoutExecutionState | null>(null);
+  const [loadingWorkoutState, setLoadingWorkoutState] = useState(true);
 
-  if (loading) {
+  // Check for saved workout state on component mount
+  useEffect(() => {
+    const checkWorkoutState = async () => {
+      try {
+        const savedState = await loadWorkoutState();
+        setSavedWorkoutState(savedState);
+        if (savedState?.isInProgress) {
+          setWorkoutStarted(true);
+        }
+      } catch (error) {
+        console.error('Error loading workout state:', error);
+      } finally {
+        setLoadingWorkoutState(false);
+      }
+    };
+
+    checkWorkoutState();
+  }, []);
+
+  if (loading || loadingWorkoutState) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -54,7 +76,7 @@ export default function TodayWorkout() {
   }
 
   const today = new Date();
-  const dayOfWeek = today.getDay();
+  const dayOfWeek = today.getDay() - 2;
   const todayTraining = activeWorkout?.trainingDays?.find(
     (day) => day.dayOfWeek === dayOfWeek
   );
@@ -101,9 +123,25 @@ export default function TodayWorkout() {
     });
   };
 
-  const handleFinishWorkout = () => {
+  const handleResumeWorkout = () => {
+    if (savedWorkoutState) {
+      // Navigate to exercise execution screen with saved state
+      router.push({
+        pathname: "/exercise",
+        params: {
+          exercises: JSON.stringify(savedWorkoutState.exercises),
+          trainingDayName: savedWorkoutState.trainingDayName,
+          resumeState: "true",
+        },
+      });
+    }
+  };
+
+  const handleFinishWorkout = async () => {
     setWorkoutStarted(false);
-    // Handle workout completion logic
+    setSavedWorkoutState(null);
+    // Clear saved workout state
+    await clearWorkoutState();
   };
 
   if (isRestDay) {
@@ -167,6 +205,14 @@ export default function TodayWorkout() {
           >
             <Ionicons name="play" size={24} color="#FFFFFF" />
             <Text style={styles.startButtonText}>Iniciar Treino</Text>
+          </TouchableOpacity>
+        ) : savedWorkoutState?.isInProgress ? (
+          <TouchableOpacity
+            style={styles.resumeButton}
+            onPress={handleResumeWorkout}
+          >
+            <Ionicons name="play-forward" size={24} color="#FFFFFF" />
+            <Text style={styles.resumeButtonText}>Retomar Treino</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -380,6 +426,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   finishButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  resumeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FF9500",
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+  },
+  resumeButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
