@@ -557,6 +557,10 @@ export default function ExerciseExecution() {
     return "0";
   };
 
+  const areAllSetsCompleted = () => {
+    return sets.length > 0 && sets.every(set => set.completed);
+  };
+
   const handleSaveWorkoutHistory = async () => {
     if (!user || !activeWorkout) {
       Alert.alert('Erro', 'Dados do usuário ou treino não encontrados.');
@@ -778,45 +782,61 @@ export default function ExerciseExecution() {
 
       {/* Current Set Info */}
       <View style={styles.currentSetCard}>
-        <Text style={styles.currentSetTitle}>
-          Série {currentSet + 1} de {currentExercise?.sets || 0}
-        </Text>
-        
-        {/* Weight and Reps Input */}
-        <View style={styles.inputRow}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Peso (kg)</Text>
-            <TextInput
-              style={styles.input}
-              value={weight}
-              onChangeText={setWeight}
-              keyboardType="numeric"
-              placeholder={getPlaceholderWeight()}
-            />
+        {areAllSetsCompleted() ? (
+          /* Minimized version when all sets are completed */
+          <View style={styles.completedSetsContainer}>
+            <View style={styles.completedSetsHeader}>
+              <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+              <Text style={styles.completedSetsTitle}>
+                Séries {currentExercise?.sets || 0} de {currentExercise?.sets || 0}
+              </Text>
+            </View>
+            <Text style={styles.completedSetsSubtitle}>Séries concluídas</Text>
           </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Repetições</Text>
-            <TextInput
-              style={styles.input}
-              value={reps}
-              onChangeText={setReps}
-              keyboardType="numeric"
-              placeholder={getLastSetReps() || "0"}
-            />
-          </View>
-        </View>
+        ) : (
+          /* Normal version when sets are in progress */
+          <>
+            <Text style={styles.currentSetTitle}>
+              Série {currentSet + 1} de {currentExercise?.sets || 0}
+            </Text>
+            
+            {/* Weight and Reps Input */}
+            <View style={styles.inputRow}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Peso (kg)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={weight}
+                  onChangeText={setWeight}
+                  keyboardType="numeric"
+                  placeholder={getPlaceholderWeight()}
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Repetições</Text>
+                <TextInput
+                  style={styles.input}
+                  value={reps}
+                  onChangeText={setReps}
+                  keyboardType="numeric"
+                  placeholder={getLastSetReps() || "0"}
+                />
+              </View>
+            </View>
 
-        {/* Complete Set Button */}
-        <TouchableOpacity
-          style={[
-            styles.completeButton,
-            (!weight || !reps) && styles.completeButtonDisabled
-          ]}
-          onPress={handleCompleteSet}
-          disabled={!weight || !reps}
-        >
-          <Text style={styles.completeButtonText}>Concluir Série</Text>
-        </TouchableOpacity>
+            {/* Complete Set Button */}
+            <TouchableOpacity
+              style={[
+                styles.completeButton,
+                (!weight || !reps) && styles.completeButtonDisabled
+              ]}
+              onPress={handleCompleteSet}
+              disabled={!weight || !reps}
+            >
+              <Text style={styles.completeButtonText}>Concluir Série</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
 
       {/* Rest Timer */}
@@ -1112,6 +1132,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  completedSetsContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  completedSetsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  completedSetsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#34C759',
+  },
+  completedSetsSubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
   },
   restTimerCard: {
     margin: 16,
