@@ -566,6 +566,19 @@ export default function ExerciseExecution() {
     return sets.length > 0 && sets.every(set => set.completed);
   };
 
+  const areAllPlannedSetsCompleted = () => {
+    const plannedSetsCount = getPlannedSetsCount();
+    const result = sets.length >= plannedSetsCount && 
+           sets.slice(0, plannedSetsCount).every(set => set.completed);
+    console.log('areAllPlannedSetsCompleted:', {
+      plannedSetsCount,
+      setsLength: sets.length,
+      plannedSets: sets.slice(0, plannedSetsCount),
+      result
+    });
+    return result;
+  };
+
   const getPlannedSetsCount = () => {
     return currentExercise?.sets || 0;
   };
@@ -872,7 +885,7 @@ export default function ExerciseExecution() {
 
       {/* Current Set Info */}
       <View style={styles.currentSetCard}>
-        {areAllSetsCompleted() && currentSet >= getPlannedSetsCount() ? (
+        {areAllPlannedSetsCompleted() && areAllSetsCompleted() ? (
           /* Minimized version when all planned sets are completed */
           <View style={styles.completedSetsContainer}>
             <View style={styles.completedSetsHeader}>
