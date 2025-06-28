@@ -169,7 +169,12 @@ export function useWorkoutHistoriesByUserAndDate(userId?: string, date?: Date) {
     {
       variables: { 
         userId, 
-        date: date ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0).toISOString() : undefined
+        date: date ? (() => {
+          const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
+          console.log('🔍 Query date being sent:', normalizedDate.toISOString());
+          console.log('🔍 Original selectedDate:', date);
+          return normalizedDate.toISOString();
+        })() : undefined
       },
       skip: !userId || !date,
       errorPolicy: 'all',

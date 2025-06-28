@@ -373,7 +373,16 @@ export default function WorkoutHistory() {
           if (selectedDate) {
             const filteredData = dateHistoriesData?.workoutHistoriesByUserAndDate || [];
             console.log('Date filtered data:', filteredData);
-            const convertedData = convertWorkoutHistoryData(filteredData);
+            
+            // Additional frontend filtering to ensure exact date match
+            const exactDateFilteredData = filteredData.filter(workout => {
+              const workoutDate = formatApiDate(workout.executedAt);
+              console.log('🔍 Comparing:', workoutDate, 'vs', selectedDate);
+              return workoutDate === selectedDate;
+            });
+            console.log('Exact date filtered data:', exactDateFilteredData);
+            
+            const convertedData = convertWorkoutHistoryData(exactDateFilteredData);
             console.log('Converted filtered data:', convertedData);
             return convertedData;
           } else {
