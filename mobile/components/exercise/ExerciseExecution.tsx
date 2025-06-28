@@ -70,6 +70,9 @@ export default function ExerciseExecution() {
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [allExerciseSets, setAllExerciseSets] = useState<Map<number, ExerciseSet[]>>(new Map());
   const [allExerciseNotes, setAllExerciseNotes] = useState<Map<number, string>>(new Map());
+  const [editingSetIndex, setEditingSetIndex] = useState<number | null>(null);
+  const [editWeight, setEditWeight] = useState('');
+  const [editReps, setEditReps] = useState('');
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -561,6 +564,48 @@ export default function ExerciseExecution() {
     return sets.length > 0 && sets.every(set => set.completed);
   };
 
+  const handleEditSet = (setIndex: number) => {
+    const setToEdit = sets[setIndex];
+    if (setToEdit && setToEdit.completed) {
+      setEditingSetIndex(setIndex);
+      setEditWeight(setToEdit.weight.toString());
+      setEditReps(setToEdit.reps.toString());
+    }
+  };
+
+  const handleSaveEditedSet = () => {
+    if (editingSetIndex !== null && editWeight && editReps) {
+      const updatedSets = [...sets];
+      updatedSets[editingSetIndex] = {
+        ...updatedSets[editingSetIndex],
+        weight: parseFloat(editWeight),
+        reps: parseInt(editReps),
+      };
+      setSets(updatedSets);
+      
+      // Update the stored sets for this exercise
+      setAllExerciseSets(prev => {
+        const newMap = new Map(prev);
+        newMap.set(currentExerciseIndex, updatedSets);
+        return newMap;
+      });
+
+      // Save workout state after editing
+      setTimeout(() => saveCurrentWorkoutState(), 100);
+
+      // Reset editing state
+      setEditingSetIndex(null);
+      setEditWeight('');
+      setEditReps('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSetIndex(null);
+    setEditWeight('');
+    setEditReps('');
+  };
+
   const handleSaveWorkoutHistory = async () => {
     if (!user || !activeWorkout) {
       Alert.alert('Erro', 'Dados do usuário ou treino não encontrados.');
@@ -897,21 +942,59 @@ export default function ExerciseExecution() {
             style={[
               styles.setRow,
               set.completed && styles.setRowCompleted,
-              index === currentSet && styles.setRowCurrent
+              index === currentSet && styles.setRowCurrent,
+              editingSetIndex === index && styles.setRowEditing
             ]}
           >
             <Text style={styles.setNumber}>Série {index + 1}</Text>
-            {set.completed ? (
-              <Text style={styles.setData}>
-                {set.weight}kg × {set.reps} reps
-              </Text>
+            
+            {editingSetIndex === index ? (
+              /* Editing mode */
+              <View style={styles.editSetContainer}>
+                <View style={styles.editInputRow}>
+                  <TextInput
+                    style={styles.editInput}
+                    value={editWeight}
+                    onChangeText={setEditWeight}
+                    keyboardType="numeric"
+                    placeholder="Peso"
+                  />
+                  <Text style={styles.editSeparator}>×</Text>
+                  <TextInput
+                    style={styles.editInput}
+                    value={editReps}
+                    onChangeText={setEditReps}
+                    keyboardType="numeric"
+                    placeholder="Reps"
+                  />
+                </View>
+                <View style={styles.editActions}>
+                  <TouchableOpacity style={styles.editSaveButton} onPress={handleSaveEditedSet}>
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.editCancelButton} onPress={handleCancelEdit}>
+                    <Ionicons name="close" size={16} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : set.completed ? (
+              /* Completed set display */
+              <>
+                <Text style={styles.setData}>
+                  {set.weight}kg × {set.reps} reps
+                </Text>
+                <TouchableOpacity 
+                  style={styles.editButton}
+                  onPress={() => handleEditSet(index)}
+                >
+                  <Ionicons name="create" size={16} color="#007AFF" />
+                </TouchableOpacity>
+              </>
             ) : (
+              /* Pending set display */
               <Text style={styles.setPlaceholder}>
                 {index === currentSet ? 'Em andamento...' : 'Aguardando...'}
               </Text>
-            )}
-            {set.completed && (
-              <Ionicons name="checkmark-circle" size={20} color="#34C759" />
             )}
           </View>
         ))}
@@ -1241,6 +1324,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#8E8E93',
     fontStyle: 'italic',
+  },
+  setRowEditing: {
+    backgroundColor: '#F0F8FF',
+    borderWidth: 2,
+    borderColor: '#007AFF',
+  },
+  editSetContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginLeft: 12,
+  },
+  editInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  editInput: {
+    height: 32,
+    width: 50,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    fontSize: 14,
+    textAlign: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  editSeparator: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginHorizontal: 8,
+  },
+  editActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginLeft: 12,
+  },
+  editSaveButton: {
+    backgroundColor: '#34C759',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editCancelButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editButton: {
+    padding: 8,
+    marginLeft: 8,
   },
   notesCard: {
     margin: 16,
