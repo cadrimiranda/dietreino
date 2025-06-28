@@ -32,7 +32,6 @@ interface Exercise {
 export default function TodayWorkout() {
   const { user, loading, error, activeWorkout } = useCurrentUser();
   const router = useRouter();
-  const [workoutStarted, setWorkoutStarted] = useState(false);
   const [savedWorkoutState, setSavedWorkoutState] = useState<WorkoutExecutionState | null>(null);
   const [loadingWorkoutState, setLoadingWorkoutState] = useState(true);
 
@@ -43,13 +42,6 @@ export default function TodayWorkout() {
       const savedState = await loadWorkoutState();
       console.log('TodayWorkout - Loaded workout state:', savedState);
       setSavedWorkoutState(savedState);
-      if (savedState?.isInProgress) {
-        console.log('TodayWorkout - Workout in progress, setting workoutStarted to true');
-        setWorkoutStarted(true);
-      } else {
-        console.log('TodayWorkout - No workout in progress, setting workoutStarted to false');
-        setWorkoutStarted(false);
-      }
     } catch (error) {
       console.error('Error loading workout state:', error);
     } finally {
@@ -126,7 +118,6 @@ export default function TodayWorkout() {
     })) || [];
 
   const handleStartWorkout = () => {
-    setWorkoutStarted(true);
     // Navigate to exercise execution screen with exercises data
     router.push({
       pathname: "/exercise",
@@ -151,12 +142,6 @@ export default function TodayWorkout() {
     }
   };
 
-  const handleFinishWorkout = async () => {
-    setWorkoutStarted(false);
-    setSavedWorkoutState(null);
-    // Clear saved workout state
-    await clearWorkoutState();
-  };
 
   if (isRestDay) {
     return (
@@ -220,21 +205,13 @@ export default function TodayWorkout() {
             <Ionicons name="play-forward" size={24} color="#FFFFFF" />
             <Text style={styles.resumeButtonText}>Retomar Treino</Text>
           </TouchableOpacity>
-        ) : !workoutStarted ? (
+        ) : (
           <TouchableOpacity
             style={styles.startButton}
             onPress={handleStartWorkout}
           >
             <Ionicons name="play" size={24} color="#FFFFFF" />
             <Text style={styles.startButtonText}>Iniciar Treino</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.finishButton}
-            onPress={handleFinishWorkout}
-          >
-            <Ionicons name="checkmark" size={24} color="#FFFFFF" />
-            <Text style={styles.finishButtonText}>Finalizar Treino</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -426,20 +403,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   startButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  finishButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#34C759",
-    borderRadius: 12,
-    padding: 16,
-    gap: 8,
-  },
-  finishButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
