@@ -276,6 +276,8 @@ export type Query = {
   workout?: Maybe<WorkoutType>;
   workoutHistories: Array<WorkoutHistoryType>;
   workoutHistoriesByUser: Array<WorkoutHistoryType>;
+  workoutHistoriesByUserAndDate: Array<WorkoutHistoryType>;
+  workoutHistoriesByUserAndDateRange: Array<WorkoutHistoryType>;
   workoutHistoriesByWorkout: Array<WorkoutHistoryType>;
   workoutHistory?: Maybe<WorkoutHistoryType>;
   workouts: Array<WorkoutType>;
@@ -314,6 +316,19 @@ export type QueryWorkoutArgs = {
 
 
 export type QueryWorkoutHistoriesByUserArgs = {
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkoutHistoriesByUserAndDateArgs = {
+  date: Scalars['DateTime']['input'];
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryWorkoutHistoriesByUserAndDateRangeArgs = {
+  endDate: Scalars['DateTime']['input'];
+  startDate: Scalars['DateTime']['input'];
   userId: Scalars['ID']['input'];
 };
 
@@ -523,6 +538,7 @@ export type WorkoutHistoryExercise = {
   completedSets: Scalars['Float']['output'];
   createdAt: Scalars['DateTime']['output'];
   exercise: Exercise;
+  exerciseId: Scalars['String']['output'];
   exerciseName: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   notes?: Maybe<Scalars['String']['output']>;
@@ -531,6 +547,7 @@ export type WorkoutHistoryExercise = {
   updatedAt: Scalars['DateTime']['output'];
   workoutHistory: WorkoutHistory;
   workoutHistoryExerciseSets: Array<WorkoutHistoryExerciseSet>;
+  workoutHistoryId: Scalars['String']['output'];
 };
 
 export type WorkoutHistoryExerciseSet = {
@@ -549,6 +566,7 @@ export type WorkoutHistoryExerciseSet = {
   updatedAt: Scalars['DateTime']['output'];
   weight?: Maybe<Scalars['Float']['output']>;
   workoutHistoryExercise: WorkoutHistoryExercise;
+  workoutHistoryExerciseId: Scalars['String']['output'];
 };
 
 export type WorkoutHistoryExerciseSetType = {

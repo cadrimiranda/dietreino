@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,8 +7,16 @@ import {
   TouchableOpacity,
   TextInput,
   Dimensions,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { 
+  useWorkoutHistoriesByUser, 
+  useWorkoutHistoriesByUserAndDate,
+  WorkoutHistoryQueryData 
+} from '@/hooks/useWorkoutHistoryQuery';
 
 interface WorkoutData {
   date: string;
@@ -28,44 +36,47 @@ interface ExerciseProgress {
 const { width } = Dimensions.get('window');
 
 export default function WorkoutHistory() {
+  const { user } = useCurrentUser();
   const [selectedView, setSelectedView] = useState<'calendar' | 'progress' | 'search'>('calendar');
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
 
-  // Mock data - replace with real data
-  const workoutHistory: WorkoutData[] = [
-    {
-      date: '2025-06-14',
-      workoutName: 'Treino de Peito',
-      exercises: 5,
-      totalSets: 15,
-      duration: '45min',
-      notes: 'Ótimo treino! Consegui aumentar o peso no supino.'
-    },
-    {
-      date: '2025-06-12',
-      workoutName: 'Treino de Costas',
-      exercises: 6,
-      totalSets: 18,
-      duration: '50min',
-      notes: 'Foquei mais na forma dos movimentos.'
-    },
-    {
-      date: '2025-06-10',
-      workoutName: 'Treino de Pernas',
-      exercises: 4,
-      totalSets: 16,
-      duration: '55min',
-    },
-    {
-      date: '2025-06-08',
-      workoutName: 'Treino de Ombros',
-      exercises: 5,
-      totalSets: 15,
-      duration: '40min',
-    },
-  ];
+  // Fetch workout histories
+  const { 
+    data: allHistoriesData, 
+    loading: allHistoriesLoading, 
+    error: allHistoriesError 
+  } = useWorkoutHistoriesByUser(user?.id);
+
+  const { 
+    data: dateHistoriesData, 
+    loading: dateHistoriesLoading 
+  } = useWorkoutHistoriesByUserAndDate(
+    user?.id, 
+    selectedDate ? new Date(selectedDate) : undefined
+  );
+
+  // Convert API data to component format
+  const convertWorkoutHistoryData = (histories: WorkoutHistoryQueryData[]): WorkoutData[] => {
+    return histories.map((history) => ({
+      date: history.executedAt.split('T')[0], // Convert ISO string to YYYY-MM-DD
+      workoutName: history.workoutName,
+      exercises: history.workoutHistoryExercises.length,
+      totalSets: history.workoutHistoryExercises.reduce(
+        (total, exercise) => total + exercise.completedSets, 
+        0
+      ),
+      duration: history.durationMinutes ? `${history.durationMinutes}min` : 'N/A',
+      notes: history.notes,
+    }));
+  };
+
+  // Get workout history data
+  const allWorkoutHistories = allHistoriesData?.workoutHistoriesByUser || [];
+  const workoutHistory = convertWorkoutHistoryData(allWorkoutHistories);
 
   const exerciseProgress: ExerciseProgress[] = [
     {
@@ -99,6 +110,45 @@ export default function WorkoutHistory() {
     return week;
   };
 
+  const getMonthCalendar = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    // First day of the month
+    const firstDay = new Date(year, month, 1);
+    // Last day of the month
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Start from Sunday of the week containing the first day
+    const startDate = new Date(firstDay);
+    startDate.setDate(firstDay.getDate() - firstDay.getDay());
+    
+    // Create calendar grid (6 weeks = 42 days)
+    const calendar = [];
+    const currentDate = new Date(startDate);
+    
+    for (let week = 0; week < 6; week++) {
+      const weekDays = [];
+      for (let day = 0; day < 7; day++) {
+        weekDays.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      calendar.push(weekDays);
+    }
+    
+    return { calendar, firstDay, lastDay };
+  };
+
+  const changeMonth = (direction: 'prev' | 'next') => {
+    const newMonth = new Date(selectedMonth);
+    if (direction === 'prev') {
+      newMonth.setMonth(selectedMonth.getMonth() - 1);
+    } else {
+      newMonth.setMonth(selectedMonth.getMonth() + 1);
+    }
+    setSelectedMonth(newMonth);
+  };
+
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0];
   };
@@ -111,12 +161,114 @@ export default function WorkoutHistory() {
     return workoutHistory.find(workout => workout.date === date);
   };
 
+  const renderMonthCalendar = () => {
+    const { calendar, firstDay } = getMonthCalendar(selectedMonth);
+    const monthNames = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+
+    return (
+      <View style={styles.monthCalendarContainer}>
+        {/* Month Navigation */}
+        <View style={styles.monthHeader}>
+          <TouchableOpacity
+            style={styles.monthNavButton}
+            onPress={() => changeMonth('prev')}
+          >
+            <Ionicons name="chevron-back" size={24} color="#007AFF" />
+          </TouchableOpacity>
+          
+          <Text style={styles.monthTitle}>
+            {monthNames[selectedMonth.getMonth()]} {selectedMonth.getFullYear()}
+          </Text>
+          
+          <TouchableOpacity
+            style={styles.monthNavButton}
+            onPress={() => changeMonth('next')}
+          >
+            <Ionicons name="chevron-forward" size={24} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Days of week header */}
+        <View style={styles.daysOfWeekHeader}>
+          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, index) => (
+            <Text key={index} style={styles.dayOfWeekLabel}>{day}</Text>
+          ))}
+        </View>
+
+        {/* Calendar Grid */}
+        <View style={styles.monthGrid}>
+          {calendar.map((week, weekIndex) => (
+            <View key={weekIndex} style={styles.monthWeekRow}>
+              {week.map((date, dayIndex) => {
+                const dateStr = formatDate(date);
+                const hasWorkout = hasWorkoutOnDate(dateStr);
+                const isToday = formatDate(new Date()) === dateStr;
+                const isSelected = selectedDate === dateStr;
+                const isCurrentMonth = date.getMonth() === selectedMonth.getMonth();
+
+                return (
+                  <TouchableOpacity
+                    key={dayIndex}
+                    style={[
+                      styles.monthDayContainer,
+                      hasWorkout && styles.monthDayWithWorkout,
+                      isToday && styles.monthDayToday,
+                      isSelected && styles.monthDaySelected,
+                      !isCurrentMonth && styles.monthDayOtherMonth
+                    ]}
+                    onPress={() => {
+                      setSelectedDate(dateStr);
+                      setShowMonthPicker(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.monthDayNumber,
+                      hasWorkout && styles.monthDayNumberWithWorkout,
+                      isToday && styles.monthDayNumberToday,
+                      isSelected && styles.monthDayNumberSelected,
+                      !isCurrentMonth && styles.monthDayNumberOtherMonth
+                    ]}>
+                      {date.getDate()}
+                    </Text>
+                    {hasWorkout && isCurrentMonth && (
+                      <View style={styles.monthWorkoutIndicator} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+
+        {/* Close button */}
+        <TouchableOpacity
+          style={styles.closeCalendarButton}
+          onPress={() => setShowMonthPicker(false)}
+        >
+          <Text style={styles.closeCalendarText}>Fechar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const renderCalendarView = () => {
     const currentWeek = getCurrentWeek();
     
     return (
       <View style={styles.calendarContainer}>
-        <Text style={styles.sectionTitle}>Esta Semana</Text>
+        <View style={styles.weekHeader}>
+          <Text style={styles.sectionTitle}>Esta Semana</Text>
+          <TouchableOpacity
+            style={styles.calendarButton}
+            onPress={() => setShowMonthPicker(true)}
+          >
+            <Ionicons name="calendar-outline" size={20} color="#007AFF" />
+            <Text style={styles.calendarButtonText}>Calendário</Text>
+          </TouchableOpacity>
+        </View>
         
         {/* Week View */}
         <View style={styles.weekView}>
@@ -125,6 +277,7 @@ export default function WorkoutHistory() {
             const dateStr = formatDate(date);
             const hasWorkout = hasWorkoutOnDate(dateStr);
             const isToday = formatDate(new Date()) === dateStr;
+            const isSelected = selectedDate === dateStr;
             
             return (
               <TouchableOpacity
@@ -132,16 +285,20 @@ export default function WorkoutHistory() {
                 style={[
                   styles.dayContainer,
                   hasWorkout && styles.dayWithWorkout,
-                  isToday && styles.dayToday
+                  isToday && styles.dayToday,
+                  isSelected && styles.daySelected
                 ]}
+                onPress={() => setSelectedDate(dateStr)}
               >
                 <Text style={[
                   styles.dayLabel,
-                  isToday && styles.dayTodayText
+                  isToday && styles.dayTodayText,
+                  isSelected && styles.daySelectedText
                 ]}>{day}</Text>
                 <Text style={[
                   styles.dayNumber,
-                  isToday && styles.dayTodayText
+                  isToday && styles.dayTodayText,
+                  isSelected && styles.daySelectedText
                 ]}>{date.getDate()}</Text>
                 {hasWorkout && (
                   <View style={styles.workoutIndicator} />
@@ -152,8 +309,34 @@ export default function WorkoutHistory() {
         </View>
 
         {/* Recent Workouts */}
-        <Text style={styles.sectionTitle}>Treinos Recentes</Text>
-        {workoutHistory.slice(0, 5).map((workout, index) => (
+        <Text style={styles.sectionTitle}>
+          {selectedDate ? `Treino de ${new Date(selectedDate).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}` : 'Treinos Recentes'}
+        </Text>
+        
+        {/* Loading state */}
+        {(allHistoriesLoading || dateHistoriesLoading) && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Carregando histórico...</Text>
+          </View>
+        )}
+
+        {/* Error state */}
+        {allHistoriesError && (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={48} color="#FF3B30" />
+            <Text style={styles.errorText}>Erro ao carregar histórico</Text>
+            <Text style={styles.errorSubtext}>
+              Verifique sua conexão e tente novamente
+            </Text>
+          </View>
+        )}
+
+        {/* Workout list */}
+        {!allHistoriesLoading && !dateHistoriesLoading && (selectedDate 
+          ? convertWorkoutHistoryData(dateHistoriesData?.workoutHistoriesByUserAndDate || [])
+          : workoutHistory.slice(0, 5)
+        ).map((workout, index) => (
           <TouchableOpacity key={index} style={styles.workoutItem}>
             <View style={styles.workoutHeader}>
               <Text style={styles.workoutDate}>
@@ -176,6 +359,23 @@ export default function WorkoutHistory() {
             )}
           </TouchableOpacity>
         ))}
+        
+        {/* Empty state for selected date */}
+        {selectedDate && !dateHistoriesLoading && (!dateHistoriesData?.workoutHistoriesByUserAndDate || dateHistoriesData.workoutHistoriesByUserAndDate.length === 0) && (
+          <View style={styles.emptyState}>
+            <Ionicons name="calendar" size={48} color="#E5E5EA" />
+            <Text style={styles.emptyStateText}>Nenhum treino realizado</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Você não treinou neste dia
+            </Text>
+            <TouchableOpacity 
+              style={styles.clearSelectionButton}
+              onPress={() => setSelectedDate(null)}
+            >
+              <Text style={styles.clearSelectionText}>Ver todos os treinos</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
@@ -365,6 +565,18 @@ export default function WorkoutHistory() {
         {selectedView === 'progress' && renderProgressView()}
         {selectedView === 'search' && renderSearchView()}
       </ScrollView>
+
+      {/* Month Calendar Modal */}
+      <Modal
+        visible={showMonthPicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowMonthPicker(false)}
+      >
+        <View style={styles.modalContainer}>
+          {renderMonthCalendar()}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -412,6 +624,58 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     paddingHorizontal: 20,
   },
+  weekHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
+  calendarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  calendarButtonText: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#8E8E93',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FF3B30',
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+  },
   
   // Calendar View
   calendarContainer: {
@@ -436,6 +700,11 @@ const styles = StyleSheet.create({
   dayToday: {
     backgroundColor: '#007AFF',
   },
+  daySelected: {
+    backgroundColor: '#34C759',
+    borderWidth: 2,
+    borderColor: '#30D158',
+  },
   dayLabel: {
     fontSize: 12,
     fontWeight: '600',
@@ -449,6 +718,10 @@ const styles = StyleSheet.create({
   },
   dayTodayText: {
     color: '#FFFFFF',
+  },
+  daySelectedText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   workoutIndicator: {
     width: 6,
@@ -623,5 +896,131 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8E8E93',
     marginTop: 4,
+  },
+  clearSelectionButton: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+  },
+  clearSelectionText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  
+  // Month Calendar Modal
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  monthCalendarContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+  },
+  monthHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+    marginBottom: 20,
+  },
+  monthNavButton: {
+    padding: 8,
+  },
+  monthTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1C1C1E',
+  },
+  daysOfWeekHeader: {
+    flexDirection: 'row',
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+    marginBottom: 10,
+  },
+  dayOfWeekLabel: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#8E8E93',
+  },
+  monthGrid: {
+    flex: 1,
+  },
+  monthWeekRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  monthDayContainer: {
+    flex: 1,
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    marginHorizontal: 2,
+    position: 'relative',
+  },
+  monthDayWithWorkout: {
+    backgroundColor: '#E3F2FD',
+  },
+  monthDayToday: {
+    backgroundColor: '#007AFF',
+  },
+  monthDaySelected: {
+    backgroundColor: '#34C759',
+    borderWidth: 2,
+    borderColor: '#30D158',
+  },
+  monthDayOtherMonth: {
+    opacity: 0.3,
+  },
+  monthDayNumber: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1C1C1E',
+  },
+  monthDayNumberWithWorkout: {
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  monthDayNumberToday: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  monthDayNumberSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  monthDayNumberOtherMonth: {
+    color: '#8E8E93',
+  },
+  monthWorkoutIndicator: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#007AFF',
+    position: 'absolute',
+    bottom: 4,
+  },
+  closeCalendarButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  closeCalendarText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

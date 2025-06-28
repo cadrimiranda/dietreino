@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   StyleSheet,
   View,
@@ -11,11 +11,11 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { useAuth } from '@/hooks/useAuth';
+} from "react-native";
+import { useAuth } from "@/hooks/useAuth";
 
-const STORAGE_KEY = '@email_storage_key';
-const REMEMBER_EMAIL_KEY = '@remember_email_key';
+const STORAGE_KEY = "@email_storage_key";
+const REMEMBER_EMAIL_KEY = "@remember_email_key";
 
 const saveEmailPreference = async (shouldRemember: boolean, email?: string) => {
   try {
@@ -26,19 +26,20 @@ const saveEmailPreference = async (shouldRemember: boolean, email?: string) => {
       await AsyncStorage.setItem(STORAGE_KEY, email);
     }
   } catch (error) {
-    console.error('Error saving email preferences:', error);
+    console.error("Error saving email preferences:", error);
   }
 };
 
 const loadEmailPreference = async () => {
   try {
     const savedRememberEmail = await AsyncStorage.getItem(REMEMBER_EMAIL_KEY);
-    const savedEmail = savedRememberEmail === 'true' 
-      ? await AsyncStorage.getItem(STORAGE_KEY)
-      : null;
-    return { shouldRemember: savedRememberEmail === 'true', savedEmail };
+    const savedEmail =
+      savedRememberEmail === "true"
+        ? await AsyncStorage.getItem(STORAGE_KEY)
+        : null;
+    return { shouldRemember: savedRememberEmail === "true", savedEmail };
   } catch (error) {
-    console.error('Error loading email preferences:', error);
+    console.error("Error loading email preferences:", error);
     return { shouldRemember: false, savedEmail: null };
   }
 };
@@ -50,11 +51,11 @@ const isValidEmail = (email: string): boolean => {
 
 export default function Login() {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("j@eT2p-l#OI0");
   const [rememberEmail, setRememberEmail] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [loginError, setLoginError] = useState('');
+  const [emailError, setEmailError] = useState("");
+  const [loginError, setLoginError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -72,21 +73,24 @@ export default function Login() {
   const handleEmailChange = async (text: string) => {
     setEmail(text);
     if (text.length > 3 && !isValidEmail(text)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError("Please enter a valid email address");
       // If email becomes invalid, uncheck the checkbox and remove from storage
       if (rememberEmail) {
         setRememberEmail(false);
         await saveEmailPreference(false);
       }
     } else {
-      setEmailError('');
+      setEmailError("");
     }
   };
 
   const handleRememberEmailChange = async (value: boolean) => {
     // Only allow checking if email is valid
     if (value && emailError) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address before enabling remember email');
+      Alert.alert(
+        "Invalid Email",
+        "Please enter a valid email address before enabling remember email"
+      );
       return;
     }
 
@@ -96,18 +100,18 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setLoginError('Please fill in all fields');
+      setLoginError("Please fill in all fields");
       return;
     }
 
     if (!isValidEmail(email)) {
-      setLoginError('Please enter a valid email address');
+      setLoginError("Please enter a valid email address");
       return;
     }
 
     try {
       setIsLoading(true);
-      setLoginError('');
+      setLoginError("");
       // Save email to AsyncStorage if remember is checked
       if (rememberEmail) {
         await saveEmailPreference(true, email);
@@ -116,8 +120,8 @@ export default function Login() {
       // Login using useAuth hook
       await login(email, password);
     } catch (error) {
-      console.error('Login error:', error);
-      setLoginError('Failed to login. Please try again.');
+      console.error("Login error:", error);
+      setLoginError("Failed to login. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -126,12 +130,12 @@ export default function Login() {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <View style={styles.formContainer}>
           <Text style={styles.title}>Welcome Back</Text>
-          
+
           <TextInput
             style={[styles.input, emailError ? styles.inputError : null]}
             placeholder="Email"
@@ -141,8 +145,10 @@ export default function Login() {
             autoCapitalize="none"
             autoComplete="email"
           />
-          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
-          
+          {emailError ? (
+            <Text style={styles.errorText}>{emailError}</Text>
+          ) : null}
+
           <TextInput
             style={styles.input}
             placeholder="Password"
@@ -151,7 +157,9 @@ export default function Login() {
             secureTextEntry
             autoCapitalize="none"
           />
-          {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
+          {loginError ? (
+            <Text style={styles.errorText}>{loginError}</Text>
+          ) : null}
 
           <View style={styles.checkboxContainer}>
             <TouchableOpacity
@@ -162,19 +170,24 @@ export default function Login() {
             </TouchableOpacity>
             <Text style={styles.checkboxLabel}>Remember Email</Text>
           </View>
-          
+
           <TouchableOpacity
             style={[styles.button, emailError ? styles.buttonDisabled : null]}
             onPress={handleLogin}
             disabled={!!emailError || isLoading}
-            >
-              {
-                isLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={[styles.buttonText, emailError ? styles.buttonTextDisabled : null]}>Log In</Text>
-                )
-              }
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text
+                style={[
+                  styles.buttonText,
+                  emailError ? styles.buttonTextDisabled : null,
+                ]}
+              >
+                Log In
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -184,90 +197,90 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   buttonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: "#ccc",
   },
   buttonTextDisabled: {
     opacity: 0.7,
   },
   errorText: {
-    color: '#ff3b30',
+    color: "#ff3b30",
     fontSize: 12,
     marginTop: 2,
     marginLeft: 4,
   },
   inputError: {
-    borderColor: '#ff3b30',
+    borderColor: "#ff3b30",
   },
   checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 8,
     marginBottom: 16,
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   checkbox: {
     width: 20,
     height: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 4,
     marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   checkboxChecked: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
   },
   checkmark: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   checkboxLabel: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   keyboardView: {
     flex: 1,
   },
   formContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 20,
     gap: 16,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 24,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
     height: 50,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 16,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: "#f8f8f8",
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     height: 50,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 16,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
