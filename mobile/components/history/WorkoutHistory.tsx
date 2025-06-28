@@ -62,7 +62,7 @@ export default function WorkoutHistory() {
   // Convert API data to component format
   const convertWorkoutHistoryData = (histories: WorkoutHistoryQueryData[]): WorkoutData[] => {
     return histories.map((history) => ({
-      date: history.executedAt.split('T')[0], // Convert ISO string to YYYY-MM-DD
+      date: formatApiDate(history.executedAt), // Convert ISO string to local YYYY-MM-DD
       workoutName: history.workoutName,
       exercises: history.workoutHistoryExercises.length,
       totalSets: history.workoutHistoryExercises.reduce(
@@ -153,12 +153,42 @@ export default function WorkoutHistory() {
     return date.toISOString().split('T')[0];
   };
 
+  const formatApiDate = (apiDateString: string) => {
+    // Convert API date to local date string in YYYY-MM-DD format
+    const date = new Date(apiDateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const hasWorkoutOnDate = (date: string) => {
-    return workoutHistory.some(workout => workout.date === date);
+    return allWorkoutHistories.some(workout => {
+      const workoutDate = formatApiDate(workout.executedAt);
+      return workoutDate === date;
+    });
   };
 
   const getWorkoutForDate = (date: string) => {
-    return workoutHistory.find(workout => workout.date === date);
+    const apiWorkout = allWorkoutHistories.find(workout => {
+      const workoutDate = formatApiDate(workout.executedAt);
+      return workoutDate === date;
+    });
+    
+    if (!apiWorkout) return undefined;
+    
+    // Convert to WorkoutData format
+    return {
+      date: formatApiDate(apiWorkout.executedAt),
+      workoutName: apiWorkout.workoutName,
+      exercises: apiWorkout.workoutHistoryExercises.length,
+      totalSets: apiWorkout.workoutHistoryExercises.reduce(
+        (total, exercise) => total + exercise.completedSets, 
+        0
+      ),
+      duration: apiWorkout.durationMinutes ? `${apiWorkout.durationMinutes}min` : 'N/A',
+      notes: apiWorkout.notes,
+    };
   };
 
   const renderMonthCalendar = () => {
