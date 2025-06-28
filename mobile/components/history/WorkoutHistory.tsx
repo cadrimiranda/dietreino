@@ -66,7 +66,11 @@ export default function WorkoutHistory() {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const formatted = `${year}-${month}-${day}`;
+    console.log('🔍 formatApiDate:', apiDateString, '->', formatted);
+    console.log('  - Date object:', date);
+    console.log('  - Year:', year, 'Month:', month, 'Day:', day);
+    return formatted;
   };
 
   // Convert API data to component format
@@ -160,7 +164,9 @@ export default function WorkoutHistory() {
   };
 
   const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
+    const formatted = date.toISOString().split('T')[0];
+    console.log('🔍 formatDate:', date, '->', formatted);
+    return formatted;
   };
 
   const hasWorkoutOnDate = (date: string) => {
@@ -319,7 +325,15 @@ export default function WorkoutHistory() {
                   isToday && styles.dayToday,
                   isSelected && styles.daySelected
                 ]}
-                onPress={() => setSelectedDate(dateStr)}
+                onPress={() => {
+                  console.log('🔍 Day clicked:');
+                  console.log('  - Date object:', date);
+                  console.log('  - Date string (dateStr):', dateStr);
+                  console.log('  - date.getDate():', date.getDate());
+                  console.log('  - date.getMonth():', date.getMonth());
+                  console.log('  - date.getFullYear():', date.getFullYear());
+                  setSelectedDate(dateStr);
+                }}
               >
                 <Text style={[
                   styles.dayLabel,
