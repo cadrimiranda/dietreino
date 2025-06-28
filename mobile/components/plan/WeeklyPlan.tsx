@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -40,8 +40,8 @@ const DAYS_SHORT = ["D", "S", "T", "Q", "Q", "S", "S"];
 export default function WeeklyPlan() {
   const { user, loading, error, activeWorkout } = useCurrentUser();
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
-  const [selectedWeek, setSelectedWeek] = useState(1);
   const router = useRouter();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   if (loading) {
     return (
@@ -88,6 +88,21 @@ export default function WeeklyPlan() {
 
   const handleDayPress = (dayIndex: number) => {
     setExpandedDay(expandedDay === dayIndex ? null : dayIndex);
+    
+    // Scroll to the selected day card after a brief delay to allow state update
+    setTimeout(() => {
+      if (scrollViewRef.current && expandedDay !== dayIndex) {
+        // Calculate approximate position of the day card
+        const cardHeight = 80; // Approximate height of collapsed card
+        const headerHeight = 200; // Approximate height of header sections
+        const targetPosition = headerHeight + (dayIndex * cardHeight);
+        
+        scrollViewRef.current.scrollTo({
+          y: targetPosition,
+          animated: true,
+        });
+      }
+    }, 100);
   };
 
   const handleExercisePress = (exercise: any) => {
@@ -112,7 +127,7 @@ export default function WeeklyPlan() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView ref={scrollViewRef} style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Plano de Treino</Text>
         <Text style={styles.subtitle}>
@@ -120,31 +135,6 @@ export default function WeeklyPlan() {
         </Text>
       </View>
 
-      {/* Week Selector */}
-      <View style={styles.weekSelector}>
-        <Text style={styles.weekTitle}>Semana</Text>
-        <View style={styles.weekButtons}>
-          {[1, 2, 3, 4].map((week) => (
-            <TouchableOpacity
-              key={week}
-              style={[
-                styles.weekButton,
-                selectedWeek === week && styles.weekButtonActive,
-              ]}
-              onPress={() => setSelectedWeek(week)}
-            >
-              <Text
-                style={[
-                  styles.weekButtonText,
-                  selectedWeek === week && styles.weekButtonTextActive,
-                ]}
-              >
-                {week}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
 
       {/* Weekly Overview */}
       <View style={styles.weekOverview}>
@@ -155,6 +145,7 @@ export default function WeeklyPlan() {
               styles.dayOverview,
               today === index && styles.dayOverviewToday,
               !isRestDay(index) && styles.dayOverviewWithWorkout,
+              expandedDay === index && styles.dayOverviewExpanded,
             ]}
             onPress={() => handleDayPress(index)}
           >
@@ -162,6 +153,7 @@ export default function WeeklyPlan() {
               style={[
                 styles.dayOverviewText,
                 today === index && styles.dayOverviewTextToday,
+                expandedDay === index && styles.dayOverviewTextExpanded,
               ]}
             >
               {day}
@@ -277,18 +269,6 @@ export default function WeeklyPlan() {
         })}
       </View>
 
-      {/* Weekly Notes */}
-      <View style={styles.notesCard}>
-        <Text style={styles.notesTitle}>
-          Anotações da Semana {selectedWeek}
-        </Text>
-        <TouchableOpacity style={styles.notesInput}>
-          <Text style={styles.notesPlaceholder}>
-            Adicione suas anotações sobre esta semana...
-          </Text>
-          <Ionicons name="create" size={20} color="#8E8E93" />
-        </TouchableOpacity>
-      </View>
     </ScrollView>
   );
 }
@@ -346,44 +326,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#8E8E93",
   },
-  weekSelector: {
-    padding: 16,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5EA",
-  },
-  weekTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1C1C1E",
-    marginBottom: 12,
-  },
-  weekButtons: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  weekButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F8F9FA",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
-  },
-  weekButtonActive: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
-  },
-  weekButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#8E8E93",
-  },
-  weekButtonTextActive: {
-    color: "#FFFFFF",
-  },
   weekOverview: {
     flexDirection: "row",
     padding: 16,
@@ -417,6 +359,15 @@ const styles = StyleSheet.create({
   },
   dayOverviewIcon: {
     alignItems: "center",
+  },
+  dayOverviewExpanded: {
+    backgroundColor: "#34C759",
+    borderWidth: 2,
+    borderColor: "#30D158",
+  },
+  dayOverviewTextExpanded: {
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   dailyPlans: {
     padding: 16,
@@ -541,38 +492,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#8E8E93",
     textAlign: "center",
-  },
-  notesCard: {
-    margin: 16,
-    marginTop: 0,
-    padding: 20,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  notesTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1C1C1E",
-    marginBottom: 12,
-  },
-  notesInput: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    backgroundColor: "#F8F9FA",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E5EA",
-  },
-  notesPlaceholder: {
-    flex: 1,
-    fontSize: 16,
-    color: "#8E8E93",
   },
 });
