@@ -31,6 +31,18 @@ export class WorkoutHistoryService {
     return this.repository.findByWorkoutId(workoutId);
   }
 
+  async findByUserIdAndDate(userId: string, date: Date): Promise<WorkoutHistory[]> {
+    return this.repository.findByUserIdAndDate(userId, date);
+  }
+
+  async findByUserIdAndDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<WorkoutHistory[]> {
+    return this.repository.findByUserIdAndDateRange(userId, startDate, endDate);
+  }
+
   async create(input: CreateWorkoutHistoryInput): Promise<WorkoutHistory> {
     return this.dataSource.transaction(async (manager) => {
       try {

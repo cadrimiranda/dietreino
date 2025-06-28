@@ -49,6 +49,31 @@ export class WorkoutHistoryResolver {
     return entities.map(this.workoutHistoryService.toWorkoutHistoryType);
   }
 
+  @UseGuards(GqlAuthGuard)
+  @Query(() => [WorkoutHistoryType])
+  async workoutHistoriesByUserAndDate(
+    @Args('userId', { type: () => ID }) userId: string,
+    @Args('date', { type: () => Date }) date: Date,
+  ): Promise<Partial<WorkoutHistoryType>[]> {
+    const entities = await this.workoutHistoryService.findByUserIdAndDate(userId, date);
+    return entities.map(this.workoutHistoryService.toWorkoutHistoryType);
+  }
+
+  @UseGuards(GqlAuthGuard)
+  @Query(() => [WorkoutHistoryType])
+  async workoutHistoriesByUserAndDateRange(
+    @Args('userId', { type: () => ID }) userId: string,
+    @Args('startDate', { type: () => Date }) startDate: Date,
+    @Args('endDate', { type: () => Date }) endDate: Date,
+  ): Promise<Partial<WorkoutHistoryType>[]> {
+    const entities = await this.workoutHistoryService.findByUserIdAndDateRange(
+      userId,
+      startDate,
+      endDate,
+    );
+    return entities.map(this.workoutHistoryService.toWorkoutHistoryType);
+  }
+
   @UseGuards(GqlAuthGuard, RolesGuard)
   @Roles(UserRole.CLIENT, UserRole.TRAINER)
   @Mutation(() => WorkoutHistoryType)
