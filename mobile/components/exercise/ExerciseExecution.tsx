@@ -387,8 +387,8 @@ export default function ExerciseExecution() {
     // Save workout state after completing a set
     setTimeout(() => saveCurrentWorkoutState(), 100);
 
-    // Start rest timer if not the last set
-    if (currentSet < (currentExercise?.sets || 0) - 1) {
+    // Start rest timer if not the last set (including extra sets)
+    if (currentSet < sets.length - 1) {
       const restIntervals = getRestIntervals();
       let restTimeInSeconds = 60; // default
       
@@ -413,7 +413,7 @@ export default function ExerciseExecution() {
       setWeight(nextWeight);
       setReps('');
     } else {
-      // Exercise completed - clear any rest timer first
+      // Last set completed (planned or extra) - clear rest timer first
       setIsResting(false);
       setRestTimer(0);
       setShowRestOptions(false);
@@ -421,16 +421,18 @@ export default function ExerciseExecution() {
         clearTimeout(timerRef.current);
       }
       
-      // Show temporary success feedback
-      setShowSuccessFeedback(true);
-      setTimeout(() => {
-        setShowSuccessFeedback(false);
-      }, 3000); // Hide after 3 seconds
-      
-      // Scroll to bottom to focus on finish exercise button
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      // Only show success feedback if all planned sets are done
+      if (currentSet + 1 >= getPlannedSetsCount()) {
+        setShowSuccessFeedback(true);
+        setTimeout(() => {
+          setShowSuccessFeedback(false);
+        }, 3000); // Hide after 3 seconds
+        
+        // Scroll to bottom to focus on finish exercise button
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
     }
   };
 
@@ -562,6 +564,49 @@ export default function ExerciseExecution() {
 
   const areAllSetsCompleted = () => {
     return sets.length > 0 && sets.every(set => set.completed);
+  };
+
+  const getPlannedSetsCount = () => {
+    return currentExercise?.sets || 0;
+  };
+
+  const getExtraSetsCount = () => {
+    return Math.max(0, sets.length - getPlannedSetsCount());
+  };
+
+  const handleAddExtraSet = () => {
+    const newSetId = `set-${sets.length}`;
+    const newSet: ExerciseSet = {
+      id: newSetId,
+      weight: 0,
+      reps: 0,
+      completed: false,
+    };
+    
+    const updatedSets = [...sets, newSet];
+    setSets(updatedSets);
+    
+    // Set current set to the new extra set
+    setCurrentSet(sets.length);
+    
+    // Suggest weight from last completed set
+    if (sets.length > 0) {
+      const lastCompletedSet = sets[sets.length - 1];
+      if (lastCompletedSet.completed) {
+        setWeight(lastCompletedSet.weight.toString());
+        setReps('');
+      }
+    }
+    
+    // Update stored sets
+    setAllExerciseSets(prev => {
+      const newMap = new Map(prev);
+      newMap.set(currentExerciseIndex, updatedSets);
+      return newMap;
+    });
+
+    // Save workout state
+    setTimeout(() => saveCurrentWorkoutState(), 100);
   };
 
   const handleEditSet = (setIndex: number) => {
@@ -827,22 +872,37 @@ export default function ExerciseExecution() {
 
       {/* Current Set Info */}
       <View style={styles.currentSetCard}>
-        {areAllSetsCompleted() ? (
-          /* Minimized version when all sets are completed */
+        {areAllSetsCompleted() && currentSet >= getPlannedSetsCount() ? (
+          /* Minimized version when all planned sets are completed */
           <View style={styles.completedSetsContainer}>
             <View style={styles.completedSetsHeader}>
               <Ionicons name="checkmark-circle" size={20} color="#34C759" />
               <Text style={styles.completedSetsTitle}>
-                Séries {currentExercise?.sets || 0} de {currentExercise?.sets || 0}
+                Séries {getPlannedSetsCount()} de {getPlannedSetsCount()}
+                {getExtraSetsCount() > 0 && (
+                  <Text style={styles.extraSetsText}> + {getExtraSetsCount()} extra</Text>
+                )}
               </Text>
             </View>
             <Text style={styles.completedSetsSubtitle}>Séries concluídas</Text>
+            
+            {/* Add Extra Set Button */}
+            <TouchableOpacity 
+              style={styles.addExtraSetButton}
+              onPress={handleAddExtraSet}
+            >
+              <Ionicons name="add" size={16} color="#007AFF" />
+              <Text style={styles.addExtraSetButtonText}>Adicionar Série Extra</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           /* Normal version when sets are in progress */
           <>
             <Text style={styles.currentSetTitle}>
-              Série {currentSet + 1} de {currentExercise?.sets || 0}
+              Série {currentSet + 1} de {getPlannedSetsCount()}
+              {currentSet >= getPlannedSetsCount() && (
+                <Text style={styles.extraSetIndicator}> (Extra)</Text>
+              )}
             </Text>
             
             {/* Weight and Reps Input */}
@@ -946,7 +1006,15 @@ export default function ExerciseExecution() {
               editingSetIndex === index && styles.setRowEditing
             ]}
           >
-            <Text style={styles.setNumber}>Série {index + 1}</Text>
+            <Text style={[
+              styles.setNumber,
+              index >= getPlannedSetsCount() && styles.extraSetNumber
+            ]}>
+              Série {index + 1}
+              {index >= getPlannedSetsCount() && (
+                <Text style={styles.extraSetLabel}> (Extra)</Text>
+              )}
+            </Text>
             
             {editingSetIndex === index ? (
               /* Editing mode */
@@ -1235,6 +1303,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8E8E93',
   },
+  extraSetsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF9500',
+  },
+  addExtraSetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0F8FF',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 12,
+    gap: 6,
+  },
+  addExtraSetButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  extraSetIndicator: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FF9500',
+  },
   restTimerCard: {
     margin: 16,
     marginTop: 0,
@@ -1383,6 +1479,14 @@ const styles = StyleSheet.create({
   editButton: {
     padding: 8,
     marginLeft: 8,
+  },
+  extraSetNumber: {
+    color: '#FF9500',
+  },
+  extraSetLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF9500',
   },
   notesCard: {
     margin: 16,
