@@ -157,6 +157,8 @@ type Query {
   workout(id: ID!): WorkoutType
   workoutHistories: [WorkoutHistoryType!]!
   workoutHistoriesByUser(userId: ID!): [WorkoutHistoryType!]!
+  workoutHistoriesByUserAndDate(date: DateTime!, userId: ID!): [WorkoutHistoryType!]!
+  workoutHistoriesByUserAndDateRange(endDate: DateTime!, startDate: DateTime!, userId: ID!): [WorkoutHistoryType!]!
   workoutHistoriesByWorkout(workoutId: ID!): [WorkoutHistoryType!]!
   workoutHistory(id: ID!): WorkoutHistoryType
   workouts: [WorkoutType!]!
