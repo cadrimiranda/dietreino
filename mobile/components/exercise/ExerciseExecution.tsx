@@ -58,19 +58,16 @@ export default function ExerciseExecution() {
   const [restTimer, setRestTimer] = useState(0);
   const [isResting, setIsResting] = useState(false);
   const [exerciseNotes, setExerciseNotes] = useState('');
-  const [countdownTime, setCountdownTime] = useState(0);
-  const [initialCountdownTime, setInitialCountdownTime] = useState(0);
-  const [isCountdownRunning, setIsCountdownRunning] = useState(false);
   const [currentRestIntervalIndex, setCurrentRestIntervalIndex] = useState(0);
   const [showRestOptions, setShowRestOptions] = useState(false);
-  const [showTimeSelector, setShowTimeSelector] = useState(false);
   const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
   const [showExerciseDropdown, setShowExerciseDropdown] = useState(false);
   const [workoutStartTime] = useState(new Date());
+  const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [allExerciseSets, setAllExerciseSets] = useState<Map<number, ExerciseSet[]>>(new Map());
   const [allExerciseNotes, setAllExerciseNotes] = useState<Map<number, string>>(new Map());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const stopwatchRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const currentExercise = exercises[currentExerciseIndex];
 
@@ -143,24 +140,6 @@ export default function ExerciseExecution() {
     };
   }, [restTimer, isResting]);
 
-  // Countdown effect
-  useEffect(() => {
-    if (isCountdownRunning && countdownTime > 0) {
-      stopwatchRef.current = setTimeout(() => {
-        setCountdownTime(countdownTime - 1);
-      }, 1000);
-    } else if (countdownTime === 0 && isCountdownRunning) {
-      setIsCountdownRunning(false);
-      Vibration.vibrate([300, 200, 300]);
-      Alert.alert('Tempo Finalizado!', 'O tempo do exercício acabou!');
-    }
-
-    return () => {
-      if (stopwatchRef.current) {
-        clearTimeout(stopwatchRef.current);
-      }
-    };
-  }, [countdownTime, isCountdownRunning]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -168,63 +147,33 @@ export default function ExerciseExecution() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const startCountdown = () => {
-    if (countdownTime > 0) {
-      setIsCountdownRunning(true);
-    } else {
-      setShowTimeSelector(true);
-    }
-  };
-
-  const pauseCountdown = () => {
-    setIsCountdownRunning(false);
-  };
-
-  const resetCountdown = () => {
-    setIsCountdownRunning(false);
-    setCountdownTime(initialCountdownTime);
-  };
-
-  const setCountdownTimer = (seconds: number) => {
-    setCountdownTime(seconds);
-    setInitialCountdownTime(seconds);
-    setIsCountdownRunning(false);
-    setShowTimeSelector(false);
-  };
 
   const handleFinishExercise = () => {
-    Alert.alert(
-      'Finalizar Exercício',
-      `Deseja marcar "${currentExercise?.name}" como concluído?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Finalizar',
-          style: 'default',
-          onPress: () => {
-            const newCompleted = new Set(completedExercises);
-            newCompleted.add(currentExerciseIndex);
-            setCompletedExercises(newCompleted);
-            
-            // Reset current exercise state
-            setCurrentSet(0);
-            setWeight('');
-            setReps('');
-            setIsCountdownRunning(false);
-            setIsResting(false);
-            
-            // Find next uncompleted exercise or stay on current
-            const nextUncompletedIndex = exercises.findIndex((_, index) => 
-              index > currentExerciseIndex && !newCompleted.has(index)
-            );
-            
-            if (nextUncompletedIndex !== -1) {
-              setCurrentExerciseIndex(nextUncompletedIndex);
-            }
-          }
-        }
-      ]
+    const newCompleted = new Set(completedExercises);
+    newCompleted.add(currentExerciseIndex);
+    setCompletedExercises(newCompleted);
+    
+    // Reset current exercise state
+    setCurrentSet(0);
+    setWeight('');
+    setReps('');
+    setIsResting(false);
+    setRestTimer(0);
+    setShowRestOptions(false);
+    
+    // Clear timer if running
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    
+    // Find next uncompleted exercise or stay on current
+    const nextUncompletedIndex = exercises.findIndex((_, index) => 
+      index > currentExerciseIndex && !newCompleted.has(index)
     );
+    
+    if (nextUncompletedIndex !== -1) {
+      setCurrentExerciseIndex(nextUncompletedIndex);
+    }
   };
 
   const handleSelectExercise = (exerciseIndex: number) => {
@@ -239,9 +188,14 @@ export default function ExerciseExecution() {
     // Reset states for new exercise
     setWeight('');
     setReps('');
-    setIsCountdownRunning(false);
     setIsResting(false);
+    setRestTimer(0);
     setShowRestOptions(false);
+    
+    // Clear timer if running
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
   };
 
   const isExerciseCompleted = (index: number) => {
@@ -260,29 +214,6 @@ export default function ExerciseExecution() {
     return currentExercise?.restIntervals || [];
   };
 
-  const getAvailableCountdownTimes = () => {
-    const restIntervals = getRestIntervals();
-    const times = restIntervals.map(interval => ({
-      label: interval.intervalTime,
-      seconds: parseRestTime(interval.intervalTime),
-      id: interval.id
-    }));
-    
-    // Add some common preset times if no intervals available
-    if (times.length === 0) {
-      return [
-        { label: '30s', seconds: 30, id: 'preset-30' },
-        { label: '45s', seconds: 45, id: 'preset-45' },
-        { label: '60s', seconds: 60, id: 'preset-60' },
-        { label: '90s', seconds: 90, id: 'preset-90' },
-        { label: '2m', seconds: 120, id: 'preset-120' },
-        { label: '3m', seconds: 180, id: 'preset-180' },
-      ];
-    }
-    
-    // Sort by time ascending
-    return times.sort((a, b) => a.seconds - b.seconds);
-  };
 
   const parseRestTime = (timeString: string): number => {
     // Handle formats like "60s", "1m 30s", "90", etc.
@@ -349,25 +280,29 @@ export default function ExerciseExecution() {
       setShowRestOptions(true);
       setCurrentSet(currentSet + 1);
       
-      // Reset countdown for rest period
-      setIsCountdownRunning(false);
-      
       // Suggest weight for next set (increase slightly)
       const nextWeight = (parseFloat(weight) + 2.5).toString();
       setWeight(nextWeight);
       setReps('');
     } else {
-      // Exercise completed
-      Alert.alert(
-        'Exercício Concluído!',
-        'Parabéns! Você completou todas as séries.',
-        [
-          {
-            text: 'Próximo Exercício',
-            onPress: handleNextExercise,
-          }
-        ]
-      );
+      // Exercise completed - clear any rest timer first
+      setIsResting(false);
+      setRestTimer(0);
+      setShowRestOptions(false);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      
+      // Show temporary success feedback
+      setShowSuccessFeedback(true);
+      setTimeout(() => {
+        setShowSuccessFeedback(false);
+      }, 3000); // Hide after 3 seconds
+      
+      // Scroll to bottom to focus on finish exercise button
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     }
   };
 
@@ -530,7 +465,7 @@ export default function ExerciseExecution() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView ref={scrollViewRef} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -554,6 +489,14 @@ export default function ExerciseExecution() {
         
         <View style={styles.headerSpacer} />
       </View>
+
+      {/* Success Feedback */}
+      {showSuccessFeedback && (
+        <View style={styles.successFeedbackCard}>
+          <Ionicons name="checkmark-circle" size={20} color="#34C759" />
+          <Text style={styles.successFeedbackText}>✅ Todas as séries concluídas!</Text>
+        </View>
+      )}
 
       {/* Saving Status */}
       {savingHistory && (
@@ -587,113 +530,6 @@ export default function ExerciseExecution() {
         </Text>
       </View>
 
-      {/* Countdown Timer */}
-      <View style={styles.stopwatchCard}>
-        <View style={styles.countdownHeader}>
-          <Text style={styles.stopwatchTitle}>Timer do Exercício</Text>
-          <TouchableOpacity 
-            style={styles.timeSelectButton} 
-            onPress={() => setShowTimeSelector(true)}
-          >
-            <Ionicons name="time" size={16} color="#007AFF" />
-            <Text style={styles.timeSelectButtonText}>Tempo</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <Text style={[
-          styles.stopwatchTime,
-          countdownTime <= 10 && countdownTime > 0 && isCountdownRunning && styles.warningTime
-        ]}>
-          {formatTime(countdownTime)}
-        </Text>
-        
-        {initialCountdownTime > 0 && (
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBar}>
-              <View style={[
-                styles.progressFill,
-                { width: `${(countdownTime / initialCountdownTime) * 100}%` }
-              ]} />
-            </View>
-            <Text style={styles.exerciseProgressText}>
-              {initialCountdownTime > 0 ? `${formatTime(initialCountdownTime)} inicial` : ''}
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.stopwatchActions}>
-          {!isCountdownRunning ? (
-            <TouchableOpacity style={styles.stopwatchButton} onPress={startCountdown}>
-              <Ionicons name="play" size={20} color="#007AFF" />
-              <Text style={styles.stopwatchButtonText}>
-                {countdownTime > 0 ? 'Iniciar' : 'Definir Tempo'}
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.stopwatchButton} onPress={pauseCountdown}>
-              <Ionicons name="pause" size={20} color="#FF9500" />
-              <Text style={styles.stopwatchButtonText}>Pausar</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity style={styles.stopwatchButton} onPress={resetCountdown}>
-            <Ionicons name="refresh" size={20} color="#8E8E93" />
-            <Text style={styles.stopwatchButtonText}>Reset</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Time Selector Modal */}
-      {showTimeSelector && (
-        <View style={styles.timeSelectorOverlay}>
-          <View style={styles.timeSelectorCard}>
-            <Text style={styles.timeSelectorTitle}>Escolha o Tempo do Exercício</Text>
-            <ScrollView style={styles.timeOptionsScroll}>
-              {getAvailableCountdownTimes().map((time) => (
-                <TouchableOpacity
-                  key={time.id}
-                  style={styles.timeOption}
-                  onPress={() => setCountdownTimer(time.seconds)}
-                >
-                  <Text style={styles.timeOptionLabel}>{time.label}</Text>
-                  <Text style={styles.timeOptionTime}>{formatTime(time.seconds)}</Text>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                style={styles.timeOption}
-                onPress={() => {
-                  Alert.prompt(
-                    'Tempo Personalizado',
-                    'Digite o tempo (ex: 90s, 2m, 1m30s):',
-                    [
-                      { text: 'Cancelar', style: 'cancel' },
-                      {
-                        text: 'OK',
-                        onPress: (text) => {
-                          if (text) {
-                            const customTime = parseRestTime(text);
-                            setCountdownTimer(customTime);
-                          }
-                        }
-                      }
-                    ],
-                    'plain-text',
-                    '90s'
-                  );
-                }}
-              >
-                <Ionicons name="create" size={20} color="#007AFF" />
-                <Text style={styles.timeOptionLabel}>Personalizado</Text>
-              </TouchableOpacity>
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.timeSelectorCloseButton}
-              onPress={() => setShowTimeSelector(false)}
-            >
-              <Text style={styles.timeSelectorCloseText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
 
       {/* Exercise Dropdown Modal */}
       {showExerciseDropdown && (
@@ -1231,50 +1067,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#007AFF',
   },
-  stopwatchCard: {
-    margin: 16,
-    marginTop: 0,
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    alignItems: 'center',
-  },
-  stopwatchTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1C1C1E',
-    marginBottom: 12,
-  },
-  stopwatchTime: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#007AFF',
-    marginBottom: 16,
-    fontFamily: 'monospace',
-  },
-  stopwatchActions: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  stopwatchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    gap: 6,
-  },
-  stopwatchButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1C1C1E',
-  },
   restIntervalOptions: {
     width: '100%',
     marginBottom: 16,
@@ -1311,55 +1103,6 @@ const styles = StyleSheet.create({
   },
   restIntervalButtonTextActive: {
     color: '#FFFFFF',
-  },
-  countdownHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 12,
-  },
-  timeSelectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F8FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    gap: 4,
-  },
-  timeSelectButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  warningTime: {
-    color: '#FF3B30',
-    textShadowColor: '#FF3B30',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
-  },
-  progressBarContainer: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  progressBar: {
-    width: '100%',
-    height: 6,
-    backgroundColor: '#E5E5EA',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#007AFF',
-    borderRadius: 3,
-  },
-  exerciseProgressText: {
-    fontSize: 12,
-    color: '#8E8E93',
   },
   timeSelectorOverlay: {
     position: 'absolute',
@@ -1554,6 +1297,29 @@ const styles = StyleSheet.create({
     color: '#FF9500',
     fontSize: 14,
     fontWeight: '600',
+  },
+  successFeedbackCard: {
+    margin: 16,
+    marginTop: 0,
+    padding: 16,
+    backgroundColor: '#F0F9F5',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#34C759',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#34C759',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  successFeedbackText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#34C759',
   },
   savingStatusCard: {
     margin: 16,
