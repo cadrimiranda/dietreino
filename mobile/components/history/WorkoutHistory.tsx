@@ -364,10 +364,22 @@ export default function WorkoutHistory() {
         )}
 
         {/* Workout list */}
-        {!allHistoriesLoading && !dateHistoriesLoading && (selectedDate 
-          ? convertWorkoutHistoryData(dateHistoriesData?.workoutHistoriesByUserAndDate || [])
-          : workoutHistory.slice(0, 5)
-        ).map((workout, index) => (
+        {!allHistoriesLoading && !dateHistoriesLoading && (() => {
+          console.log('🔍 Debug Info:');
+          console.log('selectedDate:', selectedDate);
+          console.log('dateHistoriesData:', dateHistoriesData);
+          console.log('allWorkoutHistories count:', allWorkoutHistories.length);
+          
+          if (selectedDate) {
+            const filteredData = dateHistoriesData?.workoutHistoriesByUserAndDate || [];
+            console.log('Date filtered data:', filteredData);
+            const convertedData = convertWorkoutHistoryData(filteredData);
+            console.log('Converted filtered data:', convertedData);
+            return convertedData;
+          } else {
+            return workoutHistory.slice(0, 5);
+          }
+        })().map((workout, index) => (
           <TouchableOpacity key={index} style={styles.workoutItem}>
             <View style={styles.workoutHeader}>
               <Text style={styles.workoutDate}>

@@ -169,10 +169,11 @@ export function useWorkoutHistoriesByUserAndDate(userId?: string, date?: Date) {
     {
       variables: { 
         userId, 
-        date: date?.toISOString()
+        date: date ? new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0).toISOString() : undefined
       },
       skip: !userId || !date,
       errorPolicy: 'all',
+      fetchPolicy: 'cache-and-network', // Always try to fetch fresh data
     }
   );
 }
