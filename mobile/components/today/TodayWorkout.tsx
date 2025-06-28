@@ -9,8 +9,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { loadWorkoutState, clearWorkoutState, WorkoutExecutionState } from "@/utils/workoutStorage";
+import { useCallback } from "react";
 
 interface RestInterval {
   id: string;
@@ -35,24 +36,37 @@ export default function TodayWorkout() {
   const [savedWorkoutState, setSavedWorkoutState] = useState<WorkoutExecutionState | null>(null);
   const [loadingWorkoutState, setLoadingWorkoutState] = useState(true);
 
-  // Check for saved workout state on component mount
-  useEffect(() => {
-    const checkWorkoutState = async () => {
-      try {
-        const savedState = await loadWorkoutState();
-        setSavedWorkoutState(savedState);
-        if (savedState?.isInProgress) {
-          setWorkoutStarted(true);
-        }
-      } catch (error) {
-        console.error('Error loading workout state:', error);
-      } finally {
-        setLoadingWorkoutState(false);
+  // Check for saved workout state on component mount and when focused
+  const checkWorkoutState = useCallback(async () => {
+    try {
+      setLoadingWorkoutState(true);
+      const savedState = await loadWorkoutState();
+      console.log('TodayWorkout - Loaded workout state:', savedState);
+      setSavedWorkoutState(savedState);
+      if (savedState?.isInProgress) {
+        console.log('TodayWorkout - Workout in progress, setting workoutStarted to true');
+        setWorkoutStarted(true);
+      } else {
+        console.log('TodayWorkout - No workout in progress, setting workoutStarted to false');
+        setWorkoutStarted(false);
       }
-    };
-
-    checkWorkoutState();
+    } catch (error) {
+      console.error('Error loading workout state:', error);
+    } finally {
+      setLoadingWorkoutState(false);
+    }
   }, []);
+
+  useEffect(() => {
+    checkWorkoutState();
+  }, [checkWorkoutState]);
+
+  // Recheck workout state when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      checkWorkoutState();
+    }, [checkWorkoutState])
+  );
 
   if (loading || loadingWorkoutState) {
     return (
@@ -198,21 +212,21 @@ export default function TodayWorkout() {
           </View>
         </View>
 
-        {!workoutStarted ? (
-          <TouchableOpacity
-            style={styles.startButton}
-            onPress={handleStartWorkout}
-          >
-            <Ionicons name="play" size={24} color="#FFFFFF" />
-            <Text style={styles.startButtonText}>Iniciar Treino</Text>
-          </TouchableOpacity>
-        ) : savedWorkoutState?.isInProgress ? (
+        {savedWorkoutState?.isInProgress ? (
           <TouchableOpacity
             style={styles.resumeButton}
             onPress={handleResumeWorkout}
           >
             <Ionicons name="play-forward" size={24} color="#FFFFFF" />
             <Text style={styles.resumeButtonText}>Retomar Treino</Text>
+          </TouchableOpacity>
+        ) : !workoutStarted ? (
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={handleStartWorkout}
+          >
+            <Ionicons name="play" size={24} color="#FFFFFF" />
+            <Text style={styles.startButtonText}>Iniciar Treino</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity

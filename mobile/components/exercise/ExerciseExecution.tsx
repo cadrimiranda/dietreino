@@ -90,7 +90,10 @@ export default function ExerciseExecution() {
 
   // Function to save current workout state
   const saveCurrentWorkoutState = async () => {
-    if (!user || !activeWorkout) return;
+    if (!user || !activeWorkout) {
+      console.log('ExerciseExecution - Cannot save: missing user or activeWorkout');
+      return;
+    }
 
     try {
       const workoutState: WorkoutExecutionState = {
@@ -105,7 +108,9 @@ export default function ExerciseExecution() {
         workoutStartTime: workoutStartTime.toISOString(),
       };
 
+      console.log('ExerciseExecution - Saving workout state:', workoutState);
       await saveWorkoutState(workoutState);
+      console.log('ExerciseExecution - Workout state saved successfully');
     } catch (error) {
       console.error('Error saving workout state:', error);
     }
