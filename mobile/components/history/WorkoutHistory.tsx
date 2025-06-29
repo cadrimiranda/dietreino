@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -9,14 +9,14 @@ import {
   Dimensions,
   Modal,
   ActivityIndicator,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { 
-  useWorkoutHistoriesByUser, 
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import {
+  useWorkoutHistoriesByUser,
   useWorkoutHistoriesByUserAndDate,
-  WorkoutHistoryQueryData 
-} from '@/hooks/useWorkoutHistoryQuery';
+  WorkoutHistoryQueryData,
+} from "@/hooks/useWorkoutHistoryQuery";
 
 interface WorkoutData {
   date: string;
@@ -33,57 +33,58 @@ interface ExerciseProgress {
   weights: number[];
 }
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function WorkoutHistory() {
   const { user } = useCurrentUser();
-  const [selectedView, setSelectedView] = useState<'calendar' | 'progress' | 'search'>('calendar');
+  const [selectedView, setSelectedView] = useState<
+    "calendar" | "progress" | "search"
+  >("calendar");
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   // Fetch workout histories
-  const { 
-    data: allHistoriesData, 
-    loading: allHistoriesLoading, 
-    error: allHistoriesError 
+  const {
+    data: allHistoriesData,
+    loading: allHistoriesLoading,
+    error: allHistoriesError,
   } = useWorkoutHistoriesByUser(user?.id);
 
-  const { 
-    data: dateHistoriesData, 
-    loading: dateHistoriesLoading 
-  } = useWorkoutHistoriesByUserAndDate(
-    user?.id, 
-    selectedDate ? new Date(selectedDate) : undefined
-  );
+  const { data: dateHistoriesData, loading: dateHistoriesLoading } =
+    useWorkoutHistoriesByUserAndDate(
+      user?.id,
+      selectedDate ? new Date(selectedDate) : undefined
+    );
 
   // Helper function to format API dates consistently
   const formatApiDate = (apiDateString: string) => {
     // Convert API date to local date string in YYYY-MM-DD format
     const date = new Date(apiDateString);
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     const formatted = `${year}-${month}-${day}`;
-    console.log('🔍 formatApiDate:', apiDateString, '->', formatted);
-    console.log('  - Date object:', date);
-    console.log('  - Year:', year, 'Month:', month, 'Day:', day);
     return formatted;
   };
 
   // Convert API data to component format
-  const convertWorkoutHistoryData = (histories: WorkoutHistoryQueryData[]): WorkoutData[] => {
+  const convertWorkoutHistoryData = (
+    histories: WorkoutHistoryQueryData[]
+  ): WorkoutData[] => {
     return histories.map((history) => ({
       date: formatApiDate(history.executedAt), // Convert ISO string to local YYYY-MM-DD
       workoutName: history.workoutName,
       exercises: history.workoutHistoryExercises.length,
       totalSets: history.workoutHistoryExercises.reduce(
-        (total, exercise) => total + exercise.completedSets, 
+        (total, exercise) => total + exercise.completedSets,
         0
       ),
-      duration: history.durationMinutes ? `${history.durationMinutes}min` : 'N/A',
+      duration: history.durationMinutes
+        ? `${history.durationMinutes}min`
+        : "N/A",
       notes: history.notes,
     }));
   };
@@ -94,27 +95,33 @@ export default function WorkoutHistory() {
 
   const exerciseProgress: ExerciseProgress[] = [
     {
-      name: 'Supino Inclinado',
-      dates: ['2025-06-01', '2025-06-05', '2025-06-08', '2025-06-12', '2025-06-14'],
-      weights: [60, 62.5, 62.5, 65, 67.5]
+      name: "Supino Inclinado",
+      dates: [
+        "2025-06-01",
+        "2025-06-05",
+        "2025-06-08",
+        "2025-06-12",
+        "2025-06-14",
+      ],
+      weights: [60, 62.5, 62.5, 65, 67.5],
     },
     {
-      name: 'Agachamento',
-      dates: ['2025-06-02', '2025-06-06', '2025-06-10', '2025-06-13'],
-      weights: [80, 82.5, 85, 87.5]
+      name: "Agachamento",
+      dates: ["2025-06-02", "2025-06-06", "2025-06-10", "2025-06-13"],
+      weights: [80, 82.5, 85, 87.5],
     },
     {
-      name: 'Desenvolvimento',
-      dates: ['2025-06-03', '2025-06-07', '2025-06-11', '2025-06-14'],
-      weights: [40, 42.5, 42.5, 45]
-    }
+      name: "Desenvolvimento",
+      dates: ["2025-06-03", "2025-06-07", "2025-06-11", "2025-06-14"],
+      weights: [40, 42.5, 42.5, 45],
+    },
   ];
 
   const getCurrentWeek = () => {
     const today = new Date();
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
-    
+
     const week = [];
     for (let i = 0; i < 7; i++) {
       const day = new Date(startOfWeek);
@@ -127,20 +134,20 @@ export default function WorkoutHistory() {
   const getMonthCalendar = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
-    
+
     // First day of the month
     const firstDay = new Date(year, month, 1);
     // Last day of the month
     const lastDay = new Date(year, month + 1, 0);
-    
+
     // Start from Sunday of the week containing the first day
     const startDate = new Date(firstDay);
     startDate.setDate(firstDay.getDate() - firstDay.getDay());
-    
+
     // Create calendar grid (6 weeks = 42 days)
     const calendar = [];
     const currentDate = new Date(startDate);
-    
+
     for (let week = 0; week < 6; week++) {
       const weekDays = [];
       for (let day = 0; day < 7; day++) {
@@ -149,13 +156,13 @@ export default function WorkoutHistory() {
       }
       calendar.push(weekDays);
     }
-    
+
     return { calendar, firstDay, lastDay };
   };
 
-  const changeMonth = (direction: 'prev' | 'next') => {
+  const changeMonth = (direction: "prev" | "next") => {
     const newMonth = new Date(selectedMonth);
-    if (direction === 'prev') {
+    if (direction === "prev") {
       newMonth.setMonth(selectedMonth.getMonth() - 1);
     } else {
       newMonth.setMonth(selectedMonth.getMonth() + 1);
@@ -164,36 +171,37 @@ export default function WorkoutHistory() {
   };
 
   const formatDate = (date: Date) => {
-    const formatted = date.toISOString().split('T')[0];
-    console.log('🔍 formatDate:', date, '->', formatted);
+    const formatted = date.toISOString().split("T")[0];
     return formatted;
   };
 
   const hasWorkoutOnDate = (date: string) => {
-    return allWorkoutHistories.some(workout => {
+    return allWorkoutHistories.some((workout) => {
       const workoutDate = formatApiDate(workout.executedAt);
       return workoutDate === date;
     });
   };
 
   const getWorkoutForDate = (date: string) => {
-    const apiWorkout = allWorkoutHistories.find(workout => {
+    const apiWorkout = allWorkoutHistories.find((workout) => {
       const workoutDate = formatApiDate(workout.executedAt);
       return workoutDate === date;
     });
-    
+
     if (!apiWorkout) return undefined;
-    
+
     // Convert to WorkoutData format
     return {
       date: formatApiDate(apiWorkout.executedAt),
       workoutName: apiWorkout.workoutName,
       exercises: apiWorkout.workoutHistoryExercises.length,
       totalSets: apiWorkout.workoutHistoryExercises.reduce(
-        (total, exercise) => total + exercise.completedSets, 
+        (total, exercise) => total + exercise.completedSets,
         0
       ),
-      duration: apiWorkout.durationMinutes ? `${apiWorkout.durationMinutes}min` : 'N/A',
+      duration: apiWorkout.durationMinutes
+        ? `${apiWorkout.durationMinutes}min`
+        : "N/A",
       notes: apiWorkout.notes,
     };
   };
@@ -201,8 +209,18 @@ export default function WorkoutHistory() {
   const renderMonthCalendar = () => {
     const { calendar, firstDay } = getMonthCalendar(selectedMonth);
     const monthNames = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro",
     ];
 
     return (
@@ -211,18 +229,18 @@ export default function WorkoutHistory() {
         <View style={styles.monthHeader}>
           <TouchableOpacity
             style={styles.monthNavButton}
-            onPress={() => changeMonth('prev')}
+            onPress={() => changeMonth("prev")}
           >
             <Ionicons name="chevron-back" size={24} color="#007AFF" />
           </TouchableOpacity>
-          
+
           <Text style={styles.monthTitle}>
             {monthNames[selectedMonth.getMonth()]} {selectedMonth.getFullYear()}
           </Text>
-          
+
           <TouchableOpacity
             style={styles.monthNavButton}
-            onPress={() => changeMonth('next')}
+            onPress={() => changeMonth("next")}
           >
             <Ionicons name="chevron-forward" size={24} color="#007AFF" />
           </TouchableOpacity>
@@ -230,8 +248,10 @@ export default function WorkoutHistory() {
 
         {/* Days of week header */}
         <View style={styles.daysOfWeekHeader}>
-          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, index) => (
-            <Text key={index} style={styles.dayOfWeekLabel}>{day}</Text>
+          {["D", "S", "T", "Q", "Q", "S", "S"].map((day, index) => (
+            <Text key={index} style={styles.dayOfWeekLabel}>
+              {day}
+            </Text>
           ))}
         </View>
 
@@ -244,7 +264,8 @@ export default function WorkoutHistory() {
                 const hasWorkout = hasWorkoutOnDate(dateStr);
                 const isToday = formatDate(new Date()) === dateStr;
                 const isSelected = selectedDate === dateStr;
-                const isCurrentMonth = date.getMonth() === selectedMonth.getMonth();
+                const isCurrentMonth =
+                  date.getMonth() === selectedMonth.getMonth();
 
                 return (
                   <TouchableOpacity
@@ -254,20 +275,22 @@ export default function WorkoutHistory() {
                       hasWorkout && styles.monthDayWithWorkout,
                       isToday && styles.monthDayToday,
                       isSelected && styles.monthDaySelected,
-                      !isCurrentMonth && styles.monthDayOtherMonth
+                      !isCurrentMonth && styles.monthDayOtherMonth,
                     ]}
                     onPress={() => {
                       setSelectedDate(dateStr);
                       setShowMonthPicker(false);
                     }}
                   >
-                    <Text style={[
-                      styles.monthDayNumber,
-                      hasWorkout && styles.monthDayNumberWithWorkout,
-                      isToday && styles.monthDayNumberToday,
-                      isSelected && styles.monthDayNumberSelected,
-                      !isCurrentMonth && styles.monthDayNumberOtherMonth
-                    ]}>
+                    <Text
+                      style={[
+                        styles.monthDayNumber,
+                        hasWorkout && styles.monthDayNumberWithWorkout,
+                        isToday && styles.monthDayNumberToday,
+                        isSelected && styles.monthDayNumberSelected,
+                        !isCurrentMonth && styles.monthDayNumberOtherMonth,
+                      ]}
+                    >
                       {date.getDate()}
                     </Text>
                     {hasWorkout && isCurrentMonth && (
@@ -293,7 +316,7 @@ export default function WorkoutHistory() {
 
   const renderCalendarView = () => {
     const currentWeek = getCurrentWeek();
-    
+
     return (
       <View style={styles.calendarContainer}>
         <View style={styles.weekHeader}>
@@ -306,16 +329,16 @@ export default function WorkoutHistory() {
             <Text style={styles.calendarButtonText}>Calendário</Text>
           </TouchableOpacity>
         </View>
-        
+
         {/* Week View */}
         <View style={styles.weekView}>
-          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, index) => {
+          {["D", "S", "T", "Q", "Q", "S", "S"].map((day, index) => {
             const date = currentWeek[index];
             const dateStr = formatDate(date);
             const hasWorkout = hasWorkoutOnDate(dateStr);
             const isToday = formatDate(new Date()) === dateStr;
             const isSelected = selectedDate === dateStr;
-            
+
             return (
               <TouchableOpacity
                 key={index}
@@ -323,31 +346,31 @@ export default function WorkoutHistory() {
                   styles.dayContainer,
                   hasWorkout && styles.dayWithWorkout,
                   isToday && styles.dayToday,
-                  isSelected && styles.daySelected
+                  isSelected && styles.daySelected,
                 ]}
                 onPress={() => {
-                  console.log('🔍 Day clicked:');
-                  console.log('  - Date object:', date);
-                  console.log('  - Date string (dateStr):', dateStr);
-                  console.log('  - date.getDate():', date.getDate());
-                  console.log('  - date.getMonth():', date.getMonth());
-                  console.log('  - date.getFullYear():', date.getFullYear());
                   setSelectedDate(dateStr);
                 }}
               >
-                <Text style={[
-                  styles.dayLabel,
-                  isToday && styles.dayTodayText,
-                  isSelected && styles.daySelectedText
-                ]}>{day}</Text>
-                <Text style={[
-                  styles.dayNumber,
-                  isToday && styles.dayTodayText,
-                  isSelected && styles.daySelectedText
-                ]}>{date.getDate()}</Text>
-                {hasWorkout && (
-                  <View style={styles.workoutIndicator} />
-                )}
+                <Text
+                  style={[
+                    styles.dayLabel,
+                    isToday && styles.dayTodayText,
+                    isSelected && styles.daySelectedText,
+                  ]}
+                >
+                  {day}
+                </Text>
+                <Text
+                  style={[
+                    styles.dayNumber,
+                    isToday && styles.dayTodayText,
+                    isSelected && styles.daySelectedText,
+                  ]}
+                >
+                  {date.getDate()}
+                </Text>
+                {hasWorkout && <View style={styles.workoutIndicator} />}
               </TouchableOpacity>
             );
           })}
@@ -355,9 +378,14 @@ export default function WorkoutHistory() {
 
         {/* Recent Workouts */}
         <Text style={styles.sectionTitle}>
-          {selectedDate ? `Treino de ${new Date(selectedDate).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}` : 'Treinos Recentes'}
+          {selectedDate
+            ? `Treino de ${new Date(selectedDate).toLocaleDateString("pt-BR", {
+                day: "numeric",
+                month: "short",
+              })}`
+            : "Treinos Recentes"}
         </Text>
-        
+
         {/* Loading state */}
         {(allHistoriesLoading || dateHistoriesLoading) && (
           <View style={styles.loadingContainer}>
@@ -378,70 +406,71 @@ export default function WorkoutHistory() {
         )}
 
         {/* Workout list */}
-        {!allHistoriesLoading && !dateHistoriesLoading && (() => {
-          console.log('🔍 Debug Info:');
-          console.log('selectedDate:', selectedDate);
-          console.log('dateHistoriesData:', dateHistoriesData);
-          console.log('allWorkoutHistories count:', allWorkoutHistories.length);
-          
-          if (selectedDate) {
-            const filteredData = dateHistoriesData?.workoutHistoriesByUserAndDate || [];
-            console.log('Date filtered data:', filteredData);
-            
-            // Additional frontend filtering to ensure exact date match
-            const exactDateFilteredData = filteredData.filter(workout => {
-              const workoutDate = formatApiDate(workout.executedAt);
-              console.log('🔍 Comparing:', workoutDate, 'vs', selectedDate);
-              return workoutDate === selectedDate;
-            });
-            console.log('Exact date filtered data:', exactDateFilteredData);
-            
-            const convertedData = convertWorkoutHistoryData(exactDateFilteredData);
-            console.log('Converted filtered data:', convertedData);
-            return convertedData;
-          } else {
-            return workoutHistory.slice(0, 5);
-          }
-        })().map((workout, index) => (
-          <TouchableOpacity key={index} style={styles.workoutItem}>
-            <View style={styles.workoutHeader}>
-              <Text style={styles.workoutDate}>
-                {new Date(workout.date).toLocaleDateString('pt-BR', {
-                  weekday: 'short',
-                  day: 'numeric',
-                  month: 'short'
-                })}
+        {!allHistoriesLoading &&
+          !dateHistoriesLoading &&
+          (() => {
+            if (selectedDate) {
+              const filteredData =
+                dateHistoriesData?.workoutHistoriesByUserAndDate || [];
+
+              // Additional frontend filtering to ensure exact date match
+              const exactDateFilteredData = filteredData.filter((workout) => {
+                const workoutDate = formatApiDate(workout.executedAt);
+                return workoutDate === selectedDate;
+              });
+
+              const convertedData = convertWorkoutHistoryData(
+                exactDateFilteredData
+              );
+              return convertedData;
+            } else {
+              return workoutHistory.slice(0, 5);
+            }
+          })().map((workout, index) => (
+            <TouchableOpacity key={index} style={styles.workoutItem}>
+              <View style={styles.workoutHeader}>
+                <Text style={styles.workoutDate}>
+                  {new Date(workout.date).toLocaleDateString("pt-BR", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </Text>
+                <Text style={styles.workoutDuration}>{workout.duration}</Text>
+              </View>
+              <Text style={styles.workoutName}>{workout.workoutName}</Text>
+              <Text style={styles.workoutStats}>
+                {workout.exercises} exercícios • {workout.totalSets} séries
               </Text>
-              <Text style={styles.workoutDuration}>{workout.duration}</Text>
-            </View>
-            <Text style={styles.workoutName}>{workout.workoutName}</Text>
-            <Text style={styles.workoutStats}>
-              {workout.exercises} exercícios • {workout.totalSets} séries
-            </Text>
-            {workout.notes && (
-              <Text style={styles.workoutNotes} numberOfLines={2}>
-                {workout.notes}
-              </Text>
-            )}
-          </TouchableOpacity>
-        ))}
-        
-        {/* Empty state for selected date */}
-        {selectedDate && !dateHistoriesLoading && (!dateHistoriesData?.workoutHistoriesByUserAndDate || dateHistoriesData.workoutHistoriesByUserAndDate.length === 0) && (
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar" size={48} color="#E5E5EA" />
-            <Text style={styles.emptyStateText}>Nenhum treino realizado</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Você não treinou neste dia
-            </Text>
-            <TouchableOpacity 
-              style={styles.clearSelectionButton}
-              onPress={() => setSelectedDate(null)}
-            >
-              <Text style={styles.clearSelectionText}>Ver todos os treinos</Text>
+              {workout.notes && (
+                <Text style={styles.workoutNotes} numberOfLines={2}>
+                  {workout.notes}
+                </Text>
+              )}
             </TouchableOpacity>
-          </View>
-        )}
+          ))}
+
+        {/* Empty state for selected date */}
+        {selectedDate &&
+          !dateHistoriesLoading &&
+          (!dateHistoriesData?.workoutHistoriesByUserAndDate ||
+            dateHistoriesData.workoutHistoriesByUserAndDate.length === 0) && (
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar" size={48} color="#E5E5EA" />
+              <Text style={styles.emptyStateText}>Nenhum treino realizado</Text>
+              <Text style={styles.emptyStateSubtext}>
+                Você não treinou neste dia
+              </Text>
+              <TouchableOpacity
+                style={styles.clearSelectionButton}
+                onPress={() => setSelectedDate(null)}
+              >
+                <Text style={styles.clearSelectionText}>
+                  Ver todos os treinos
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
       </View>
     );
   };
@@ -450,7 +479,7 @@ export default function WorkoutHistory() {
     const maxWeight = Math.max(...exercise.weights);
     const minWeight = Math.min(...exercise.weights);
     const range = maxWeight - minWeight || 1;
-    
+
     return (
       <View style={styles.chartContainer}>
         <Text style={styles.exerciseName}>{exercise.name}</Text>
@@ -458,7 +487,7 @@ export default function WorkoutHistory() {
           {exercise.weights.map((weight, index) => {
             const height = ((weight - minWeight) / range) * 80 + 20;
             const isLast = index === exercise.weights.length - 1;
-            
+
             return (
               <View key={index} style={styles.chartColumn}>
                 <Text style={styles.weightLabel}>{weight}kg</Text>
@@ -466,7 +495,7 @@ export default function WorkoutHistory() {
                   style={[
                     styles.chartBar,
                     { height },
-                    isLast && styles.chartBarCurrent
+                    isLast && styles.chartBarCurrent,
                   ]}
                 />
                 <Text style={styles.dateLabel}>
@@ -478,7 +507,12 @@ export default function WorkoutHistory() {
         </View>
         <View style={styles.progressSummary}>
           <Text style={styles.progressText}>
-            Progresso: +{(exercise.weights[exercise.weights.length - 1] - exercise.weights[0]).toFixed(1)}kg
+            Progresso: +
+            {(
+              exercise.weights[exercise.weights.length - 1] -
+              exercise.weights[0]
+            ).toFixed(1)}
+            kg
           </Text>
         </View>
       </View>
@@ -489,14 +523,26 @@ export default function WorkoutHistory() {
     return (
       <View style={styles.progressContainer}>
         <Text style={styles.sectionTitle}>Evolução dos Exercícios</Text>
-        
+
         {/* Exercise Filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+        >
           <TouchableOpacity
-            style={[styles.filterButton, !selectedExercise && styles.filterButtonActive]}
+            style={[
+              styles.filterButton,
+              !selectedExercise && styles.filterButtonActive,
+            ]}
             onPress={() => setSelectedExercise(null)}
           >
-            <Text style={[styles.filterText, !selectedExercise && styles.filterTextActive]}>
+            <Text
+              style={[
+                styles.filterText,
+                !selectedExercise && styles.filterTextActive,
+              ]}
+            >
               Todos
             </Text>
           </TouchableOpacity>
@@ -505,14 +551,16 @@ export default function WorkoutHistory() {
               key={exercise.name}
               style={[
                 styles.filterButton,
-                selectedExercise === exercise.name && styles.filterButtonActive
+                selectedExercise === exercise.name && styles.filterButtonActive,
               ]}
               onPress={() => setSelectedExercise(exercise.name)}
             >
-              <Text style={[
-                styles.filterText,
-                selectedExercise === exercise.name && styles.filterTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedExercise === exercise.name && styles.filterTextActive,
+                ]}
+              >
                 {exercise.name}
               </Text>
             </TouchableOpacity>
@@ -522,11 +570,12 @@ export default function WorkoutHistory() {
         {/* Progress Charts */}
         <ScrollView>
           {exerciseProgress
-            .filter(exercise => !selectedExercise || exercise.name === selectedExercise)
+            .filter(
+              (exercise) =>
+                !selectedExercise || exercise.name === selectedExercise
+            )
             .map((exercise, index) => (
-              <View key={index}>
-                {renderProgressChart(exercise)}
-              </View>
+              <View key={index}>{renderProgressChart(exercise)}</View>
             ))}
         </ScrollView>
       </View>
@@ -534,9 +583,10 @@ export default function WorkoutHistory() {
   };
 
   const renderSearchView = () => {
-    const filteredWorkouts = workoutHistory.filter(workout =>
-      workout.workoutName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      workout.notes?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredWorkouts = workoutHistory.filter(
+      (workout) =>
+        workout.workoutName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        workout.notes?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -552,14 +602,16 @@ export default function WorkoutHistory() {
         </View>
 
         <Text style={styles.sectionTitle}>
-          {searchQuery ? `Resultados (${filteredWorkouts.length})` : 'Todos os Treinos'}
+          {searchQuery
+            ? `Resultados (${filteredWorkouts.length})`
+            : "Todos os Treinos"}
         </Text>
 
         {filteredWorkouts.map((workout, index) => (
           <TouchableOpacity key={index} style={styles.workoutItem}>
             <View style={styles.workoutHeader}>
               <Text style={styles.workoutDate}>
-                {new Date(workout.date).toLocaleDateString('pt-BR')}
+                {new Date(workout.date).toLocaleDateString("pt-BR")}
               </Text>
               <Text style={styles.workoutDuration}>{workout.duration}</Text>
             </View>
@@ -593,33 +645,39 @@ export default function WorkoutHistory() {
         <Text style={styles.title}>Histórico</Text>
         <View style={styles.tabSelector}>
           <TouchableOpacity
-            style={[styles.tab, selectedView === 'calendar' && styles.tabActive]}
-            onPress={() => setSelectedView('calendar')}
+            style={[
+              styles.tab,
+              selectedView === "calendar" && styles.tabActive,
+            ]}
+            onPress={() => setSelectedView("calendar")}
           >
             <Ionicons
               name="calendar"
               size={20}
-              color={selectedView === 'calendar' ? '#FFFFFF' : '#8E8E93'}
+              color={selectedView === "calendar" ? "#FFFFFF" : "#8E8E93"}
             />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tab, selectedView === 'progress' && styles.tabActive]}
-            onPress={() => setSelectedView('progress')}
+            style={[
+              styles.tab,
+              selectedView === "progress" && styles.tabActive,
+            ]}
+            onPress={() => setSelectedView("progress")}
           >
             <Ionicons
               name="trending-up"
               size={20}
-              color={selectedView === 'progress' ? '#FFFFFF' : '#8E8E93'}
+              color={selectedView === "progress" ? "#FFFFFF" : "#8E8E93"}
             />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tab, selectedView === 'search' && styles.tabActive]}
-            onPress={() => setSelectedView('search')}
+            style={[styles.tab, selectedView === "search" && styles.tabActive]}
+            onPress={() => setSelectedView("search")}
           >
             <Ionicons
               name="search"
               size={20}
-              color={selectedView === 'search' ? '#FFFFFF' : '#8E8E93'}
+              color={selectedView === "search" ? "#FFFFFF" : "#8E8E93"}
             />
           </TouchableOpacity>
         </View>
@@ -627,9 +685,9 @@ export default function WorkoutHistory() {
 
       {/* Content */}
       <ScrollView style={styles.content}>
-        {selectedView === 'calendar' && renderCalendarView()}
-        {selectedView === 'progress' && renderProgressView()}
-        {selectedView === 'search' && renderSearchView()}
+        {selectedView === "calendar" && renderCalendarView()}
+        {selectedView === "progress" && renderProgressView()}
+        {selectedView === "search" && renderSearchView()}
       </ScrollView>
 
       {/* Month Calendar Modal */}
@@ -639,9 +697,7 @@ export default function WorkoutHistory() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowMonthPicker(false)}
       >
-        <View style={styles.modalContainer}>
-          {renderMonthCalendar()}
-        </View>
+        <View style={styles.modalContainer}>{renderMonthCalendar()}</View>
       </Modal>
     </View>
   );
@@ -650,197 +706,197 @@ export default function WorkoutHistory() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   header: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA",
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1C1C1E',
+    fontWeight: "bold",
+    color: "#1C1C1E",
     marginBottom: 16,
   },
   tabSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#F8F9FA',
+    flexDirection: "row",
+    backgroundColor: "#F8F9FA",
     borderRadius: 8,
     padding: 4,
   },
   tab: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 8,
     borderRadius: 6,
   },
   tabActive: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   content: {
     flex: 1,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1C1C1E',
+    fontWeight: "bold",
+    color: "#1C1C1E",
     marginVertical: 16,
     paddingHorizontal: 20,
   },
   weekHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 8,
   },
   calendarButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E3F2FD',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#E3F2FD",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     gap: 4,
   },
   calendarButtonText: {
-    color: '#007AFF',
+    color: "#007AFF",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
   errorText: {
     marginTop: 12,
     fontSize: 18,
-    fontWeight: '600',
-    color: '#FF3B30',
-    textAlign: 'center',
+    fontWeight: "600",
+    color: "#FF3B30",
+    textAlign: "center",
   },
   errorSubtext: {
     marginTop: 8,
     fontSize: 14,
-    color: '#8E8E93',
-    textAlign: 'center',
+    color: "#8E8E93",
+    textAlign: "center",
   },
-  
+
   // Calendar View
   calendarContainer: {
     paddingBottom: 20,
   },
   weekView: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 20,
     marginBottom: 8,
     gap: 8,
   },
   dayContainer: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   dayWithWorkout: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: "#E3F2FD",
   },
   dayToday: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   daySelected: {
-    backgroundColor: '#34C759',
+    backgroundColor: "#34C759",
     borderWidth: 2,
-    borderColor: '#30D158',
+    borderColor: "#30D158",
   },
   dayLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#8E8E93',
+    fontWeight: "600",
+    color: "#8E8E93",
     marginBottom: 4,
   },
   dayNumber: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1C1C1E',
+    fontWeight: "bold",
+    color: "#1C1C1E",
   },
   dayTodayText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   daySelectedText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   workoutIndicator: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     marginTop: 4,
   },
   workoutItem: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     marginHorizontal: 20,
     marginBottom: 8,
     padding: 16,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
   workoutHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   workoutDate: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF',
-    textTransform: 'capitalize',
+    fontWeight: "600",
+    color: "#007AFF",
+    textTransform: "capitalize",
   },
   workoutDuration: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   workoutName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1C1C1E',
+    fontWeight: "bold",
+    color: "#1C1C1E",
     marginBottom: 4,
   },
   workoutStats: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: "#8E8E93",
     marginBottom: 8,
   },
   workoutNotes: {
     fontSize: 14,
-    color: '#1C1C1E',
+    color: "#1C1C1E",
     lineHeight: 20,
   },
-  
+
   // Progress View
   progressContainer: {
     paddingBottom: 20,
@@ -852,31 +908,31 @@ const styles = StyleSheet.create({
   filterButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
     marginRight: 8,
   },
   filterButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
   },
   filterText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#8E8E93',
+    fontWeight: "600",
+    color: "#8E8E93",
   },
   filterTextActive: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   chartContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     marginHorizontal: 20,
     marginBottom: 16,
     padding: 20,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -884,63 +940,63 @@ const styles = StyleSheet.create({
   },
   exerciseName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1C1C1E',
+    fontWeight: "bold",
+    color: "#1C1C1E",
     marginBottom: 16,
   },
   chart: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
     height: 120,
     marginBottom: 16,
   },
   chartColumn: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     marginHorizontal: 2,
   },
   weightLabel: {
     fontSize: 10,
-    color: '#8E8E93',
+    color: "#8E8E93",
     marginBottom: 4,
   },
   chartBar: {
-    width: '80%',
-    backgroundColor: '#E5E5EA',
+    width: "80%",
+    backgroundColor: "#E5E5EA",
     borderRadius: 4,
     marginBottom: 4,
   },
   chartBarCurrent: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   dateLabel: {
     fontSize: 10,
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   progressSummary: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   progressText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#34C759',
+    fontWeight: "600",
+    color: "#34C759",
   },
-  
+
   // Search View
   searchContainer: {
     paddingBottom: 20,
   },
   searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 16,
     marginHorizontal: 20,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
   },
   searchInput: {
     flex: 1,
@@ -949,51 +1005,51 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   emptyState: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 40,
   },
   emptyStateText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#8E8E93',
+    fontWeight: "600",
+    color: "#8E8E93",
     marginTop: 16,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: "#8E8E93",
     marginTop: 4,
   },
   clearSelectionButton: {
     marginTop: 16,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     borderRadius: 8,
   },
   clearSelectionText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  
+
   // Month Calendar Modal
   modalContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   monthCalendarContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     paddingTop: 60,
     paddingHorizontal: 20,
   },
   monthHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA",
     marginBottom: 20,
   },
   monthNavButton: {
@@ -1001,92 +1057,92 @@ const styles = StyleSheet.create({
   },
   monthTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1C1C1E',
+    fontWeight: "bold",
+    color: "#1C1C1E",
   },
   daysOfWeekHeader: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA",
     marginBottom: 10,
   },
   dayOfWeekLabel: {
     flex: 1,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 14,
-    fontWeight: '600',
-    color: '#8E8E93',
+    fontWeight: "600",
+    color: "#8E8E93",
   },
   monthGrid: {
     flex: 1,
   },
   monthWeekRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 8,
   },
   monthDayContainer: {
     flex: 1,
     aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 8,
     marginHorizontal: 2,
-    position: 'relative',
+    position: "relative",
   },
   monthDayWithWorkout: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: "#E3F2FD",
   },
   monthDayToday: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
   },
   monthDaySelected: {
-    backgroundColor: '#34C759',
+    backgroundColor: "#34C759",
     borderWidth: 2,
-    borderColor: '#30D158',
+    borderColor: "#30D158",
   },
   monthDayOtherMonth: {
     opacity: 0.3,
   },
   monthDayNumber: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#1C1C1E',
+    fontWeight: "500",
+    color: "#1C1C1E",
   },
   monthDayNumberWithWorkout: {
-    fontWeight: '600',
-    color: '#007AFF',
+    fontWeight: "600",
+    color: "#007AFF",
   },
   monthDayNumberToday: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   monthDayNumberSelected: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   monthDayNumberOtherMonth: {
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   monthWorkoutIndicator: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#007AFF',
-    position: 'absolute',
+    backgroundColor: "#007AFF",
+    position: "absolute",
     bottom: 4,
   },
   closeCalendarButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
     marginBottom: 40,
   },
   closeCalendarText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
