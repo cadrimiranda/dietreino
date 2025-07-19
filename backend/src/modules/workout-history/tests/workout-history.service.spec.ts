@@ -1,23 +1,38 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import { WorkoutHistoryService } from '../workout-history.service';
 import { WorkoutHistoryRepository } from '../workout-history.repository';
 import { WorkoutHistory } from '../../../entities/workout-history.entity';
 import { WorkoutHistoryExercise } from '../../../entities/workout-history-exercise.entity';
 import { WorkoutHistoryExerciseSet } from '../../../entities/workout-history-exercise-set.entity';
+import { User } from '../../../entities/user.entity';
+import { Workout } from '../../../entities/workout.entity';
 import { CreateWorkoutHistoryInput } from '../dto/create-workout-history.input';
 
 describe('WorkoutHistoryService', () => {
   let service: WorkoutHistoryService;
   let repository: jest.Mocked<WorkoutHistoryRepository>;
   let dataSource: jest.Mocked<DataSource>;
-  let mockEntityManager: any;
+  let mockEntityManager: jest.Mocked<
+    Pick<EntityManager, 'create' | 'save' | 'findOne'>
+  >;
+
+  const mockUser: Partial<User> = {
+    id: 'user-uuid-test-id',
+    name: 'Test User',
+    email: 'test@example.com',
+  };
+
+  const mockWorkout: Partial<Workout> = {
+    id: 'workout-uuid-test-id',
+    name: 'Test Workout',
+  };
 
   const mockWorkoutHistory: WorkoutHistory = {
     id: 'uuid-test-id',
-    user: { id: 'user-uuid-test-id' } as any,
-    workout: { id: 'workout-uuid-test-id' } as any,
+    user: mockUser as User,
+    workout: mockWorkout as Workout,
     executedAt: new Date('2024-01-15T10:00:00Z'),
     workoutName: 'Treino A - Peito e Tríceps',
     trainingDayOrder: 1,
@@ -47,7 +62,11 @@ describe('WorkoutHistoryService', () => {
     };
 
     const mockDataSourceInstance = {
-      transaction: jest.fn((callback) => callback(mockEntityManager)),
+      transaction: jest
+        .fn()
+        .mockImplementation((callback: (em: any) => Promise<any>) =>
+          callback(mockEntityManager),
+        ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -164,19 +183,27 @@ describe('WorkoutHistoryService', () => {
 
     it('should create workout history with exercises and sets', async () => {
       const savedWorkoutHistory = { ...mockWorkoutHistory, id: 'uuid-test-id' };
-      const savedExercise = {
+      const savedExercise: Partial<WorkoutHistoryExercise> = {
         id: 'exercise-uuid-test-id',
         workoutHistory: savedWorkoutHistory,
-      } as any;
-      const savedSet = {
+        order: 1,
+        exerciseName: 'Supino Reto',
+        plannedSets: 3,
+        completedSets: 3,
+      };
+      const savedSet: Partial<WorkoutHistoryExerciseSet> = {
         id: 'set-uuid-test-id',
-        workoutHistoryExercise: savedExercise,
-      } as any;
+        workoutHistoryExercise: savedExercise as WorkoutHistoryExercise,
+        setNumber: 1,
+        reps: 12,
+        isCompleted: true,
+        isFailure: false,
+      };
 
       mockEntityManager.create
-        .mockReturnValueOnce(savedWorkoutHistory)
-        .mockReturnValueOnce(savedExercise)
-        .mockReturnValueOnce(savedSet);
+        .mockReturnValueOnce(savedWorkoutHistory as any)
+        .mockReturnValueOnce(savedExercise as any)
+        .mockReturnValueOnce(savedSet as any);
 
       mockEntityManager.save
         .mockResolvedValueOnce(savedWorkoutHistory)
@@ -260,41 +287,45 @@ describe('WorkoutHistoryService', () => {
 
   describe('toWorkoutHistoryType', () => {
     it('should convert entity to GraphQL type', () => {
-      const workoutHistoryWithExercises = {
-        ...mockWorkoutHistory,
-        workoutHistoryExercises: [
-          {
-            id: 'exercise-uuid-test-id',
-            workoutHistory: { id: 'uuid-test-id' },
-            exercise: { id: 'exercise-uuid-test-id' },
-            order: 1,
-            exerciseName: 'Supino Reto',
-            plannedSets: 3,
-            completedSets: 3,
-            notes: 'Boa execução',
-            workoutHistoryExerciseSets: [
-              {
-                id: 'set-uuid-test-id',
-                workoutHistoryExercise: { id: 'exercise-uuid-test-id' },
-                setNumber: 1,
-                weight: 80,
-                reps: 12,
-                plannedRepsMin: 10,
-                plannedRepsMax: 12,
-                restSeconds: 60,
-                isCompleted: true,
-                isFailure: false,
-                notes: 'Primeira série boa',
-                executedAt: new Date('2024-01-15T10:05:00Z'),
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              },
-            ],
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
+      const mockExerciseSet: Partial<WorkoutHistoryExerciseSet> = {
+        id: 'set-uuid-test-id',
+        workoutHistoryExercise: {
+          id: 'exercise-uuid-test-id',
+        } as WorkoutHistoryExercise,
+        setNumber: 1,
+        weight: 80,
+        reps: 12,
+        plannedRepsMin: 10,
+        plannedRepsMax: 12,
+        restSeconds: 60,
+        isCompleted: true,
+        isFailure: false,
+        notes: 'Primeira série boa',
+        executedAt: new Date('2024-01-15T10:05:00Z'),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockExercise: Partial<WorkoutHistoryExercise> = {
+        id: 'exercise-uuid-test-id',
+        workoutHistory: { id: 'uuid-test-id' } as WorkoutHistory,
+        exercise: { id: 'exercise-uuid-test-id' } as any,
+        order: 1,
+        exerciseName: 'Supino Reto',
+        plannedSets: 3,
+        completedSets: 3,
+        notes: 'Boa execução',
+        workoutHistoryExerciseSets: [
+          mockExerciseSet as WorkoutHistoryExerciseSet,
         ],
-      } as WorkoutHistory;
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const workoutHistoryWithExercises: WorkoutHistory = {
+        ...mockWorkoutHistory,
+        workoutHistoryExercises: [mockExercise as WorkoutHistoryExercise],
+      };
 
       const result = service.toWorkoutHistoryType(workoutHistoryWithExercises);
 

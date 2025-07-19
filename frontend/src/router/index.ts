@@ -15,6 +15,8 @@ import DietUpload from "../components/DietUpload.vue";
 import NotFound from "../components/NotFound.vue";
 import ClientWorkoutDetails from "@/pages/client/workout/ClientWorkoutDetails.vue";
 import NewWorkout from "@/pages/client/workout/NewWorkout.vue";
+import WorkoutHistory from "@/pages/client/workout/WorkoutHistory.vue";
+import WorkoutHistoryView from "@/views/WorkoutHistoryView.vue";
 
 interface TemplateComponent {
   template: string;
@@ -89,6 +91,13 @@ const routes: Array<RouteRecordRaw> = [
         props: true,
       },
       {
+        path: "/clients/:clientId/workout/:workoutId/history",
+        name: "ClientWorkoutHistory",
+        component: WorkoutHistory,
+        meta: { requiresAuth: true },
+        props: true,
+      },
+      {
         path: "training",
         name: "TrainingPlans",
         component: TrainingList,
@@ -112,6 +121,12 @@ const routes: Array<RouteRecordRaw> = [
         path: "progress/review",
         name: "ProgressView",
         component: ProgressView,
+      },
+      {
+        path: "workout-history",
+        name: "WorkoutHistory",
+        component: WorkoutHistoryView,
+        meta: { requiresAuth: true, roles: ['TRAINER', 'CLIENT'] },
       },
       {
         path: "settings",

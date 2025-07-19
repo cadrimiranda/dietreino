@@ -9,7 +9,7 @@ export class TrainingDayService extends BaseService<TrainingDay> {
     super(trainingDayRepository);
   }
 
-  async findByWorkoutId(workoutId: number): Promise<TrainingDay[]> {
+  async findByWorkoutId(workoutId: string): Promise<TrainingDay[]> {
     return this.trainingDayRepository.findByWorkoutId(workoutId);
   }
 }

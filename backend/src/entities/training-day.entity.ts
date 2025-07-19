@@ -8,8 +8,9 @@ import { Field, ObjectType } from '@nestjs/graphql';
 @Entity('training_days')
 export class TrainingDay extends BaseEntity {
   @Column()
-  workout_id: number;
+  workout_id: string;
 
+  @Field(() => Workout)
   @ManyToOne(() => Workout, (workout: Workout) => workout.trainingDays, {
     onDelete: 'CASCADE',
   })
@@ -20,6 +21,7 @@ export class TrainingDay extends BaseEntity {
   @Column({ type: 'int' })
   dayOfWeek: number;
 
+  @Field({ nullable: true })
   @Column({ type: 'text', nullable: true })
   focus: string;
 

@@ -23,7 +23,7 @@ export class WorkoutHistory extends BaseEntity {
   executedAt: Date;
 
   @Field(() => String)
-  @Column({ length: 100 })
+  @Column({ length: 100, name: 'workout_name' })
   workoutName: string;
 
   @Field(() => Number)

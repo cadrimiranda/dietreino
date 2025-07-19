@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -9,7 +9,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
+import { loadWorkoutState, clearWorkoutState, WorkoutExecutionState } from "@/utils/workoutStorage";
+import { useCallback } from "react";
 
 interface RestInterval {
   id: string;
@@ -30,9 +32,35 @@ interface Exercise {
 export default function TodayWorkout() {
   const { user, loading, error, activeWorkout } = useCurrentUser();
   const router = useRouter();
-  const [workoutStarted, setWorkoutStarted] = useState(false);
+  const [savedWorkoutState, setSavedWorkoutState] = useState<WorkoutExecutionState | null>(null);
+  const [loadingWorkoutState, setLoadingWorkoutState] = useState(true);
 
-  if (loading) {
+  // Check for saved workout state on component mount and when focused
+  const checkWorkoutState = useCallback(async () => {
+    try {
+      setLoadingWorkoutState(true);
+      const savedState = await loadWorkoutState();
+      console.log('TodayWorkout - Loaded workout state:', savedState);
+      setSavedWorkoutState(savedState);
+    } catch (error) {
+      console.error('Error loading workout state:', error);
+    } finally {
+      setLoadingWorkoutState(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkWorkoutState();
+  }, [checkWorkoutState]);
+
+  // Recheck workout state when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      checkWorkoutState();
+    }, [checkWorkoutState])
+  );
+
+  if (loading || loadingWorkoutState) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -54,7 +82,7 @@ export default function TodayWorkout() {
   }
 
   const today = new Date();
-  const dayOfWeek = today.getDay();
+  const dayOfWeek = today.getDay() - 2;
   const todayTraining = activeWorkout?.trainingDays?.find(
     (day) => day.dayOfWeek === dayOfWeek
   );
@@ -72,7 +100,7 @@ export default function TodayWorkout() {
 
   const workoutExercises: Exercise[] =
     todayTraining?.trainingDayExercises?.map((tde, index) => ({
-      id: tde.id || index.toString(),
+      id: tde.exercise?.id || index.toString(),
       name: tde.exercise?.name || "Exercício",
       sets: tde.repSchemes?.length || 1,
       reps:
@@ -90,7 +118,6 @@ export default function TodayWorkout() {
     })) || [];
 
   const handleStartWorkout = () => {
-    setWorkoutStarted(true);
     // Navigate to exercise execution screen with exercises data
     router.push({
       pathname: "/exercise",
@@ -101,10 +128,20 @@ export default function TodayWorkout() {
     });
   };
 
-  const handleFinishWorkout = () => {
-    setWorkoutStarted(false);
-    // Handle workout completion logic
+  const handleResumeWorkout = () => {
+    if (savedWorkoutState) {
+      // Navigate to exercise execution screen with saved state
+      router.push({
+        pathname: "/exercise",
+        params: {
+          exercises: JSON.stringify(savedWorkoutState.exercises),
+          trainingDayName: savedWorkoutState.trainingDayName,
+          resumeState: "true",
+        },
+      });
+    }
   };
+
 
   if (isRestDay) {
     return (
@@ -160,21 +197,21 @@ export default function TodayWorkout() {
           </View>
         </View>
 
-        {!workoutStarted ? (
+        {savedWorkoutState?.isInProgress ? (
+          <TouchableOpacity
+            style={styles.resumeButton}
+            onPress={handleResumeWorkout}
+          >
+            <Ionicons name="play-forward" size={24} color="#FFFFFF" />
+            <Text style={styles.resumeButtonText}>Retomar Treino</Text>
+          </TouchableOpacity>
+        ) : (
           <TouchableOpacity
             style={styles.startButton}
             onPress={handleStartWorkout}
           >
             <Ionicons name="play" size={24} color="#FFFFFF" />
             <Text style={styles.startButtonText}>Iniciar Treino</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.finishButton}
-            onPress={handleFinishWorkout}
-          >
-            <Ionicons name="checkmark" size={24} color="#FFFFFF" />
-            <Text style={styles.finishButtonText}>Finalizar Treino</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -370,16 +407,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  finishButton: {
+  resumeButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#34C759",
+    backgroundColor: "#FF9500",
     borderRadius: 12,
     padding: 16,
     gap: 8,
   },
-  finishButtonText: {
+  resumeButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",

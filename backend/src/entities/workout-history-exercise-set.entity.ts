@@ -6,6 +6,10 @@ import { Field, ObjectType } from '@nestjs/graphql';
 @ObjectType()
 @Entity('workout_history_exercise_sets')
 export class WorkoutHistoryExerciseSet extends BaseEntity {
+  @Field(() => String)
+  @Column({ name: 'workout_history_exercise_id' })
+  workoutHistoryExerciseId: string;
+
   @Field(() => WorkoutHistoryExercise)
   @ManyToOne(
     () => WorkoutHistoryExercise,

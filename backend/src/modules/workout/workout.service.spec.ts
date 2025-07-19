@@ -120,8 +120,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
           return Promise.resolve({ id: 'td-new', ...data });
         }
         if (EntityClass.name === 'TrainingDayExercise') {
-          // Verify that sets is calculated correctly
-          expect(data.sets).toBe(5); // 2 + 2 + 1 = 5
+          // TrainingDayExercise doesn't have a sets field - sets are in RepScheme entities
           return Promise.resolve({ id: 'tde-new', ...data });
         }
         return Promise.resolve(data);
@@ -134,7 +133,6 @@ describe('WorkoutService - updateWorkoutExercises', () => {
       expect(mockEntityManager.save).toHaveBeenCalledWith(
         expect.any(Function),
         expect.objectContaining({
-          sets: 5,
           order: 0,
         }),
       );
@@ -188,8 +186,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
 
       mockEntityManager.save.mockImplementation((EntityClass, data) => {
         if (EntityClass.name === 'TrainingDayExercise') {
-          // Verify default sets value
-          expect(data.sets).toBe(1);
+          // TrainingDayExercise doesn't have a sets field
           return Promise.resolve({ id: 'tde-new', ...data });
         }
         return Promise.resolve(data);
@@ -200,7 +197,6 @@ describe('WorkoutService - updateWorkoutExercises', () => {
       expect(mockEntityManager.save).toHaveBeenCalledWith(
         expect.any(Function),
         expect.objectContaining({
-          sets: 1,
         }),
       );
     });
@@ -241,7 +237,7 @@ describe('WorkoutService - updateWorkoutExercises', () => {
 
       mockEntityManager.save.mockImplementation((EntityClass, data) => {
         if (EntityClass.name === 'TrainingDayExercise') {
-          expect(data.sets).toBe(4);
+          // TrainingDayExercise doesn't have a sets field
           return Promise.resolve({ id: 'tde-new', ...data });
         }
         return Promise.resolve(data);
@@ -628,7 +624,7 @@ describe('WorkoutService - createWorkout', () => {
 
       // Verify workout creation
       expect(mockEntityManager.save).toHaveBeenCalledWith(
-        'workouts',
+        'workout',
         expect.objectContaining({
           user_id: 'user-123',
           name: 'Test Workout',
@@ -751,11 +747,10 @@ describe('WorkoutService - createWorkout', () => {
 
       await service.createWorkout(input);
 
-      // Verify total sets calculation (3 + 2 = 5)
+      // Verify training day exercise creation
       expect(mockEntityManager.save).toHaveBeenCalledWith(
         'training_day_exercises',
         expect.objectContaining({
-          sets: 5,
         }),
       );
     });
@@ -792,11 +787,10 @@ describe('WorkoutService - createWorkout', () => {
 
       await service.createWorkout(input);
 
-      // Verify default sets value
+      // Verify training day exercise creation
       expect(mockEntityManager.save).toHaveBeenCalledWith(
         'training_day_exercises',
         expect.objectContaining({
-          sets: 1,
         }),
       );
     });
@@ -929,9 +923,9 @@ describe('WorkoutService - importSheetWorkout', () => {
 
       // Verify workout creation
       expect(mockEntityManager.save).toHaveBeenCalledWith(
-        'workouts',
+        expect.any(Function), // Workout entity class
         expect.objectContaining({
-          user_id: 'user-123',
+          user: { id: 'user-123' },
           name: 'Imported Workout',
           is_active: true,
         }),
@@ -985,7 +979,7 @@ describe('WorkoutService - importSheetWorkout', () => {
 
       // Verify new exercise creation
       expect(mockEntityManager.save).toHaveBeenCalledWith(
-        'exercises',
+        expect.any(Function), // Exercise entity class
         expect.objectContaining({
           name: 'New Exercise',
         }),
@@ -1069,7 +1063,7 @@ describe('WorkoutService - importSheetWorkout', () => {
 
       // Verify workout update instead of creation
       expect(mockEntityManager.save).toHaveBeenCalledWith(
-        'workouts',
+        'workout',
         expect.objectContaining({
           id: 'existing-workout-123',
           name: 'Updated Workout Name',

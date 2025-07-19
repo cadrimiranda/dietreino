@@ -10,8 +10,8 @@ export class CreateWorkoutHistoryTables1748527130280
     await queryRunner.query(`
       CREATE TABLE "workout_history" (
         "id" SERIAL PRIMARY KEY,
-        "user_id" integer NOT NULL,
-        "workout_id" integer NOT NULL,
+        "user_id" uuid NOT NULL,
+        "workout_id" uuid NOT NULL,
         "executed_at" TIMESTAMP WITH TIME ZONE NOT NULL,
         "workout_name" varchar(100) NOT NULL,
         "training_day_order" integer NOT NULL,
@@ -32,7 +32,7 @@ export class CreateWorkoutHistoryTables1748527130280
       CREATE TABLE "workout_history_exercises" (
         "id" SERIAL PRIMARY KEY,
         "workout_history_id" integer NOT NULL,
-        "exercise_id" integer NOT NULL,
+        "exercise_id" uuid NOT NULL,
         "order" integer NOT NULL,
         "exercise_name" varchar(100) NOT NULL,
         "planned_sets" integer NOT NULL,
@@ -43,7 +43,7 @@ export class CreateWorkoutHistoryTables1748527130280
         CONSTRAINT "FK_workout_history_exercises_workout_history" 
           FOREIGN KEY ("workout_history_id") REFERENCES "workout_history"("id") ON DELETE CASCADE,
         CONSTRAINT "FK_workout_history_exercises_exercise" 
-          FOREIGN KEY ("exercise_id") REFERENCES "exercise"("id") ON DELETE CASCADE
+          FOREIGN KEY ("exercise_id") REFERENCES "exercises"("id") ON DELETE CASCADE
       )
     `);
 

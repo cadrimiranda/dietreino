@@ -5,6 +5,7 @@ import { WorkoutHistoryRepository } from './workout-history.repository';
 import { WorkoutHistory } from '../../entities/workout-history.entity';
 import { WorkoutHistoryExercise } from '../../entities/workout-history-exercise.entity';
 import { WorkoutHistoryExerciseSet } from '../../entities/workout-history-exercise-set.entity';
+import { WorkoutHistorySummaryType } from './dto/workout-history-summary.type';
 import { WorkoutHistoryType } from './dto/workout-history.type';
 import { CreateWorkoutHistoryInput } from './dto/create-workout-history.input';
 
@@ -27,8 +28,27 @@ export class WorkoutHistoryService {
     return this.repository.findByUserId(userId);
   }
 
+  async findSummariesByUserId(userId: string): Promise<WorkoutHistory[]> {
+    return this.repository.findSummariesByUserId(userId);
+  }
+
   async findByWorkoutId(workoutId: string): Promise<WorkoutHistory[]> {
     return this.repository.findByWorkoutId(workoutId);
+  }
+
+  async findByUserIdAndDate(
+    userId: string,
+    date: Date,
+  ): Promise<WorkoutHistory[]> {
+    return this.repository.findByUserIdAndDate(userId, date);
+  }
+
+  async findByUserIdAndDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<WorkoutHistory[]> {
+    return this.repository.findByUserIdAndDateRange(userId, startDate, endDate);
   }
 
   async create(input: CreateWorkoutHistoryInput): Promise<WorkoutHistory> {
@@ -131,6 +151,20 @@ export class WorkoutHistoryService {
     return this.repository.delete(id);
   }
 
+  toWorkoutHistorySummaryType(
+    entity: WorkoutHistory,
+  ): Partial<WorkoutHistorySummaryType> {
+    return {
+      id: entity.id.toString(),
+
+      executedAt: entity.executedAt,
+      workoutName: entity.workoutName,
+      trainingDayOrder: entity.trainingDayOrder,
+      trainingDayName: entity.trainingDayName,
+      notes: entity.notes,
+      durationMinutes: entity.durationMinutes,
+    };
+  }
   toWorkoutHistoryType(entity: WorkoutHistory): Partial<WorkoutHistoryType> {
     return {
       id: entity.id.toString(),
@@ -145,8 +179,8 @@ export class WorkoutHistoryService {
       workoutHistoryExercises:
         entity.workoutHistoryExercises?.map((exercise) => ({
           id: exercise.id.toString(),
-          workoutHistoryId: exercise.workoutHistory?.id.toString(),
-          exerciseId: exercise.exercise?.id.toString(),
+          workoutHistoryId: exercise.workoutHistoryId.toString(),
+          exerciseId: exercise.exerciseId,
           order: exercise.order,
           exerciseName: exercise.exerciseName,
           plannedSets: exercise.plannedSets,
@@ -155,8 +189,7 @@ export class WorkoutHistoryService {
           workoutHistoryExerciseSets:
             exercise.workoutHistoryExerciseSets?.map((set) => ({
               id: set.id.toString(),
-              workoutHistoryExerciseId:
-                set.workoutHistoryExercise?.id.toString(),
+              workoutHistoryExerciseId: set.workoutHistoryExerciseId.toString(),
               setNumber: set.setNumber,
               weight: set.weight,
               reps: set.reps,

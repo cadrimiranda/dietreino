@@ -13,6 +13,9 @@
         <a-button @click="$router.push('/clients')">
           Voltar para Clientes
         </a-button>
+        <a-button @click="showHistoryView" v-if="hasWorkout">
+          <history-outlined /> Histórico
+        </a-button>
         <a-button @click="editWorkout" v-if="hasWorkout && !workout.startedAt">
           <edit-outlined /> Editar Treino
         </a-button>
@@ -76,6 +79,12 @@
                     </tr>
                   </tbody>
                 </table>
+              </a-tab-pane>
+              <a-tab-pane key="history" tab="Histórico">
+                <WorkoutHistoryDashboard
+                  :userId="userId"
+                  :preSelectedWorkoutId="workout.id"
+                />
               </a-tab-pane>
             </a-tabs>
           </div>
@@ -146,6 +155,7 @@
         </div>
       </div>
     </a-modal>
+
   </div>
 </template>
 
@@ -155,12 +165,14 @@ import {
   UserOutlined,
   EditOutlined,
   PlusOutlined,
+  HistoryOutlined,
 } from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
 import { IUserEntity, useUsers } from "@/composables/useUsers";
 import { useRoute, useRouter } from "vue-router";
 import EmptyWorkoutState from "./ClientEmptyWorkout.vue";
 import WorkoutEditDialog from "@/components/WorkoutEditDialog.vue";
+import WorkoutHistoryDashboard from "@/components/workout-history/WorkoutHistoryDashboard.vue";
 import { useProcessWorkout } from "./useProcessWorkout";
 
 export default defineComponent({
@@ -169,8 +181,10 @@ export default defineComponent({
     UserOutlined,
     EditOutlined,
     PlusOutlined,
+    HistoryOutlined,
     EmptyWorkoutState,
     WorkoutEditDialog,
+    WorkoutHistoryDashboard,
   },
   setup() {
     const { processWorkout, loading } = useProcessWorkout();
@@ -371,6 +385,16 @@ export default defineComponent({
       }
     };
 
+    const showHistoryView = () => {
+      router.push({
+        name: 'ClientWorkoutHistory',
+        params: {
+          clientId: userId,
+          workoutId: workout.id
+        }
+      });
+    };
+
     return {
       client,
       workout,
@@ -386,6 +410,7 @@ export default defineComponent({
       handleWorkoutSaved,
       formatDate,
       createNewWorkout,
+      showHistoryView,
       router,
     };
   },
