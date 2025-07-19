@@ -161,6 +161,7 @@ type Query {
   workoutHistoriesByUserAndDateRange(endDate: DateTime!, startDate: DateTime!, userId: ID!): [WorkoutHistoryType!]!
   workoutHistoriesByWorkout(workoutId: ID!): [WorkoutHistoryType!]!
   workoutHistory(id: ID!): WorkoutHistoryType
+  workoutHistorySummariesByUser(userId: ID!): [WorkoutHistorySummaryType!]!
   workouts: [WorkoutType!]!
 }
 
@@ -410,6 +411,17 @@ type WorkoutHistoryExerciseType {
   updatedAt: DateTime
   workoutHistoryExerciseSets: [WorkoutHistoryExerciseSetType!]!
   workoutHistoryId: ID!
+}
+
+type WorkoutHistorySummaryType {
+  durationMinutes: Int
+  executedAt: DateTime!
+  id: ID!
+  notes: String
+  trainingDayName: String!
+  trainingDayOrder: Int!
+  userId: ID!
+  workoutName: String!
 }
 
 type WorkoutHistoryType {

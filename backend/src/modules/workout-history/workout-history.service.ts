@@ -5,6 +5,7 @@ import { WorkoutHistoryRepository } from './workout-history.repository';
 import { WorkoutHistory } from '../../entities/workout-history.entity';
 import { WorkoutHistoryExercise } from '../../entities/workout-history-exercise.entity';
 import { WorkoutHistoryExerciseSet } from '../../entities/workout-history-exercise-set.entity';
+import { WorkoutHistorySummaryType } from './dto/workout-history-summary.type';
 import { WorkoutHistoryType } from './dto/workout-history.type';
 import { CreateWorkoutHistoryInput } from './dto/create-workout-history.input';
 
@@ -27,11 +28,18 @@ export class WorkoutHistoryService {
     return this.repository.findByUserId(userId);
   }
 
+  async findSummariesByUserId(userId: string): Promise<WorkoutHistory[]> {
+    return this.repository.findSummariesByUserId(userId);
+  }
+
   async findByWorkoutId(workoutId: string): Promise<WorkoutHistory[]> {
     return this.repository.findByWorkoutId(workoutId);
   }
 
-  async findByUserIdAndDate(userId: string, date: Date): Promise<WorkoutHistory[]> {
+  async findByUserIdAndDate(
+    userId: string,
+    date: Date,
+  ): Promise<WorkoutHistory[]> {
     return this.repository.findByUserIdAndDate(userId, date);
   }
 
@@ -143,6 +151,20 @@ export class WorkoutHistoryService {
     return this.repository.delete(id);
   }
 
+  toWorkoutHistorySummaryType(
+    entity: WorkoutHistory,
+  ): Partial<WorkoutHistorySummaryType> {
+    return {
+      id: entity.id.toString(),
+
+      executedAt: entity.executedAt,
+      workoutName: entity.workoutName,
+      trainingDayOrder: entity.trainingDayOrder,
+      trainingDayName: entity.trainingDayName,
+      notes: entity.notes,
+      durationMinutes: entity.durationMinutes,
+    };
+  }
   toWorkoutHistoryType(entity: WorkoutHistory): Partial<WorkoutHistoryType> {
     return {
       id: entity.id.toString(),

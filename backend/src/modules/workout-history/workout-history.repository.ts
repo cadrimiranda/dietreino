@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual, LessThan } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { WorkoutHistory } from '../../entities/workout-history.entity';
 
 @Injectable()
@@ -56,6 +56,14 @@ export class WorkoutHistoryRepository {
     });
   }
 
+  async findSummariesByUserId(userId: string): Promise<WorkoutHistory[]> {
+    return this.repository.find({
+      where: { user: { id: userId } },
+      relations: ['workout'], // Apenas relações leves
+      order: { executedAt: 'DESC' },
+    });
+  }
+
   async findByWorkoutId(workoutId: string): Promise<WorkoutHistory[]> {
     return this.repository.find({
       where: { workout: { id: workoutId } },
@@ -82,11 +90,14 @@ export class WorkoutHistoryRepository {
     return (result.affected ?? 0) > 0;
   }
 
-  async findByUserIdAndDate(userId: string, date: Date): Promise<WorkoutHistory[]> {
+  async findByUserIdAndDate(
+    userId: string,
+    date: Date,
+  ): Promise<WorkoutHistory[]> {
     // Create start and end of day for the given date
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
-    
+
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
@@ -113,7 +124,7 @@ export class WorkoutHistoryRepository {
     // Ensure start is beginning of day and end is end of day
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
-    
+
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 

@@ -13,10 +13,12 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import {
-  useWorkoutHistoriesByUser,
+  useWorkoutHistorySummariesByUser,
   useWorkoutHistoriesByUserAndDate,
+  useWorkoutHistoryById,
   WorkoutHistoryQueryData,
 } from "@/hooks/useWorkoutHistoryQuery";
+import WorkoutHistoryView from "./WorkoutHistoryView";
 
 interface WorkoutData {
   date: string;
@@ -42,16 +44,22 @@ export default function WorkoutHistory() {
   >("calendar");
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showHistoryDetail, setShowHistoryDetail] = useState(false);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(
+    null
+  );
 
   // Fetch workout histories
   const {
-    data: allHistoriesData,
+    data: allSummariesData,
     loading: allHistoriesLoading,
     error: allHistoriesError,
-  } = useWorkoutHistoriesByUser(user?.id);
+  } = useWorkoutHistorySummariesByUser(user?.id);
+
+  const { data: selectedHistoryData, loading: selectedHistoryLoading } =
+    useWorkoutHistoryById(selectedHistoryId || undefined);
 
   const { data: dateHistoriesData, loading: dateHistoriesLoading } =
     useWorkoutHistoriesByUserAndDate(
@@ -59,63 +67,33 @@ export default function WorkoutHistory() {
       selectedDate ? new Date(selectedDate) : undefined
     );
 
-  // Helper function to format API dates consistently
   const formatApiDate = (apiDateString: string) => {
-    // Convert API date to local date string in YYYY-MM-DD format
-    const date = new Date(apiDateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const formatted = `${year}-${month}-${day}`;
-    return formatted;
+    return new Date(apiDateString).toISOString().split("T")[0];
   };
 
-  // Convert API data to component format
-  const convertWorkoutHistoryData = (
-    histories: WorkoutHistoryQueryData[]
-  ): WorkoutData[] => {
-    return histories.map((history) => ({
-      date: formatApiDate(history.executedAt), // Convert ISO string to local YYYY-MM-DD
-      workoutName: history.workoutName,
-      exercises: history.workoutHistoryExercises.length,
-      totalSets: history.workoutHistoryExercises.reduce(
-        (total, exercise) => total + exercise.completedSets,
-        0
-      ),
-      duration: history.durationMinutes
-        ? `${history.durationMinutes}min`
-        : "N/A",
-      notes: history.notes,
-    }));
-  };
+  // const convertWorkoutHistoryData = (
+  //   histories: WorkoutHistoryQueryData[]
+  // ): WorkoutData[] => {
+  //   return histories.map((history) => ({
+  //     date: formatApiDate(history.executedAt), // Convert ISO string to local YYYY-MM-DD
+  //     workoutName: history.workoutName,
+  //     exercises: history.workoutHistoryExercises.length,
+  //     totalSets: history.workoutHistoryExercises.reduce(
+  //       (total, exercise) => total + exercise.completedSets,
+  //       0
+  //     ),
+  //     duration: history.durationMinutes
+  //       ? `${history.durationMinutes}min`
+  //       : "N/A",
+  //     notes: history.notes,
+  //   }));
+  // };
 
   // Get workout history data
-  const allWorkoutHistories = allHistoriesData?.workoutHistoriesByUser || [];
-  const workoutHistory = convertWorkoutHistoryData(allWorkoutHistories);
+  const allWorkoutSummaries =
+    allSummariesData?.workoutHistorySummariesByUser || [];
 
-  const exerciseProgress: ExerciseProgress[] = [
-    {
-      name: "Supino Inclinado",
-      dates: [
-        "2025-06-01",
-        "2025-06-05",
-        "2025-06-08",
-        "2025-06-12",
-        "2025-06-14",
-      ],
-      weights: [60, 62.5, 62.5, 65, 67.5],
-    },
-    {
-      name: "Agachamento",
-      dates: ["2025-06-02", "2025-06-06", "2025-06-10", "2025-06-13"],
-      weights: [80, 82.5, 85, 87.5],
-    },
-    {
-      name: "Desenvolvimento",
-      dates: ["2025-06-03", "2025-06-07", "2025-06-11", "2025-06-14"],
-      weights: [40, 42.5, 42.5, 45],
-    },
-  ];
+  // This part needs to be refactored or removed as it's static data
 
   const getCurrentWeek = () => {
     const today = new Date();
@@ -176,38 +154,14 @@ export default function WorkoutHistory() {
   };
 
   const hasWorkoutOnDate = (date: string) => {
-    return allWorkoutHistories.some((workout) => {
+    return allWorkoutSummaries.some((workout) => {
       const workoutDate = formatApiDate(workout.executedAt);
       return workoutDate === date;
     });
-  };
-
-  const getWorkoutForDate = (date: string) => {
-    const apiWorkout = allWorkoutHistories.find((workout) => {
-      const workoutDate = formatApiDate(workout.executedAt);
-      return workoutDate === date;
-    });
-
-    if (!apiWorkout) return undefined;
-
-    // Convert to WorkoutData format
-    return {
-      date: formatApiDate(apiWorkout.executedAt),
-      workoutName: apiWorkout.workoutName,
-      exercises: apiWorkout.workoutHistoryExercises.length,
-      totalSets: apiWorkout.workoutHistoryExercises.reduce(
-        (total, exercise) => total + exercise.completedSets,
-        0
-      ),
-      duration: apiWorkout.durationMinutes
-        ? `${apiWorkout.durationMinutes}min`
-        : "N/A",
-      notes: apiWorkout.notes,
-    };
   };
 
   const renderMonthCalendar = () => {
-    const { calendar, firstDay } = getMonthCalendar(selectedMonth);
+    const { calendar } = getMonthCalendar(selectedMonth);
     const monthNames = [
       "Janeiro",
       "Fevereiro",
@@ -419,28 +373,37 @@ export default function WorkoutHistory() {
                 return workoutDate === selectedDate;
               });
 
-              const convertedData = convertWorkoutHistoryData(
-                exactDateFilteredData
-              );
-              return convertedData;
+              // We now use the summary data directly
+              return exactDateFilteredData;
             } else {
-              return workoutHistory.slice(0, 5);
+              return allWorkoutSummaries.slice(0, 5);
             }
           })().map((workout, index) => (
-            <TouchableOpacity key={index} style={styles.workoutItem}>
+            <TouchableOpacity
+              key={index}
+              style={styles.workoutItem}
+              onPress={() => {
+                setSelectedDate(formatApiDate(workout.executedAt));
+                setShowHistoryDetail(true);
+              }}
+            >
               <View style={styles.workoutHeader}>
                 <Text style={styles.workoutDate}>
-                  {new Date(workout.date).toLocaleDateString("pt-BR", {
+                  {new Date(workout.executedAt).toLocaleDateString("pt-BR", {
                     weekday: "short",
                     day: "numeric",
                     month: "short",
                   })}
                 </Text>
-                <Text style={styles.workoutDuration}>{workout.duration}</Text>
+                <Text style={styles.workoutDuration}>
+                  {workout.durationMinutes
+                    ? `${workout.durationMinutes}min`
+                    : "N/A"}
+                </Text>
               </View>
               <Text style={styles.workoutName}>{workout.workoutName}</Text>
               <Text style={styles.workoutStats}>
-                {workout.exercises} exercícios • {workout.totalSets} séries
+                Clique para ver detalhes
               </Text>
               {workout.notes && (
                 <Text style={styles.workoutNotes} numberOfLines={2}>
@@ -475,115 +438,8 @@ export default function WorkoutHistory() {
     );
   };
 
-  const renderProgressChart = (exercise: ExerciseProgress) => {
-    const maxWeight = Math.max(...exercise.weights);
-    const minWeight = Math.min(...exercise.weights);
-    const range = maxWeight - minWeight || 1;
-
-    return (
-      <View style={styles.chartContainer}>
-        <Text style={styles.exerciseName}>{exercise.name}</Text>
-        <View style={styles.chart}>
-          {exercise.weights.map((weight, index) => {
-            const height = ((weight - minWeight) / range) * 80 + 20;
-            const isLast = index === exercise.weights.length - 1;
-
-            return (
-              <View key={index} style={styles.chartColumn}>
-                <Text style={styles.weightLabel}>{weight}kg</Text>
-                <View
-                  style={[
-                    styles.chartBar,
-                    { height },
-                    isLast && styles.chartBarCurrent,
-                  ]}
-                />
-                <Text style={styles.dateLabel}>
-                  {new Date(exercise.dates[index]).getDate()}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-        <View style={styles.progressSummary}>
-          <Text style={styles.progressText}>
-            Progresso: +
-            {(
-              exercise.weights[exercise.weights.length - 1] -
-              exercise.weights[0]
-            ).toFixed(1)}
-            kg
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
-  const renderProgressView = () => {
-    return (
-      <View style={styles.progressContainer}>
-        <Text style={styles.sectionTitle}>Evolução dos Exercícios</Text>
-
-        {/* Exercise Filter */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filterScroll}
-        >
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              !selectedExercise && styles.filterButtonActive,
-            ]}
-            onPress={() => setSelectedExercise(null)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                !selectedExercise && styles.filterTextActive,
-              ]}
-            >
-              Todos
-            </Text>
-          </TouchableOpacity>
-          {exerciseProgress.map((exercise) => (
-            <TouchableOpacity
-              key={exercise.name}
-              style={[
-                styles.filterButton,
-                selectedExercise === exercise.name && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedExercise(exercise.name)}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  selectedExercise === exercise.name && styles.filterTextActive,
-                ]}
-              >
-                {exercise.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Progress Charts */}
-        <ScrollView>
-          {exerciseProgress
-            .filter(
-              (exercise) =>
-                !selectedExercise || exercise.name === selectedExercise
-            )
-            .map((exercise, index) => (
-              <View key={index}>{renderProgressChart(exercise)}</View>
-            ))}
-        </ScrollView>
-      </View>
-    );
-  };
-
   const renderSearchView = () => {
-    const filteredWorkouts = workoutHistory.filter(
+    const filteredWorkouts = allWorkoutSummaries.filter(
       (workout) =>
         workout.workoutName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         workout.notes?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -611,13 +467,18 @@ export default function WorkoutHistory() {
           <TouchableOpacity key={index} style={styles.workoutItem}>
             <View style={styles.workoutHeader}>
               <Text style={styles.workoutDate}>
-                {new Date(workout.date).toLocaleDateString("pt-BR")}
+                {new Date(workout.executedAt).toLocaleDateString("pt-BR")}
               </Text>
-              <Text style={styles.workoutDuration}>{workout.duration}</Text>
+              <Text style={styles.workoutDuration}>
+                {workout.durationMinutes
+                  ? `${workout.durationMinutes}min`
+                  : "N/A"}
+              </Text>
             </View>
             <Text style={styles.workoutName}>{workout.workoutName}</Text>
             <Text style={styles.workoutStats}>
-              {workout.exercises} exercícios • {workout.totalSets} séries
+              {/* Details are fetched on click now */}
+              Clique para ver detalhes
             </Text>
             {workout.notes && (
               <Text style={styles.workoutNotes}>{workout.notes}</Text>
@@ -686,7 +547,6 @@ export default function WorkoutHistory() {
       {/* Content */}
       <ScrollView style={styles.content}>
         {selectedView === "calendar" && renderCalendarView()}
-        {selectedView === "progress" && renderProgressView()}
         {selectedView === "search" && renderSearchView()}
       </ScrollView>
 
@@ -698,6 +558,22 @@ export default function WorkoutHistory() {
         onRequestClose={() => setShowMonthPicker(false)}
       >
         <View style={styles.modalContainer}>{renderMonthCalendar()}</View>
+      </Modal>
+
+      <Modal
+        visible={showHistoryDetail}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowHistoryDetail(false)}
+      >
+        <View style={styles.modalContainer}>
+          {user && selectedDate && (
+            <WorkoutHistoryView
+              userId={user.id}
+              date={new Date(selectedDate)}
+            />
+          )}
+        </View>
       </Modal>
     </View>
   );

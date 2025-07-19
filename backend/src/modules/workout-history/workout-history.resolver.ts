@@ -2,6 +2,7 @@ import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { WorkoutHistoryService } from './workout-history.service';
 import { WorkoutHistoryType } from './dto/workout-history.type';
+import { WorkoutHistorySummaryType } from './dto/workout-history-summary.type';
 import { CreateWorkoutHistoryInput } from './dto/create-workout-history.input';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -16,7 +17,9 @@ export class WorkoutHistoryResolver {
   @Query(() => [WorkoutHistoryType])
   async workoutHistories(): Promise<Partial<WorkoutHistoryType>[]> {
     const entities = await this.workoutHistoryService.findAll();
-    return entities.map(this.workoutHistoryService.toWorkoutHistoryType);
+    return entities.map((entity) =>
+      this.workoutHistoryService.toWorkoutHistoryType(entity),
+    );
   }
 
   @UseGuards(GqlAuthGuard)
@@ -36,7 +39,21 @@ export class WorkoutHistoryResolver {
     @Args('userId', { type: () => ID }) userId: string,
   ): Promise<Partial<WorkoutHistoryType>[]> {
     const entities = await this.workoutHistoryService.findByUserId(userId);
-    return entities.map(this.workoutHistoryService.toWorkoutHistoryType);
+    return entities.map((entity) =>
+      this.workoutHistoryService.toWorkoutHistoryType(entity),
+    );
+  }
+
+  @UseGuards(GqlAuthGuard)
+  @Query(() => [WorkoutHistorySummaryType])
+  async workoutHistorySummariesByUser(
+    @Args('userId', { type: () => ID }) userId: string,
+  ): Promise<Partial<WorkoutHistorySummaryType>[]> {
+    const entities =
+      await this.workoutHistoryService.findSummariesByUserId(userId);
+    return entities.map((entity) =>
+      this.workoutHistoryService.toWorkoutHistorySummaryType(entity),
+    );
   }
 
   @UseGuards(GqlAuthGuard)
@@ -46,7 +63,9 @@ export class WorkoutHistoryResolver {
   ): Promise<Partial<WorkoutHistoryType>[]> {
     const entities =
       await this.workoutHistoryService.findByWorkoutId(workoutId);
-    return entities.map(this.workoutHistoryService.toWorkoutHistoryType);
+    return entities.map((entity) =>
+      this.workoutHistoryService.toWorkoutHistoryType(entity),
+    );
   }
 
   @UseGuards(GqlAuthGuard)
@@ -55,8 +74,13 @@ export class WorkoutHistoryResolver {
     @Args('userId', { type: () => ID }) userId: string,
     @Args('date', { type: () => Date }) date: Date,
   ): Promise<Partial<WorkoutHistoryType>[]> {
-    const entities = await this.workoutHistoryService.findByUserIdAndDate(userId, date);
-    return entities.map(this.workoutHistoryService.toWorkoutHistoryType);
+    const entities = await this.workoutHistoryService.findByUserIdAndDate(
+      userId,
+      date,
+    );
+    return entities.map((entity) =>
+      this.workoutHistoryService.toWorkoutHistoryType(entity),
+    );
   }
 
   @UseGuards(GqlAuthGuard)
@@ -71,7 +95,9 @@ export class WorkoutHistoryResolver {
       startDate,
       endDate,
     );
-    return entities.map(this.workoutHistoryService.toWorkoutHistoryType);
+    return entities.map((entity) =>
+      this.workoutHistoryService.toWorkoutHistoryType(entity),
+    );
   }
 
   @UseGuards(GqlAuthGuard, RolesGuard)
