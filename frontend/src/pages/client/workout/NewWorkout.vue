@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full p-6">
+  <div class="w-full p-6" v-loading="uploadLoading" :loading-text="'Processando arquivo...'">
     <div class="mb-6 flex justify-between items-center">
       <div>
         <h1 class="text-2xl font-bold">Criar Novo Treino</h1>
@@ -788,7 +788,9 @@ export default defineComponent({
         
         message.success("Treino importado com sucesso!");
         showUploadDialog.value = false;
-        await router.push(`/clients/${userId}`);
+        
+        // Atualizar a página atual
+        window.location.reload();
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
         message.error(errorMessage || "Erro ao importar treino");
