@@ -16,7 +16,7 @@ import {
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
 const httpLink = createUploadLink({
-  uri: "http://localhost:3000/graphql",
+  uri: import.meta.env.VITE_GRAPHQL_URI,
   headers: {
     "apollo-require-preflight": "true",
   },

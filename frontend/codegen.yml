@@ -1,4 +1,4 @@
-schema: http://localhost:3000/graphql
+schema: ${VITE_GRAPHQL_SCHEMA_URI}
 generates:
   ./src/generated/graphql.ts:
     plugins:
