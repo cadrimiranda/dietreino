@@ -31,8 +31,8 @@ export class UsersResolver {
   @Query(() => [UserType])
   @UseGuards(GqlAuthGuard, RolesGuard)
   @Roles(UserRole.TRAINER, UserRole.NUTRITIONIST)
-  async users(): Promise<UserType[]> {
-    return this.usersService.findAll();
+  async users(@CurrentUser() currentUser: User): Promise<UserType[]> {
+    return this.usersService.findUsersForProfessional(currentUser);
   }
 
   @Query(() => UserType)

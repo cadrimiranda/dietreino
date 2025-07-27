@@ -37,6 +37,17 @@ export class UsersService {
     return this.usersRepository.findAll();
   }
 
+  async findUsersForProfessional(currentUser: User): Promise<User[]> {
+    if (currentUser.role === UserRole.TRAINER) {
+      return this.getClientsForTrainer(currentUser.id);
+    } else if (currentUser.role === UserRole.NUTRITIONIST) {
+      return this.getClientsForNutritionist(currentUser.id);
+    } else {
+      // For other roles (admin, etc.), return all users
+      return this.findAll();
+    }
+  }
+
   async upsertUser(
     data: UserInput,
     currentUser?: User,

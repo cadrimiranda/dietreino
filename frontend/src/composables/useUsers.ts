@@ -143,6 +143,7 @@ export function useUsers({ userId }: { userId?: string }) {
     }
   `;
 
+
   const UPSERT_USER = gql`
     mutation upsertUser($userInput: UserInput!) {
       upsertUser(userInput: $userInput) {
