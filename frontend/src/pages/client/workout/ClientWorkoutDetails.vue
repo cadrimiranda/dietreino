@@ -26,7 +26,7 @@
     </div>
 
     <div v-if="!isLoading">
-      <div class="bg-white rounded-lg shadow mb-6">
+      <div class="bg-white rounded-lg shadow mb-6" v-loading="workoutCreating" loading-text="Criando treino...">
         <div class="p-6">
           <div class="flex items-center mb-6">
             <div class="bg-blue-100 p-3 rounded-full mr-4">
@@ -91,7 +91,10 @@
           <EmptyWorkoutState
             v-else
             :clientId="userId"
+            :isLoading="workoutCreating"
             @file-upload="handleFileChange"
+            @workout-created="handleWorkoutCreated"
+            @workout-creating="handleWorkoutCreating"
           />
         </div>
       </div>
@@ -249,6 +252,7 @@ export default defineComponent({
     const showEditDialog = ref(false);
     const showNewWorkoutDialog = ref(false);
     const workoutData = ref<any>({});
+    const workoutCreating = ref(false);
 
     // Observe as mudanças em user e atualize client e workouts quando os dados chegarem
     watch(
@@ -395,6 +399,16 @@ export default defineComponent({
       });
     };
 
+    const handleWorkoutCreating = (creating: boolean) => {
+      workoutCreating.value = creating;
+    };
+
+    const handleWorkoutCreated = async () => {
+      workoutCreating.value = false;
+      // Refresh user data to get the new workout
+      await refetchUser();
+    };
+
     return {
       client,
       workout,
@@ -411,6 +425,9 @@ export default defineComponent({
       formatDate,
       createNewWorkout,
       showHistoryView,
+      handleWorkoutCreating,
+      handleWorkoutCreated,
+      workoutCreating,
       router,
     };
   },
