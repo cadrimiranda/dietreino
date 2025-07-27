@@ -43,7 +43,7 @@ export class UsersResolver {
   }
 
   @Mutation(() => UserType)
-  // @UseGuards(GqlAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async upsertUser(
     @Args('userInput') userInput: UserInput,
     @CurrentUser() currentUser: User,

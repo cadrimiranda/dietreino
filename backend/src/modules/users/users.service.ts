@@ -225,6 +225,14 @@ export class UsersService {
     const processedData: Partial<User> & UserInput = { ...data };
     let rawPassword: string = data.password || '';
 
+    // Convert trainer and nutritionist IDs to entity references
+    if (data.trainerId) {
+      processedData.trainer = { id: data.trainerId } as User;
+    }
+    if (data.nutritionistId) {
+      processedData.nutritionist = { id: data.nutritionistId } as User;
+    }
+
     if (!data.password && !data.id) {
       // Generate password for new users without password
       const generatedPassword = this.generateRandomPassword();
