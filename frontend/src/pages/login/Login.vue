@@ -137,9 +137,12 @@ export default defineComponent({
 
     const onFinish = async (values: FormState): Promise<void> => {
       try {
-        await auth.login(values.email, values.password);
+        const email = values.email.trim();
+        const password = values.password.trim();
+        
+        await auth.login(email, password);
         if (formState.remember) {
-          localStorage.setItem("email", values.email);
+          localStorage.setItem("email", email);
         } else {
           localStorage.removeItem("email");
         }

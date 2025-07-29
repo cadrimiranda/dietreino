@@ -80,12 +80,6 @@
                   </tbody>
                 </table>
               </a-tab-pane>
-              <a-tab-pane key="history" tab="Histórico">
-                <WorkoutHistoryDashboard
-                  :userId="userId"
-                  :preSelectedWorkoutId="workout.id"
-                />
-              </a-tab-pane>
             </a-tabs>
           </div>
           <EmptyWorkoutState
@@ -175,7 +169,6 @@ import { IUserEntity, useUsers } from "@/composables/useUsers";
 import { useRoute, useRouter } from "vue-router";
 import EmptyWorkoutState from "./ClientEmptyWorkout.vue";
 import WorkoutEditDialog from "@/components/WorkoutEditDialog.vue";
-import WorkoutHistoryDashboard from "@/components/workout-history/WorkoutHistoryDashboard.vue";
 import { useProcessWorkout } from "./useProcessWorkout";
 
 export default defineComponent({
@@ -187,7 +180,6 @@ export default defineComponent({
     HistoryOutlined,
     EmptyWorkoutState,
     WorkoutEditDialog,
-    WorkoutHistoryDashboard,
   },
   setup() {
     const { processWorkout, loading } = useProcessWorkout();
