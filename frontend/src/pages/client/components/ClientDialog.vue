@@ -31,11 +31,14 @@
           { required: true, message: 'Por favor insira seu email' },
           { type: 'email', message: 'Email inválido' },
         ]"
+        :validate-status="emailValidationStatus"
+        :help="emailValidationMessage"
       >
         <a-input
           v-model:value="clientData.email"
           type="email"
           placeholder="john@example.com"
+          @input="validateEmailRealTime"
         />
       </a-form-item>
 
@@ -54,7 +57,10 @@
       >
         <a-input
           v-model:value="clientData.phone"
-          placeholder="(48) 99121-8736"
+          placeholder="(11) 99999-9999"
+          @input="formatPhoneNumber"
+          @keypress="onlyNumbers"
+          maxlength="15"
         />
       </a-form-item>
     </a-form>
@@ -102,6 +108,10 @@ export default defineComponent({
       phone: "",
     });
 
+    // Email validation states
+    const emailValidationStatus = ref<"" | "success" | "warning" | "error" | "validating">("");
+    const emailValidationMessage = ref("");
+
     // Watch for changes to clientToEdit and update the form accordingly
     watch(
       () => props.clientToEdit,
@@ -113,6 +123,14 @@ export default defineComponent({
             email: newVal.email,
             phone: newVal.phone || "",
           };
+          // Format phone number when loading for editing
+          if (newVal.phone) {
+            formatPhoneNumber();
+          }
+          // Validate email when loading
+          if (newVal.email) {
+            validateEmailRealTime();
+          }
         } else {
           // Reset form when not editing
           resetForm();
@@ -147,6 +165,65 @@ export default defineComponent({
         email: "",
         phone: "",
       };
+      emailValidationStatus.value = "";
+      emailValidationMessage.value = "";
+    }
+
+    function validateEmailRealTime(): void {
+      const email = clientData.value.email?.trim() || "";
+      
+      if (email === "") {
+        emailValidationStatus.value = "";
+        emailValidationMessage.value = "";
+        return;
+      }
+
+      if (StringUtils.isValidEmail(email)) {
+        emailValidationStatus.value = "success";
+        emailValidationMessage.value = "Email válido";
+      } else {
+        emailValidationStatus.value = "error";
+        emailValidationMessage.value = "Formato de email inválido";
+      }
+    }
+
+    function onlyNumbers(event: KeyboardEvent): void {
+      // Allow backspace, delete, tab, escape, enter
+      if ([8, 9, 27, 13, 46].indexOf(event.keyCode) !== -1 ||
+          // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+          (event.keyCode === 65 && event.ctrlKey === true) ||
+          (event.keyCode === 67 && event.ctrlKey === true) ||
+          (event.keyCode === 86 && event.ctrlKey === true) ||
+          (event.keyCode === 88 && event.ctrlKey === true)) {
+        return;
+      }
+      // Ensure that it is a number and stop the keypress
+      if ((event.shiftKey || (event.keyCode < 48 || event.keyCode > 57)) && (event.keyCode < 96 || event.keyCode > 105)) {
+        event.preventDefault();
+      }
+    }
+
+    function formatPhoneNumber(): void {
+      const phone = clientData.value.phone || "";
+      // Remove all non-digit characters
+      const numbers = phone.replace(/\D/g, "");
+      
+      // Apply formatting
+      let formatted = "";
+      if (numbers.length > 0) {
+        if (numbers.length <= 2) {
+          formatted = `(${numbers}`;
+        } else if (numbers.length <= 7) {
+          formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+        } else if (numbers.length <= 11) {
+          formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+        } else {
+          // Limit to 11 digits
+          formatted = `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+        }
+      }
+      
+      clientData.value.phone = formatted;
     }
 
     function closeDialog(): void {
@@ -186,7 +263,7 @@ export default defineComponent({
           id: clientData.value.id, // Will be undefined for new clients
           name: clientData.value.name.trim(),
           email: clientData.value.email.trim(),
-          phone: clientData.value.phone?.trim() || "",
+          phone: clientData.value.phone?.replace(/\D/g, "") || "", // Remove formatting, keep only numbers
         });
 
         // Parent component will handle closing the dialog and resetting after saving
@@ -208,6 +285,11 @@ export default defineComponent({
       clientData,
       visibleModel,
       isProcessingModel,
+      emailValidationStatus,
+      emailValidationMessage,
+      validateEmailRealTime,
+      onlyNumbers,
+      formatPhoneNumber,
       saveClient,
       closeDialog,
     };
