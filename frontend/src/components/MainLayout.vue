@@ -24,7 +24,7 @@
 
       <nav class="flex-1 mt-4 space-y-1">
         <router-link
-          v-for="item in navItems"
+          v-for="item in filteredNavItems"
           :key="item.path"
           :to="item.path"
           class="flex items-center justify-center md:justify-start gap-4 p-3 rounded-lg hover:bg-gray-800 transition-all"
@@ -143,14 +143,9 @@
       </header>
 
       <!-- Page Content -->
-      <main
-        class="flex-1 overflow-y-auto bg-gray-50"
-        @click="closeMenus"
-      >
+      <main class="flex-1 overflow-y-auto bg-gray-50" @click="closeMenus">
         <div class="p-4 md:p-8">
-          <div class="max-w-7xl mx-auto">
-            <router-view />
-          </div>
+          <router-view />
         </div>
       </main>
     </div>
@@ -158,7 +153,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, watch } from "vue";
+import { defineComponent, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useAuth } from "@/composables/useAuth";
 
@@ -172,7 +167,29 @@ export default defineComponent({
   name: "MainLayout",
   setup() {
     const route = useRoute();
-    return { route };
+    const auth = useAuth();
+    
+    const filteredNavItems = computed(() => {
+      const baseItems = [
+        { name: "Dashboard", path: "/dashboard", icon: "fas fa-gauge" },
+        { name: "Clientes", path: "/clients", icon: "fas fa-user-group" },
+      ];
+      
+      // Only show Treinos for trainers
+      if (auth.currentUser.value?.role === "TRAINER") {
+        baseItems.push({ name: "Treinos", path: "/training", icon: "fas fa-running" });
+      }
+      
+      baseItems.push({
+        name: "Histórico",
+        path: "/workout-history",
+        icon: "fas fa-chart-line",
+      });
+      
+      return baseItems;
+    });
+    
+    return { route, filteredNavItems };
   },
   data() {
     return {
@@ -181,15 +198,6 @@ export default defineComponent({
       notificationsOpen: false,
       unreadNotifications: 2,
       userName: "Carlos Miranda",
-      navItems: [
-        { name: "Dashboard", path: "/dashboard", icon: "fas fa-gauge" },
-        { name: "Clientes", path: "/clients", icon: "fas fa-user-group" },
-        { name: "Treinos", path: "/training", icon: "fas fa-running" },
-        { name: "Dietas", path: "/diet", icon: "fas fa-utensils" },
-        { name: "Histórico", path: "/workout-history", icon: "fas fa-chart-line" },
-        { name: "Relatórios", path: "/reports", icon: "fas fa-clipboard-list" },
-        { name: "Configurações", path: "/settings", icon: "fas fa-sliders-h" },
-      ] as NavItem[],
       notifications: [
         {
           title: "Novo cliente cadastrado",
@@ -283,10 +291,12 @@ export default defineComponent({
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(156, 163, 175, 0.5);
   border-radius: 20px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.8);
 }
@@ -295,6 +305,7 @@ export default defineComponent({
 .router-link-active {
   position: relative;
 }
+
 .router-link-active::before {
   content: "";
   position: absolute;

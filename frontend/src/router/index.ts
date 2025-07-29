@@ -17,6 +17,7 @@ import ClientWorkoutDetails from "@/pages/client/workout/ClientWorkoutDetails.vu
 import NewWorkout from "@/pages/client/workout/NewWorkout.vue";
 import WorkoutHistory from "@/pages/client/workout/WorkoutHistory.vue";
 import WorkoutHistoryView from "@/views/WorkoutHistoryView.vue";
+import TrainingList from "@/pages/training/TrainingList.vue";
 
 interface TemplateComponent {
   template: string;
@@ -24,9 +25,6 @@ interface TemplateComponent {
 
 const ClientDetail: TemplateComponent = {
   template: "<div>Client Detail View</div>",
-};
-const TrainingList: TemplateComponent = {
-  template: "<div>Training Plans List</div>",
 };
 const DietList: TemplateComponent = { template: "<div>Diet Plans List</div>" };
 const ProgressView: TemplateComponent = {

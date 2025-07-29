@@ -139,6 +139,40 @@ export function useUsers({ userId }: { userId?: string }) {
           id
           name
         }
+        workouts {
+          id
+          name
+          weekStart
+          weekEnd
+          isActive
+          startedAt
+          trainingDays {
+            id
+            name
+            order
+            dayOfWeek
+            trainingDayExercises {
+              id
+              order
+              exercise {
+                id
+                name
+                videoLink
+              }
+              repSchemes {
+                id
+                sets
+                minReps
+                maxReps
+              }
+              restIntervals {
+                id
+                intervalTime
+                order
+              }
+            }
+          }
+        }
       }
     }
   `;
