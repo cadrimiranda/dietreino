@@ -107,16 +107,39 @@
                 class="bg-white p-3 rounded border"
               >
                 <div class="text-sm">
-                  <div class="font-medium text-gray-900">Série {{ index + 1 }}</div>
+                  <div class="font-medium text-gray-900">
+                    Série {{ index + 1 }}
+                    <span v-if="set.isBilateral" class="ml-1 px-1 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                      Unilateral
+                    </span>
+                  </div>
                   <div class="text-gray-600 mt-1">
-                    <div>Alvo: {{ set.targetRepsMin }}-{{ set.targetRepsMax }} reps</div>
-                    <div class="flex justify-between">
-                      <span>Concluídas: {{ set.completedReps }}</span>
-                      <span :class="getCompletionClass(set.completedReps, set.targetRepsMin, set.targetRepsMax)">
-                        {{ getCompletionStatus(set.completedReps, set.targetRepsMin, set.targetRepsMax) }}
-                      </span>
+                    <!-- Exercício Bilateral (Unilateral) -->
+                    <div v-if="set.isBilateral">
+                      <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-gray-50 p-2 rounded">
+                          <div class="font-medium text-blue-600">Esquerdo</div>
+                          <div>{{ set.repsLeft || 0 }} reps</div>
+                          <div v-if="set.weightLeft">{{ set.weightLeft }}kg</div>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded">
+                          <div class="font-medium text-green-600">Direito</div>
+                          <div>{{ set.repsRight || 0 }} reps</div>
+                          <div v-if="set.weightRight">{{ set.weightRight }}kg</div>
+                        </div>
+                      </div>
                     </div>
-                    <div v-if="set.weight" class="text-xs text-gray-500 mt-1">{{ set.weight }}kg</div>
+                    <!-- Exercício Tradicional (Bilateral) -->
+                    <div v-else>
+                      <div>Alvo: {{ set.targetRepsMin }}-{{ set.targetRepsMax }} reps</div>
+                      <div class="flex justify-between">
+                        <span>Concluídas: {{ set.completedReps }}</span>
+                        <span :class="getCompletionClass(set.completedReps, set.targetRepsMin, set.targetRepsMax)">
+                          {{ getCompletionStatus(set.completedReps, set.targetRepsMin, set.targetRepsMax) }}
+                        </span>
+                      </div>
+                      <div v-if="set.weight" class="text-xs text-gray-500 mt-1">{{ set.weight }}kg</div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -54,6 +54,39 @@ export class CreateWorkoutHistoryExerciseSetInput {
   @Max(200)
   reps: number;
 
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  weightLeft?: number;
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(200)
+  repsLeft?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  weightRight?: number;
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(200)
+  repsRight?: number;
+
+  @Field(() => Boolean, { defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  isBilateral?: boolean;
+
   @Field(() => Int, { nullable: true })
   @IsOptional()
   @IsNumber()

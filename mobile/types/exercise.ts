@@ -4,6 +4,11 @@ export interface Series {
   reps: number;
   weight?: number;
   completed?: number;
+  weightLeft?: number;
+  repsLeft?: number;
+  weightRight?: number;
+  repsRight?: number;
+  isBilateral?: boolean;
 }
 
 export interface Set {
@@ -28,6 +33,7 @@ export interface Exercise {
   completedSeries?: Series[];
   history?: HistoryEntry[];
   isCompleted?: boolean;
+  isBilateral?: boolean; // Definido pelo treinador na prescrição
 }
 
 export interface WorkoutDetails {

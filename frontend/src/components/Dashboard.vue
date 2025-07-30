@@ -94,6 +94,92 @@
       </div>
     </div>
 
+    <!-- Progress Reports and Reminders Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Progress Reports -->
+      <div class="bg-white rounded-lg shadow-sm p-5">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-gray-900">New Progress Reports</h3>
+          <button 
+            @click="viewAllReports"
+            class="text-blue-600 text-sm hover:text-blue-800"
+          >
+            View All
+          </button>
+        </div>
+        <div class="space-y-3">
+          <div 
+            v-for="report in recentReports" 
+            :key="report.id"
+            class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
+            @click="viewReport(report.id)"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="font-medium text-gray-900">{{ report.clientName }}</p>
+                <p class="text-sm text-gray-600">{{ report.title }}</p>
+              </div>
+              <span class="text-xs text-gray-500">{{ formatDate(report.createdAt) }}</span>
+            </div>
+          </div>
+          <div v-if="recentReports.length === 0" class="text-center py-4 text-gray-500">
+            Nenhum relatório recente
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Reminders -->
+      <div class="bg-white rounded-lg shadow-sm p-5">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-gray-900">Upcoming Reminders</h3>
+          <button 
+            @click="$router.push('/reminders')"
+            class="text-blue-600 text-sm hover:text-blue-800"
+          >
+            View All
+          </button>
+        </div>
+        <div class="space-y-3">
+          <div 
+            v-for="reminder in upcomingReminders" 
+            :key="reminder.id"
+            class="border border-gray-200 rounded-lg p-3"
+          >
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <p class="font-medium text-gray-900">{{ reminder.title }}</p>
+                <p class="text-sm text-gray-600">{{ reminder.clientName }}</p>
+              </div>
+              <span class="text-xs text-gray-500">{{ formatDate(reminder.dueDate) }}</span>
+            </div>
+            <div class="flex gap-2">
+              <button 
+                @click="renewReminder(reminder.id)"
+                class="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
+              >
+                Renew
+              </button>
+              <button 
+                @click="viewReminder(reminder.id)"
+                class="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
+              >
+                View
+              </button>
+              <button 
+                @click="sendReminder(reminder.id)"
+                class="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded hover:bg-orange-200"
+              >
+                Remind
+              </button>
+            </div>
+          </div>
+          <div v-if="upcomingReminders.length === 0" class="text-center py-4 text-gray-500">
+            Nenhum lembrete próximo
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Recent clients and quick actions -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Recent clients -->
@@ -359,6 +445,64 @@ export default defineComponent({
       clientDialogVisible.value = true;
     };
 
+    // Mock data for progress reports and reminders
+    const recentReports = computed(() => [
+      {
+        id: '1',
+        clientName: 'João Silva',
+        title: 'Relatório de Progresso Mensal',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: '2',
+        clientName: 'Maria Santos',
+        title: 'Avaliação de Treino',
+        createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+      }
+    ]);
+
+    const upcomingReminders = computed(() => [
+      {
+        id: '1',
+        title: 'Renovação de treino',
+        clientName: 'Ana Costa',
+        dueDate: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
+      },
+      {
+        id: '2',
+        title: 'Avaliação física',
+        clientName: 'Pedro Lima',
+        dueDate: new Date(Date.now() + 172800000).toISOString(), // 2 days from now
+      }
+    ]);
+
+    // Functions for progress reports
+    const viewAllReports = () => {
+      // TODO: Implement navigation to reports page
+      console.log('Navigating to all reports...');
+    };
+
+    const viewReport = (reportId: string) => {
+      // TODO: Implement navigation to specific report
+      console.log('Viewing report:', reportId);
+    };
+
+    // Functions for reminders
+    const renewReminder = (reminderId: string) => {
+      // TODO: Implement reminder renewal
+      console.log('Renewing reminder:', reminderId);
+    };
+
+    const viewReminder = (reminderId: string) => {
+      // TODO: Implement view reminder details
+      console.log('Viewing reminder:', reminderId);
+    };
+
+    const sendReminder = (reminderId: string) => {
+      // TODO: Implement send reminder
+      console.log('Sending reminder:', reminderId);
+    };
+
     const handleClientSaved = async (clientData: any) => {
       try {
         isProcessingClient.value = true;
@@ -391,6 +535,14 @@ export default defineComponent({
       clientDialogVisible,
       isProcessingClient,
       loading,
+      // Progress reports and reminders
+      recentReports,
+      upcomingReminders,
+      viewAllReports,
+      viewReport,
+      renewReminder,
+      viewReminder,
+      sendReminder,
     };
   },
 });

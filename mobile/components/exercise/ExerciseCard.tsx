@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { Exercise, Series } from "../../types/exercise";
 import ExerciseRestTimes from "./ExerciseRestTimes";
 import SeriesInput from "./SeriesInput";
+import BilateralSeriesInput from "./BilateralSeriesInput";
 import ExerciseMenu from "./ExerciseMenu";
 import ExerciseFinish from "./ExerciseFinish";
 import ExerciseHistory from "./ExerciseHistory";
@@ -49,6 +50,27 @@ export function ExerciseCard({
       ...newInputs[index],
       [field]: Number(value) || 0,
     };
+    setSeriesInputs(newInputs);
+    onUpdateExercise(exercise.id, { completedSeries: newInputs });
+  };
+
+  const handleBilateralSeriesInput = (
+    index: number,
+    field: "repsLeft" | "weightLeft" | "repsRight" | "weightRight" | "isBilateral",
+    value: string | boolean
+  ) => {
+    const newInputs = [...seriesInputs];
+    if (field === "isBilateral") {
+      newInputs[index] = {
+        ...newInputs[index],
+        [field]: value as boolean,
+      };
+    } else {
+      newInputs[index] = {
+        ...newInputs[index],
+        [field]: Number(value) || 0,
+      };
+    }
     setSeriesInputs(newInputs);
     onUpdateExercise(exercise.id, { completedSeries: newInputs });
   };
@@ -100,11 +122,12 @@ export function ExerciseCard({
           contentContainerStyle={styles.seriesScrollContent}
         >
           {Array.from({ length: exercise.series || 0 }).map((_, index) => (
-            <SeriesInput
+            <BilateralSeriesInput
               key={index + exercise.series}
               index={index}
               seriesInputs={seriesInputs}
               handleSeriesInput={handleSeriesInput}
+              handleBilateralSeriesInput={handleBilateralSeriesInput}
               exercise={exercise}
               isCompleted={isCompleted}
             />

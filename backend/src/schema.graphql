@@ -39,15 +39,20 @@ input CreateWorkoutHistoryExerciseInput {
 
 input CreateWorkoutHistoryExerciseSetInput {
   executedAt: DateTime!
+  isBilateral: Boolean! = false
   isCompleted: Boolean!
   isFailure: Boolean!
   notes: String
   plannedRepsMax: Int
   plannedRepsMin: Int
   reps: Int!
+  repsLeft: Int
+  repsRight: Int
   restSeconds: Int
   setNumber: Int!
   weight: Float
+  weightLeft: Float
+  weightRight: Float
 }
 
 input CreateWorkoutHistoryInput {
@@ -223,6 +228,7 @@ type TrainingDayExercise {
   createdAt: DateTime!
   exercise: Exercise!
   id: ID!
+  isBilateral: Boolean!
   order: Float!
   repSchemes: [RepScheme!]!
   restIntervals: [RestInterval!]!
@@ -368,16 +374,21 @@ type WorkoutHistoryExerciseSet {
   createdAt: DateTime!
   executedAt: DateTime
   id: ID!
+  isBilateral: Boolean!
   isCompleted: Boolean!
   isFailure: Boolean!
   notes: String
   plannedRepsMax: Float
   plannedRepsMin: Float
   reps: Float
+  repsLeft: Float
+  repsRight: Float
   restSeconds: Float
   setNumber: Float!
   updatedAt: DateTime!
   weight: Float
+  weightLeft: Float
+  weightRight: Float
   workoutHistoryExercise: WorkoutHistoryExercise!
   workoutHistoryExerciseId: String!
 }
@@ -386,16 +397,21 @@ type WorkoutHistoryExerciseSetType {
   createdAt: DateTime!
   executedAt: DateTime!
   id: ID!
+  isBilateral: Boolean!
   isCompleted: Boolean!
   isFailure: Boolean!
   notes: String
   plannedRepsMax: Int
   plannedRepsMin: Int
   reps: Int!
+  repsLeft: Int
+  repsRight: Int
   restSeconds: Int
   setNumber: Int!
   updatedAt: DateTime
   weight: Float
+  weightLeft: Float
+  weightRight: Float
   workoutHistoryExerciseId: ID!
 }
 

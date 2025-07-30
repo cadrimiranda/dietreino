@@ -17,6 +17,21 @@ export class WorkoutHistoryExerciseSetType {
   @Field(() => Int)
   reps: number;
 
+  @Field(() => Float, { nullable: true })
+  weightLeft?: number;
+
+  @Field(() => Int, { nullable: true })
+  repsLeft?: number;
+
+  @Field(() => Float, { nullable: true })
+  weightRight?: number;
+
+  @Field(() => Int, { nullable: true })
+  repsRight?: number;
+
+  @Field(() => Boolean, { defaultValue: false })
+  isBilateral?: boolean;
+
   @Field(() => Int, { nullable: true })
   plannedRepsMin?: number;
 

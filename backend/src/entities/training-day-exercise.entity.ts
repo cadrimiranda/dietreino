@@ -31,6 +31,10 @@ export class TrainingDayExercise extends BaseEntity {
   @Column({ type: 'int' })
   order: number;
 
+  @Field(() => Boolean)
+  @Column({ type: 'boolean', default: false, name: 'is_bilateral' })
+  isBilateral: boolean;
+
   @OneToMany(() => WeeklyLoad, (wl: WeeklyLoad) => wl.trainingDayExercise, {
     eager: true,
   })

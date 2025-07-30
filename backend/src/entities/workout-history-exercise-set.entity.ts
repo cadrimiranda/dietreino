@@ -35,6 +35,26 @@ export class WorkoutHistoryExerciseSet extends BaseEntity {
   reps: number;
 
   @Field(() => Number, { nullable: true })
+  @Column({ type: 'decimal', precision: 8, scale: 2, nullable: true, name: 'weight_left' })
+  weightLeft: number;
+
+  @Field(() => Number, { nullable: true })
+  @Column({ type: 'int', nullable: true, name: 'reps_left' })
+  repsLeft: number;
+
+  @Field(() => Number, { nullable: true })
+  @Column({ type: 'decimal', precision: 8, scale: 2, nullable: true, name: 'weight_right' })
+  weightRight: number;
+
+  @Field(() => Number, { nullable: true })
+  @Column({ type: 'int', nullable: true, name: 'reps_right' })
+  repsRight: number;
+
+  @Field(() => Boolean)
+  @Column({ type: 'boolean', default: false, name: 'is_bilateral' })
+  isBilateral: boolean;
+
+  @Field(() => Number, { nullable: true })
   @Column({ type: 'int', nullable: true, name: 'planned_reps_min' })
   plannedRepsMin: number;
 
