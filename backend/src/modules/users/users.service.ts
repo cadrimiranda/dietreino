@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 import { promisify } from 'util';
 import { UserRole } from '../../utils/roles.enum';
 import { UserInput } from './dto/user.input';
+import * as bcrypt from 'bcrypt';
 
 // Promisify the crypto functions
 const scrypt = promisify(crypto.scrypt);
@@ -307,8 +308,24 @@ export class UsersService {
     hashedPassword: string,
   ): Promise<boolean> {
     try {
-      // Split the stored hash into salt and hash portions
+      // Validate inputs
+      if (!plainPassword || !hashedPassword) {
+        console.error('Missing password data:', { plainPassword: !!plainPassword, hashedPassword: !!hashedPassword });
+        return false;
+      }
+
+      // Check if password is in bcrypt format (legacy)
+      if (hashedPassword.startsWith('$2b$') || hashedPassword.startsWith('$2a$')) {
+        return await bcrypt.compare(plainPassword, hashedPassword);
+      }
+
+      // Handle scrypt format (current)
       const [salt, storedHash] = hashedPassword.split(':');
+      
+      if (!salt || !storedHash) {
+        console.error('Invalid password format - missing salt or hash:', { salt: !!salt, storedHash: !!storedHash });
+        return false;
+      }
 
       // Hash the input password with the same salt
       const derivedKey = (await scrypt(
