@@ -284,23 +284,50 @@
           <div class="grid grid-cols-1 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Treino</label>
-              <a-input v-model:value="uploadForm.name" placeholder="Ex: Treino de Força" />
+              <a-input v-model:value="uploadForm.name" placeholder="Ex: Treino de Força" :disabled="isUploading" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Data de Início</label>
-                <a-date-picker v-model:value="uploadForm.weekStart" format="DD/MM/YYYY" class="w-full" />
+                <a-date-picker v-model:value="uploadForm.weekStart" format="DD/MM/YYYY" class="w-full" :disabled="isUploading" />
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Data de Fim</label>
-                <a-date-picker v-model:value="uploadForm.weekEnd" format="DD/MM/YYYY" class="w-full" />
+                <a-date-picker v-model:value="uploadForm.weekEnd" format="DD/MM/YYYY" class="w-full" :disabled="isUploading" />
               </div>
             </div>
           </div>
         </div>
 
-        <div class="flex justify-center space-x-4">
-          <a-button @click="handleUploadClick" :loading="uploadLoading" :disabled="uploadLoading">
+        <!-- Arquivo Selecionado -->
+        <div v-if="selectedFile" class="mb-6 p-4 bg-gray-50 rounded-lg border">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="bg-green-100 p-2 rounded-full">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">{{ selectedFile.name }}</p>
+                <p class="text-sm text-gray-500">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+              </div>
+            </div>
+            <a-button 
+              type="text" 
+              danger 
+              @click="removeSelectedFile" 
+              :disabled="isUploading"
+              class="ml-4"
+            >
+              <delete-outlined />
+            </a-button>
+          </div>
+        </div>
+
+        <!-- Upload Area -->
+        <div v-if="!selectedFile" class="flex justify-center space-x-4">
+          <a-button @click="handleUploadClick" :disabled="isUploading">
             <upload-outlined /> Selecionar Arquivo
           </a-button>
           <input
@@ -312,9 +339,19 @@
           />
         </div>
         
-        <div class="mt-4 flex justify-center space-x-3">
-          <a-button @click="showUploadDialog = false">
+        <!-- Actions -->
+        <div class="mt-6 flex justify-center space-x-3">
+          <a-button @click="closeUploadDialog" :disabled="isUploading">
             Cancelar
+          </a-button>
+          <a-button 
+            v-if="selectedFile" 
+            type="primary" 
+            @click="uploadWorkout" 
+            :loading="isUploading"
+            :disabled="isUploading"
+          >
+            <upload-outlined /> Salvar Treino
           </a-button>
         </div>
       </div>
@@ -417,6 +454,8 @@ export default defineComponent({
     const draggedDayIndex = ref<number | null>(null);
     const showUploadDialog = ref(false);
     const fileInput = ref<HTMLInputElement | null>(null);
+    const selectedFile = ref<File | null>(null);
+    const isUploading = ref(false);
     
     const uploadForm = reactive({
       name: "Treino Importado",
@@ -761,9 +800,36 @@ export default defineComponent({
       fileInput.value?.click();
     }
 
-    async function handleFileUpload(event: Event) {
+    function handleFileUpload(event: Event) {
       const target = event.target as HTMLInputElement;
       if (!target.files || target.files.length === 0) return;
+
+      selectedFile.value = target.files[0];
+      
+      // Reset file input para permitir selecionar o mesmo arquivo novamente se necessário
+      target.value = "";
+    }
+
+    function removeSelectedFile() {
+      selectedFile.value = null;
+    }
+
+    function closeUploadDialog() {
+      showUploadDialog.value = false;
+      selectedFile.value = null;
+      // Reset form apenas se não estiver fazendo upload
+      if (!isUploading.value) {
+        uploadForm.name = "Treino Importado";
+        uploadForm.weekStart = dayjs();
+        uploadForm.weekEnd = dayjs().add(12, "week");
+      }
+    }
+
+    async function uploadWorkout() {
+      if (!selectedFile.value) {
+        message.error("Nenhum arquivo selecionado");
+        return;
+      }
 
       if (!uploadForm.name.trim()) {
         message.error("Nome do treino é obrigatório");
@@ -775,10 +841,12 @@ export default defineComponent({
         return;
       }
 
+      isUploading.value = true;
+
       try {
         await processWorkout({
           input: {
-            file: target.files[0],
+            file: selectedFile.value,
             userId,
             weekStart: uploadForm.weekStart!.format(),
             weekEnd: uploadForm.weekEnd!.format(),
@@ -786,19 +854,22 @@ export default defineComponent({
           },
         });
         
-        message.success("Treino importado com sucesso!");
+        message.success("Treino importado com sucesso! 🎉", 5);
         showUploadDialog.value = false;
+        selectedFile.value = null;
         
-        // Atualizar a página atual
-        window.location.reload();
+        // Reset upload form
+        uploadForm.name = "Treino Importado";
+        uploadForm.weekStart = dayjs();
+        uploadForm.weekEnd = dayjs().add(12, "week");
+        
+        // Redirect back to client page
+        await router.push(`/clients/${userId}`);
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
         message.error(errorMessage || "Erro ao importar treino");
       } finally {
-        // Reset file input
-        if (target) {
-          target.value = "";
-        }
+        isUploading.value = false;
       }
     }
 
@@ -867,6 +938,8 @@ export default defineComponent({
       uploadForm,
       uploadLoading,
       fileInput,
+      selectedFile,
+      isUploading,
       addTrainingDay,
       removeTrainingDay,
       addExercise,
@@ -885,6 +958,9 @@ export default defineComponent({
       updateDayOfWeek,
       handleUploadClick,
       handleFileUpload,
+      removeSelectedFile,
+      closeUploadDialog,
+      uploadWorkout,
       saveWorkout,
     };
   },
