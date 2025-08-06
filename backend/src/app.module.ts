@@ -55,6 +55,10 @@ export class AppModule implements NestModule {
         graphqlUploadExpress({
           maxFileSize: 10_000_000,
           maxFiles: 1,
+          limits: {
+            fileSize: 10_000_000,
+            files: 1,
+          },
         }) as any,
       )
       .forRoutes('graphql');

@@ -95,16 +95,43 @@ export class XlsxService {
     const readStream: fs.ReadStream = upload.createReadStream();
 
     await new Promise<void>((resolve, reject) => {
-      readStream
-        .pipe(writeStream)
-        .on('finish', () => resolve())
-        .on('error', (error: unknown) => {
-          const safeError =
-            error instanceof Error
-              ? error
-              : new Error('Erro desconhecido ao escrever o arquivo.');
-          reject(safeError);
-        });
+      let hasError = false;
+
+      const cleanup = () => {
+        try {
+          if (fs.existsSync(tempFilePath)) {
+            fs.unlinkSync(tempFilePath);
+          }
+        } catch (cleanupError) {
+          console.error('Erro ao limpar arquivo temporário:', cleanupError);
+        }
+      };
+
+      readStream.on('error', (error: unknown) => {
+        hasError = true;
+        cleanup();
+        const safeError = error instanceof Error 
+          ? new Error(`Erro na leitura do arquivo: ${error.message}`)
+          : new Error('Erro desconhecido na leitura do arquivo.');
+        reject(safeError);
+      });
+
+      writeStream.on('error', (error: unknown) => {
+        hasError = true;
+        cleanup();
+        const safeError = error instanceof Error
+          ? new Error(`Erro na escrita do arquivo: ${error.message}`)
+          : new Error('Erro desconhecido ao escrever o arquivo.');
+        reject(safeError);
+      });
+
+      writeStream.on('finish', () => {
+        if (!hasError) {
+          resolve();
+        }
+      });
+
+      readStream.pipe(writeStream);
     });
 
     // Lê o arquivo para um buffer
@@ -125,8 +152,9 @@ export class XlsxService {
    * @returns Array de exercícios por folha com seus esquemas de repetições
    */
   async extractWorkoutSheet(upload: FileUpload): Promise<SheetExercises[]> {
-    // Utiliza o método processXlsx para obter todos os dados
-    const processedData = await this.processXlsx(upload);
+    try {
+      // Utiliza o método processXlsx para obter todos os dados
+      const processedData = await this.processXlsx(upload);
 
     // Array para armazenar os exercícios por folha
     const sheetExercises: SheetExercises[] = [];
@@ -198,7 +226,19 @@ export class XlsxService {
       });
     }
 
-    return sheetExercises;
+      return sheetExercises;
+    } catch (error) {
+      console.error('Erro ao processar arquivo XLSX:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Unexpected end of form')) {
+          throw new Error('Upload do arquivo foi interrompido. Por favor, tente novamente.');
+        }
+        throw new Error(`Erro ao processar arquivo: ${error.message}`);
+      }
+      
+      throw new Error('Erro desconhecido ao processar arquivo XLSX.');
+    }
   }
 
   // Função auxiliar para verificar se uma linha representa um exercício
